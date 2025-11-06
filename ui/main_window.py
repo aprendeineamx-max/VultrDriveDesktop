@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
                              QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
-                             QMenu)
+                             QMenu, QScrollArea, QSizePolicy)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal
 from PyQt6.QtGui import QAction
 from config_manager import ConfigManager
@@ -76,7 +76,8 @@ class MainWindow(QMainWindow):
         
         # Initialize UI
         self.setWindowTitle(self.tr("window_title"))
-        self.setGeometry(100, 100, 700, 550)
+        self.setGeometry(100, 100, 900, 700)  # Ventana más grande y responsiva
+        self.setMinimumSize(800, 600)  # Tamaño mínimo para evitar problemas de visualización
 
         self.config_manager = ConfigManager()
         self.s3_handler = None
@@ -252,8 +253,16 @@ class MainWindow(QMainWindow):
             self.update_theme_button_text()
 
     def setup_main_tab(self):
-        layout = QVBoxLayout(self.main_tab)
+        # Crear un scroll area para toda la pestaña
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        
+        # Widget contenedor para el scroll
+        container = QWidget()
+        layout = QVBoxLayout(container)
         layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Profile selection group
         profile_group = QGroupBox(self.tr("profile_selection"))
@@ -305,14 +314,31 @@ class MainWindow(QMainWindow):
         layout.addLayout(settings_layout)
 
         layout.addStretch()
+        
+        # Configurar el scroll area
+        scroll.setWidget(container)
+        
+        # Agregar el scroll area al tab
+        tab_layout = QVBoxLayout(self.main_tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)
+        tab_layout.addWidget(scroll)
 
     def setup_mount_tab(self):
-        layout = QVBoxLayout(self.mount_tab)
+        # Crear un scroll area para toda la pestaña
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        
+        # Widget contenedor para el scroll
+        container = QWidget()
+        layout = QVBoxLayout(container)
         layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Detector de discos montados (NUEVO)
         detector_group = QGroupBox("🔍 " + self.tr("mounted_drives_detector"))
         detector_group.setObjectName("detector_group")  # Nombre para encontrarlo después
+        detector_group.setToolTip("ℹ️ " + self.tr("detector_tooltip"))  # Tooltip informativo
         detector_layout = QVBoxLayout()
         
         detector_info = QLabel(self.tr("detector_info"))
@@ -366,7 +392,9 @@ class MainWindow(QMainWindow):
         # Lista de unidades detectadas
         self.drives_list = QTextEdit()
         self.drives_list.setReadOnly(True)
-        self.drives_list.setMaximumHeight(120)
+        self.drives_list.setMinimumHeight(100)  # Más pequeño por defecto
+        self.drives_list.setMaximumHeight(400)  # Máximo para que no crezca demasiado
+        self.drives_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)  # Se ajusta al contenido
         self.drives_list.setPlainText(self.tr("no_drives_detected"))
         self.drives_list.setStyleSheet("""
             QTextEdit {
@@ -381,11 +409,19 @@ class MainWindow(QMainWindow):
         """)
         detector_layout.addWidget(self.drives_list)
         
+        # Contenedor para botones individuales de desmontaje (se llena dinámicamente)
+        self.individual_buttons_container = QWidget()
+        self.individual_buttons_container_layout = QVBoxLayout(self.individual_buttons_container)
+        self.individual_buttons_container_layout.setContentsMargins(0, 10, 0, 0)
+        self.individual_buttons_container.hide()  # Oculto hasta que se detecten unidades
+        detector_layout.addWidget(self.individual_buttons_container)
+        
         detector_group.setLayout(detector_layout)
         layout.addWidget(detector_group)
 
         # Mount configuration
         mount_group = QGroupBox(self.tr("mount_configuration"))
+        mount_group.setToolTip("ℹ️ " + self.tr("mount_config_tooltip"))  # Tooltip informativo
         mount_layout = QVBoxLayout()
 
         drive_letter_layout = QHBoxLayout()
@@ -402,6 +438,7 @@ class MainWindow(QMainWindow):
 
         # Mount actions
         actions_group = QGroupBox(self.tr("drive_actions"))
+        actions_group.setToolTip("ℹ️ " + self.tr("mount_actions_tooltip"))  # Tooltip informativo
         actions_layout = QVBoxLayout()
 
         self.mount_status_label = QLabel(self.tr("status_not_mounted"))
@@ -425,26 +462,44 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMaximumHeight(150)
+        info_text.setMinimumHeight(60)  # Más pequeño
+        info_text.setMaximumHeight(100)  # Máximo más reducido
         info_text.setPlainText(self.tr("mount_info").replace('\\n', '\n'))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
         layout.addWidget(info_group)
 
         layout.addStretch()
+        
+        # Configurar el scroll area
+        scroll.setWidget(container)
+        
+        # Agregar el scroll area al tab
+        tab_layout = QVBoxLayout(self.mount_tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)
+        tab_layout.addWidget(scroll)
 
     def setup_sync_tab(self):
-        layout = QVBoxLayout(self.sync_tab)
+        # Crear un scroll area para toda la pestaña
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        
+        # Widget contenedor para el scroll
+        container = QWidget()
+        layout = QVBoxLayout(container)
         layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Folder selection
-        folder_group = QGroupBox("Folder to Monitor")
+        folder_group = QGroupBox(self.tr("folder_to_monitor"))
+        folder_group.setToolTip("ℹ️ " + self.tr("folder_monitor_tooltip"))  # Tooltip informativo
         folder_layout = QVBoxLayout()
 
         folder_select_layout = QHBoxLayout()
-        self.sync_folder_label = QLabel("No folder selected")
+        self.sync_folder_label = QLabel(self.tr("no_folder_selected"))
         self.sync_folder_label.setWordWrap(True)
-        self.sync_folder_btn = QPushButton("📁 Select Folder")
+        self.sync_folder_btn = QPushButton(self.tr("select_folder"))
         self.sync_folder_btn.clicked.connect(self.select_sync_folder)
         folder_select_layout.addWidget(self.sync_folder_label, 1)
         folder_select_layout.addWidget(self.sync_folder_btn)
@@ -454,16 +509,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(folder_group)
 
         # Sync status and controls
-        sync_group = QGroupBox("Synchronization Control")
+        sync_group = QGroupBox(self.tr("sync_control"))
+        sync_group.setToolTip("ℹ️ " + self.tr("sync_control_tooltip"))  # Tooltip informativo
         sync_layout = QVBoxLayout()
 
-        self.sync_status_label = QLabel("Status: Stopped")
+        self.sync_status_label = QLabel(self.tr("status_stopped"))
         sync_layout.addWidget(self.sync_status_label)
 
         buttons_layout = QHBoxLayout()
-        self.start_sync_btn = QPushButton("▶️ Start Real-Time Sync")
+        self.start_sync_btn = QPushButton(self.tr("start_sync"))
         self.start_sync_btn.clicked.connect(self.start_real_time_sync)
-        self.stop_sync_btn = QPushButton("⏹️ Stop Sync")
+        self.stop_sync_btn = QPushButton(self.tr("stop_sync"))
         self.stop_sync_btn.clicked.connect(self.stop_real_time_sync)
         self.stop_sync_btn.setEnabled(False)
         buttons_layout.addWidget(self.start_sync_btn)
@@ -474,16 +530,17 @@ class MainWindow(QMainWindow):
         layout.addWidget(sync_group)
 
         # Activity log
-        log_group = QGroupBox("Activity Log")
+        log_group = QGroupBox(self.tr("activity_log"))
+        log_group.setToolTip("ℹ️ " + self.tr("activity_log_tooltip"))  # Tooltip informativo
         log_layout = QVBoxLayout()
 
         self.sync_log = QTextEdit()
         self.sync_log.setReadOnly(True)
         self.sync_log.setMaximumHeight(200)
-        self.sync_log.setPlainText("Real-time sync not started yet.\n")
+        self.sync_log.setPlainText(self.tr("sync_not_started"))
         log_layout.addWidget(self.sync_log)
 
-        clear_log_btn = QPushButton("Clear Log")
+        clear_log_btn = QPushButton(self.tr("clear_log"))
         clear_log_btn.clicked.connect(lambda: self.sync_log.clear())
         log_layout.addWidget(clear_log_btn)
 
@@ -495,13 +552,22 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMaximumHeight(100)
+        info_text.setMinimumHeight(50)  # Más pequeño
+        info_text.setMaximumHeight(80)  # Máximo más reducido
         info_text.setPlainText(self.tr("sync_info"))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
         layout.addWidget(info_group)
 
         layout.addStretch()
+        
+        # Configurar el scroll area
+        scroll.setWidget(container)
+        
+        # Agregar el scroll area al tab
+        tab_layout = QVBoxLayout(self.sync_tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)
+        tab_layout.addWidget(scroll)
 
     def select_sync_folder(self):
         """Select folder for real-time synchronization"""
@@ -567,8 +633,16 @@ class MainWindow(QMainWindow):
         self.sync_log.append(f"[{timestamp}] {message}")
 
     def setup_advanced_tab(self):
-        layout = QVBoxLayout(self.advanced_tab)
+        # Crear un scroll area para toda la pestaña
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+        
+        # Widget contenedor para el scroll
+        container = QWidget()
+        layout = QVBoxLayout(container)
         layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
 
         # Warning label
         warning_label = QLabel(f"⚠️ {self.tr('advanced_warning')}")
@@ -596,6 +670,14 @@ class MainWindow(QMainWindow):
         layout.addWidget(format_group)
 
         layout.addStretch()
+        
+        # Configurar el scroll area
+        scroll.setWidget(container)
+        
+        # Agregar el scroll area al tab
+        tab_layout = QVBoxLayout(self.advanced_tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)
+        tab_layout.addWidget(scroll)
 
     def refresh_buckets(self):
         if not self.s3_handler:
@@ -868,79 +950,56 @@ class MainWindow(QMainWindow):
     
     def create_individual_unmount_buttons(self, detected_drives):
         """Crea botones individuales para desmontar cada unidad"""
-        # Limpiar botones anteriores si existen
-        if hasattr(self, 'individual_unmount_buttons'):
-            for btn in self.individual_unmount_buttons:
-                btn.setParent(None)
-                btn.deleteLater()
+        # Limpiar layout existente
+        while self.individual_buttons_container_layout.count():
+            item = self.individual_buttons_container_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
         
-        self.individual_unmount_buttons = []
+        if not detected_drives:
+            # Si no hay unidades, ocultar el contenedor
+            self.individual_buttons_container.hide()
+            return
         
-        # Buscar el layout donde están los botones de detector
-        detector_group = self.mount_tab.findChild(QGroupBox, "detector_group")
-        if not detector_group:
-            # Si no existe, buscar por el título
-            for widget in self.mount_tab.children():
-                if isinstance(widget, QGroupBox) and "Detector" in widget.title():
-                    detector_group = widget
-                    break
+        # Etiqueta de sección
+        label = QLabel("🎯 Desmontar Unidades Específicas:")
+        label.setStyleSheet("font-weight: bold; color: #3498db; margin-top: 10px;")
+        self.individual_buttons_container_layout.addWidget(label)
         
-        if detector_group:
-            layout = detector_group.layout()
+        # Crear un botón para cada unidad
+        for drive in detected_drives:
+            btn_layout = QHBoxLayout()
             
-            # Crear un contenedor para los botones individuales
-            if not hasattr(self, 'individual_buttons_widget'):
-                self.individual_buttons_widget = QWidget()
-                self.individual_buttons_layout = QVBoxLayout(self.individual_buttons_widget)
-                self.individual_buttons_layout.setSpacing(5)
-                layout.addWidget(self.individual_buttons_widget)
-            else:
-                # Limpiar layout existente
-                while self.individual_buttons_layout.count():
-                    item = self.individual_buttons_layout.takeAt(0)
-                    if item.widget():
-                        item.widget().deleteLater()
+            # Botón de desmontaje
+            unmount_btn = QPushButton(f"🗑️ Desmontar {drive['letter']}:")
+            unmount_btn.clicked.connect(lambda checked, letter=drive['letter']: self.unmount_specific_drive(letter))
+            unmount_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #e67e22;
+                    color: white;
+                    border: none;
+                    padding: 8px 15px;
+                    font-size: 10pt;
+                    font-weight: bold;
+                    border-radius: 4px;
+                }
+                QPushButton:hover {
+                    background-color: #d35400;
+                }
+            """)
             
-            # Etiqueta de sección
-            label = QLabel("🎯 Desmontar Unidades Específicas:")
-            label.setStyleSheet("font-weight: bold; color: #3498db; margin-top: 10px;")
-            self.individual_buttons_layout.addWidget(label)
+            # Etiqueta con info
+            info_label = QLabel(f"({drive['label'][:30]}{'...' if len(drive['label']) > 30 else ''})")
+            info_label.setStyleSheet("color: #95a5a6; font-size: 9pt;")
             
-            # Crear un botón para cada unidad
-            for drive in detected_drives:
-                btn_layout = QHBoxLayout()
-                
-                # Botón de desmontaje
-                unmount_btn = QPushButton(f"🗑️ Desmontar {drive['letter']}:")
-                unmount_btn.setProperty('drive_letter', drive['letter'])
-                unmount_btn.clicked.connect(lambda checked, letter=drive['letter']: self.unmount_specific_drive(letter))
-                unmount_btn.setStyleSheet("""
-                    QPushButton {
-                        background-color: #e67e22;
-                        color: white;
-                        border: none;
-                        padding: 8px 15px;
-                        font-size: 10pt;
-                        font-weight: bold;
-                        border-radius: 4px;
-                    }
-                    QPushButton:hover {
-                        background-color: #d35400;
-                    }
-                """)
-                
-                # Etiqueta con info
-                info_label = QLabel(f"({drive['label'][:30]}{'...' if len(drive['label']) > 30 else ''})")
-                info_label.setStyleSheet("color: #95a5a6; font-size: 9pt;")
-                
-                btn_layout.addWidget(unmount_btn)
-                btn_layout.addWidget(info_label)
-                btn_layout.addStretch()
-                
-                self.individual_buttons_layout.addLayout(btn_layout)
-                self.individual_unmount_buttons.append(unmount_btn)
+            btn_layout.addWidget(unmount_btn)
+            btn_layout.addWidget(info_label)
+            btn_layout.addStretch()
             
-            self.individual_buttons_widget.show()
+            self.individual_buttons_container_layout.addLayout(btn_layout)
+        
+        # Mostrar el contenedor
+        self.individual_buttons_container.show()
     
     def unmount_specific_drive(self, drive_letter: str):
         """Desmonta una unidad específica"""
@@ -975,7 +1034,7 @@ class MainWindow(QMainWindow):
                     QMessageBox.critical(
                         self,
                         "❌ Error",
-                        f"No se pudo desmontar la unidad {drive_letter}:\n\n{message}"
+                        message
                     )
                     self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
                     

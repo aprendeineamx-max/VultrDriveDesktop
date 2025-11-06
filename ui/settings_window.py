@@ -31,9 +31,17 @@ class SettingsWindow(QWidget):
         
         self.form_layout = QFormLayout()
         self.profile_name_input = QLineEdit()
+        self.profile_name_input.setPlaceholderText("Ej: mi-cuenta-vultr")
+        
         self.access_key_input = QLineEdit()
+        self.access_key_input.setPlaceholderText("Ej: VVQQYYLLLHH4OB6ZZAABBC")
+        
         self.secret_key_input = QLineEdit()
+        self.secret_key_input.setPlaceholderText("Ej: g9UUiHHvKKaabbcc12334455VVxxYYzzAABBCC")
+        self.secret_key_input.setEchoMode(QLineEdit.EchoMode.Password)  # Ocultar contraseña
+        
         self.host_base_input = QLineEdit()
+        self.host_base_input.setPlaceholderText("Ej: ewr1.vultrobjects.com")
 
         self.form_layout.addRow("Profile Name:", self.profile_name_input)
         self.form_layout.addRow("Access Key:", self.access_key_input)
