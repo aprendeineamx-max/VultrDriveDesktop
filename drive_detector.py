@@ -132,74 +132,45 @@ class DriveDetector:
             Tuple (success: bool, message: str)
         """
         try:
+            import time
             drive_path = f"{drive_letter}:"
             
-            # ESTRATEGIA 1: Cerrar el Explorador de archivos primero (libera archivos abiertos)
-            try:
-                subprocess.run(
-                    ['taskkill', '/F', '/IM', 'explorer.exe'],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=5
-                )
-                import time
-                time.sleep(0.5)  # Esperar a que explorer se cierre
-            except Exception:
-                pass
+            # Matar TODOS los procesos de rclone (como el botón rojo)
+            # Esto es lo que FUNCIONA en Windows
+            result = subprocess.run(
+                ['taskkill', '/F', '/IM', 'rclone.exe'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
             
-            # ESTRATEGIA 2: Buscar y matar el proceso específico de rclone para esta unidad
-            try:
-                wmic_result = subprocess.run(
-                    ['wmic', 'process', 'where', 'name="rclone.exe"', 'get', 'processid,commandline', '/format:csv'],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=10
-                )
-                
-                if wmic_result.returncode == 0:
-                    for line in wmic_result.stdout.split('\n'):
-                        # Buscar líneas que contengan esta letra de unidad
-                        if f'{drive_letter}:' in line or f'--drive-letter={drive_letter}' in line.lower():
-                            # Extraer el PID
-                            parts = line.split(',')
-                            if len(parts) >= 3:
-                                pid = parts[2].strip()
-                                if pid.isdigit():
-                                    # Matar este proceso específico
-                                    kill_result = subprocess.run(
-                                        ['taskkill', '/F', '/PID', pid],
-                                        capture_output=True,
-                                        text=True,
-                                        creationflags=subprocess.CREATE_NO_WINDOW,
-                                        timeout=5
-                                    )
-                                    
-                                    if kill_result.returncode == 0:
-                                        import time
-                                        time.sleep(1)  # Esperar a que se libere
-                                        return True, f"Unidad {drive_letter}: desmontada exitosamente"
-            except Exception:
-                pass
+            # Esperar a que se libere
+            time.sleep(1.5)
             
-            # ESTRATEGIA 3: Intentar net use delete (por si es unidad de red)
-            try:
-                result = subprocess.run(
-                    ['net', 'use', drive_path, '/delete', '/yes'],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=10
-                )
-                
-                if result.returncode == 0:
-                    return True, f"Unidad {drive_letter}: desmontada exitosamente"
-            except Exception:
-                pass
+            # Verificar que se desmontó
+            vol_result = subprocess.run(
+                ['cmd', '/c', 'vol', drive_path],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
             
-            # Si ninguna estrategia funcionó
-            return False, f"No se pudo desmontar la unidad {drive_letter}:\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+            # Si la unidad no existe más, fue exitoso
+            if vol_result.returncode != 0:
+                return True, f"Unidad {drive_letter}: desmontada exitosamente"
+            
+            # Si la unidad sigue existiendo, intentar net use
+            result2 = subprocess.run(
+                ['net', 'use', drive_path, '/delete', '/yes'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            
+            if result2.returncode == 0 or result.returncode == 0:
+                return True, f"Unidad {drive_letter}: desmontada exitosamente"
+            else:
+                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
                 
         except Exception as e:
             return False, f"Error al desmontar: {str(e)}"
