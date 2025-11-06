@@ -9,6 +9,7 @@ from s3_handler import S3Handler
 from ui.settings_window import SettingsWindow
 from rclone_manager import RcloneManager
 from file_watcher import RealTimeSync
+from drive_detector import DriveDetector
 import os
 
 class UploadThread(QThread):
@@ -308,6 +309,80 @@ class MainWindow(QMainWindow):
     def setup_mount_tab(self):
         layout = QVBoxLayout(self.mount_tab)
         layout.setSpacing(15)
+
+        # Detector de discos montados (NUEVO)
+        detector_group = QGroupBox("🔍 " + self.tr("mounted_drives_detector"))
+        detector_group.setObjectName("detector_group")  # Nombre para encontrarlo después
+        detector_layout = QVBoxLayout()
+        
+        detector_info = QLabel(self.tr("detector_info"))
+        detector_info.setWordWrap(True)
+        detector_info.setStyleSheet("color: #888; font-size: 10pt; margin-bottom: 10px;")
+        detector_layout.addWidget(detector_info)
+        
+        detector_buttons_layout = QHBoxLayout()
+        self.detect_drives_btn = QPushButton("🔎 " + self.tr("detect_mounted_drives"))
+        self.detect_drives_btn.clicked.connect(self.detect_mounted_drives)
+        self.detect_drives_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 11pt;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #2980b9;
+            }
+        """)
+        
+        self.unmount_all_btn = QPushButton("🗑️ " + self.tr("unmount_all_drives"))
+        self.unmount_all_btn.clicked.connect(self.unmount_all_detected_drives)
+        self.unmount_all_btn.setEnabled(False)
+        self.unmount_all_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 11pt;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:disabled {
+                background-color: #95a5a6;
+            }
+        """)
+        
+        detector_buttons_layout.addWidget(self.detect_drives_btn)
+        detector_buttons_layout.addWidget(self.unmount_all_btn)
+        detector_layout.addLayout(detector_buttons_layout)
+        
+        # Lista de unidades detectadas
+        self.drives_list = QTextEdit()
+        self.drives_list.setReadOnly(True)
+        self.drives_list.setMaximumHeight(120)
+        self.drives_list.setPlainText(self.tr("no_drives_detected"))
+        self.drives_list.setStyleSheet("""
+            QTextEdit {
+                background-color: #2c3e50;
+                color: #ecf0f1;
+                border: 2px solid #34495e;
+                border-radius: 5px;
+                padding: 10px;
+                font-family: 'Consolas', monospace;
+                font-size: 10pt;
+            }
+        """)
+        detector_layout.addWidget(self.drives_list)
+        
+        detector_group.setLayout(detector_layout)
+        layout.addWidget(detector_group)
 
         # Mount configuration
         mount_group = QGroupBox(self.tr("mount_configuration"))
@@ -725,6 +800,249 @@ class MainWindow(QMainWindow):
             self.load_profile(profiles[0])
         else:
             self.load_profile(None)
+    
+    def detect_mounted_drives(self):
+        """Detecta todas las unidades montadas por rclone"""
+        self.drives_list.setPlainText("🔍 Detectando unidades montadas...\n")
+        self.drives_list.repaint()
+        
+        try:
+            detected_drives = DriveDetector.detect_mounted_drives()
+            
+            if not detected_drives:
+                self.drives_list.setPlainText(
+                    "ℹ️ No se detectaron unidades montadas\n\n"
+                    "No hay unidades V:, W:, X:, Y:, Z: montadas actualmente.\n"
+                    "Todas las letras están disponibles para montar."
+                )
+                self.unmount_all_btn.setEnabled(False)
+                # Limpiar botones individuales si existen
+                if hasattr(self, 'individual_unmount_buttons'):
+                    for btn in self.individual_unmount_buttons:
+                        btn.setParent(None)
+                        btn.deleteLater()
+                    self.individual_unmount_buttons = []
+            else:
+                result_text = f"✅ Se detectaron {len(detected_drives)} unidad(es) montada(s):\n\n"
+                
+                for drive in detected_drives:
+                    result_text += f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                    result_text += f"💿 Unidad: {drive['letter']}:\n"
+                    result_text += f"📁 Ruta: {drive['path']}\n"
+                    result_text += f"🏷️  Etiqueta: {drive['label']}\n"
+                    
+                    if drive['has_process']:
+                        result_text += f"🔧 Proceso(s): {drive['process_ids']}\n"
+                        result_text += f"✅ Estado: Proceso activo\n\n"
+                    else:
+                        result_text += f"⚠️  Proceso: No detectado (sesión anterior)\n"
+                        result_text += f"📌 Estado: Montada sin proceso activo\n\n"
+                
+                result_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+                result_text += "\n💡 Usa los botones individuales o 'Desmontar Todas'."
+                
+                self.drives_list.setPlainText(result_text)
+                self.unmount_all_btn.setEnabled(True)
+                
+                # Crear botones individuales de desmontaje
+                self.create_individual_unmount_buttons(detected_drives)
+                
+                # Actualizar status bar
+                self.statusBar().showMessage(
+                    f"✅ {len(detected_drives)} unidad(es) detectada(s): " + 
+                    ", ".join([d['letter'] + ":" for d in detected_drives]),
+                    5000
+                )
+        
+        except Exception as e:
+            error_msg = f"❌ Error al detectar unidades:\n\n{str(e)}\n\n"
+            error_msg += "Asegúrate de que tienes los permisos necesarios."
+            self.drives_list.setPlainText(error_msg)
+            self.unmount_all_btn.setEnabled(False)
+            
+            QMessageBox.critical(
+                self,
+                "Error de Detección",
+                f"No se pudieron detectar las unidades montadas:\n\n{str(e)}"
+            )
+    
+    def create_individual_unmount_buttons(self, detected_drives):
+        """Crea botones individuales para desmontar cada unidad"""
+        # Limpiar botones anteriores si existen
+        if hasattr(self, 'individual_unmount_buttons'):
+            for btn in self.individual_unmount_buttons:
+                btn.setParent(None)
+                btn.deleteLater()
+        
+        self.individual_unmount_buttons = []
+        
+        # Buscar el layout donde están los botones de detector
+        detector_group = self.mount_tab.findChild(QGroupBox, "detector_group")
+        if not detector_group:
+            # Si no existe, buscar por el título
+            for widget in self.mount_tab.children():
+                if isinstance(widget, QGroupBox) and "Detector" in widget.title():
+                    detector_group = widget
+                    break
+        
+        if detector_group:
+            layout = detector_group.layout()
+            
+            # Crear un contenedor para los botones individuales
+            if not hasattr(self, 'individual_buttons_widget'):
+                self.individual_buttons_widget = QWidget()
+                self.individual_buttons_layout = QVBoxLayout(self.individual_buttons_widget)
+                self.individual_buttons_layout.setSpacing(5)
+                layout.addWidget(self.individual_buttons_widget)
+            else:
+                # Limpiar layout existente
+                while self.individual_buttons_layout.count():
+                    item = self.individual_buttons_layout.takeAt(0)
+                    if item.widget():
+                        item.widget().deleteLater()
+            
+            # Etiqueta de sección
+            label = QLabel("🎯 Desmontar Unidades Específicas:")
+            label.setStyleSheet("font-weight: bold; color: #3498db; margin-top: 10px;")
+            self.individual_buttons_layout.addWidget(label)
+            
+            # Crear un botón para cada unidad
+            for drive in detected_drives:
+                btn_layout = QHBoxLayout()
+                
+                # Botón de desmontaje
+                unmount_btn = QPushButton(f"🗑️ Desmontar {drive['letter']}:")
+                unmount_btn.setProperty('drive_letter', drive['letter'])
+                unmount_btn.clicked.connect(lambda checked, letter=drive['letter']: self.unmount_specific_drive(letter))
+                unmount_btn.setStyleSheet("""
+                    QPushButton {
+                        background-color: #e67e22;
+                        color: white;
+                        border: none;
+                        padding: 8px 15px;
+                        font-size: 10pt;
+                        font-weight: bold;
+                        border-radius: 4px;
+                    }
+                    QPushButton:hover {
+                        background-color: #d35400;
+                    }
+                """)
+                
+                # Etiqueta con info
+                info_label = QLabel(f"({drive['label'][:30]}{'...' if len(drive['label']) > 30 else ''})")
+                info_label.setStyleSheet("color: #95a5a6; font-size: 9pt;")
+                
+                btn_layout.addWidget(unmount_btn)
+                btn_layout.addWidget(info_label)
+                btn_layout.addStretch()
+                
+                self.individual_buttons_layout.addLayout(btn_layout)
+                self.individual_unmount_buttons.append(unmount_btn)
+            
+            self.individual_buttons_widget.show()
+    
+    def unmount_specific_drive(self, drive_letter: str):
+        """Desmonta una unidad específica"""
+        reply = QMessageBox.question(
+            self,
+            "⚠️ Confirmar Desmontaje",
+            f"¿Estás seguro de que deseas desmontar la unidad {drive_letter}:?\n\n"
+            f"Los archivos abiertos desde esta unidad se cerrarán.\n"
+            f"Las demás unidades permanecerán montadas.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage(f"🔄 Desmontando unidad {drive_letter}:...")
+            
+            try:
+                success, message = DriveDetector.unmount_drive(drive_letter)
+                
+                if success:
+                    QMessageBox.information(
+                        self,
+                        "✅ Éxito",
+                        message
+                    )
+                    
+                    self.statusBar().showMessage(f"✅ {message}", 5000)
+                    
+                    # Refrescar la detección
+                    self.detect_mounted_drives()
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "❌ Error",
+                        f"No se pudo desmontar la unidad {drive_letter}:\n\n{message}"
+                    )
+                    self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+                    
+            except Exception as e:
+                error_msg = f"❌ Error inesperado:\n\n{str(e)}"
+                QMessageBox.critical(
+                    self,
+                    "❌ Error Crítico",
+                    f"Error inesperado al desmontar unidad {drive_letter}:\n\n{str(e)}"
+                )
+    
+    def unmount_all_detected_drives(self):
+        """Desmonta todas las unidades detectadas"""
+        reply = QMessageBox.question(
+            self,
+            "⚠️ Confirmar Desmontaje",
+            "¿Estás seguro de que deseas desmontar TODAS las unidades montadas?\n\n"
+            "Esto cerrará todos los procesos de rclone y desmontará\n"
+            "todas las unidades V:, W:, X:, Y:, Z: que estén activas.\n\n"
+            "Los archivos abiertos desde estas unidades se cerrarán.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage("🔄 Desmontando todas las unidades...")
+            
+            try:
+                success, message = DriveDetector.unmount_all_drives()
+                
+                if success:
+                    self.drives_list.setPlainText(
+                        f"✅ {message}\n\n"
+                        "Todas las unidades han sido desmontadas correctamente.\n"
+                        "Puedes volver a detectar unidades para verificar."
+                    )
+                    self.unmount_all_btn.setEnabled(False)
+                    
+                    # También actualizar el estado del botón de unmount principal
+                    self.unmount_button.setEnabled(False)
+                    self.mount_button.setEnabled(True)
+                    self.mount_status_label.setText(self.tr("status_not_mounted"))
+                    
+                    QMessageBox.information(
+                        self,
+                        "✅ Éxito",
+                        message
+                    )
+                    
+                    self.statusBar().showMessage("✅ " + message, 5000)
+                else:
+                    self.drives_list.setPlainText(f"❌ Error:\n\n{message}")
+                    QMessageBox.critical(
+                        self,
+                        "❌ Error",
+                        f"No se pudieron desmontar las unidades:\n\n{message}"
+                    )
+                    self.statusBar().showMessage("❌ Error al desmontar", 5000)
+                    
+            except Exception as e:
+                error_msg = f"❌ Error inesperado:\n\n{str(e)}"
+                self.drives_list.setPlainText(error_msg)
+                QMessageBox.critical(
+                    self,
+                    "❌ Error Crítico",
+                    f"Error inesperado al desmontar unidades:\n\n{str(e)}"
+                )
 
     def closeEvent(self, event):
         """Handle application close event"""
