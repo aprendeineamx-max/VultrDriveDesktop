@@ -1021,15 +1021,26 @@ class MainWindow(QMainWindow):
                 if success:
                     self.statusBar().showMessage(f"✅ {message}", 3000)
                     
-                    # Esperar 1 segundo y refrescar (la unidad necesita tiempo para liberarse)
-                    QTimer.singleShot(1000, self.detect_mounted_drives)
+                    # Esperar 2 segundos para asegurar que la unidad se libere completamente
+                    QTimer.singleShot(2000, self.detect_mounted_drives)
                 else:
-                    QMessageBox.critical(
-                        self,
-                        "❌ Error",
-                        message
-                    )
-                    self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+                    # Intentar una segunda vez si falla la primera
+                    self.statusBar().showMessage(f"⚠️ Reintentando desmontaje de {drive_letter}...")
+                    import time
+                    time.sleep(1)
+                    
+                    # Segunda intento
+                    success2, message2 = DriveDetector.unmount_drive(drive_letter)
+                    if success2:
+                        self.statusBar().showMessage(f"✅ {message2}", 3000)
+                        QTimer.singleShot(2000, self.detect_mounted_drives)
+                    else:
+                        QMessageBox.critical(
+                            self,
+                            "❌ Error",
+                            message
+                        )
+                        self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
                     
             except Exception as e:
                 error_msg = f"❌ Error inesperado:\n\n{str(e)}"

@@ -134,13 +134,28 @@ class DriveDetector:
         try:
             drive_path = f"{drive_letter}:"
             
-            # ESTRATEGIA 1: Buscar y matar el proceso específico de rclone para esta unidad
+            # ESTRATEGIA 1: Cerrar el Explorador de archivos primero (libera archivos abiertos)
+            try:
+                subprocess.run(
+                    ['taskkill', '/F', '/IM', 'explorer.exe'],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    timeout=5
+                )
+                import time
+                time.sleep(0.5)  # Esperar a que explorer se cierre
+            except Exception:
+                pass
+            
+            # ESTRATEGIA 2: Buscar y matar el proceso específico de rclone para esta unidad
             try:
                 wmic_result = subprocess.run(
                     ['wmic', 'process', 'where', 'name="rclone.exe"', 'get', 'processid,commandline', '/format:csv'],
                     capture_output=True,
                     text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    timeout=10
                 )
                 
                 if wmic_result.returncode == 0:
@@ -157,24 +172,25 @@ class DriveDetector:
                                         ['taskkill', '/F', '/PID', pid],
                                         capture_output=True,
                                         text=True,
-                                        creationflags=subprocess.CREATE_NO_WINDOW
+                                        creationflags=subprocess.CREATE_NO_WINDOW,
+                                        timeout=5
                                     )
                                     
                                     if kill_result.returncode == 0:
-                                        # Esperar un momento para que se libere la unidad
                                         import time
-                                        time.sleep(0.5)
+                                        time.sleep(1)  # Esperar a que se libere
                                         return True, f"Unidad {drive_letter}: desmontada exitosamente"
             except Exception:
                 pass
             
-            # ESTRATEGIA 2: Intentar net use delete (por si es unidad de red)
+            # ESTRATEGIA 3: Intentar net use delete (por si es unidad de red)
             try:
                 result = subprocess.run(
                     ['net', 'use', drive_path, '/delete', '/yes'],
                     capture_output=True,
                     text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    timeout=10
                 )
                 
                 if result.returncode == 0:
