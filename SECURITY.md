@@ -70,7 +70,7 @@ Si accidentalmente subiste credenciales reales a git:
 2. Genera nuevas credenciales
 3. Actualiza tu `config.json` local con las nuevas credenciales
 4. Limpia el historial de git (considera usar `git filter-branch` o BFG Repo-Cleaner)
-5. Fuerza un push del historio limpio (ten cuidado con esto)
+5. Fuerza un push del historial limpio (ten cuidado con esto)
 
 ## Obtener Credenciales de Vultr
 

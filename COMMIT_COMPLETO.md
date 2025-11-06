@@ -4,7 +4,7 @@
 
 Este documento detalla el commit completo del proyecto **VultrDriveDesktop**, una aplicación de escritorio para gestionar Vultr Object Storage con funcionalidades avanzadas de montaje de disco, backup y sincronización.
 
-**Fecha de Completación**: 6 de Noviembre de 2025
+**Fecha de Completación**: 6 de Noviembre de 2024
 **Versión**: 2.0
 **Estado**: ✅ Completo y Funcional
 
@@ -406,6 +406,6 @@ Desarrollado con:
 
 **✨ Proyecto completado y listo para uso!**
 
-Fecha: 6 de Noviembre de 2025
+Fecha: 6 de Noviembre de 2024
 Versión: 2.0
 Estado: ✅ Producción
