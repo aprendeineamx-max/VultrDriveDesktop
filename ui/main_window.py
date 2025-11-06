@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QWidget, QPushButton, QCo
                              QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
                              QMenu, QScrollArea, QSizePolicy)
-from PyQt6.QtCore import Qt, QThread, pyqtSignal
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from config_manager import ConfigManager
 from s3_handler import S3Handler
@@ -392,9 +392,8 @@ class MainWindow(QMainWindow):
         # Lista de unidades detectadas
         self.drives_list = QTextEdit()
         self.drives_list.setReadOnly(True)
-        self.drives_list.setMinimumHeight(100)  # Más pequeño por defecto
-        self.drives_list.setMaximumHeight(400)  # Máximo para que no crezca demasiado
-        self.drives_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)  # Se ajusta al contenido
+        self.drives_list.setMinimumHeight(70)  # Muy pequeño, solo para el texto
+        self.drives_list.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)  # Solo crece verticalmente si hay contenido
         self.drives_list.setPlainText(self.tr("no_drives_detected"))
         self.drives_list.setStyleSheet("""
             QTextEdit {
@@ -462,8 +461,8 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMinimumHeight(60)  # Más pequeño
-        info_text.setMaximumHeight(100)  # Máximo más reducido
+        info_text.setMinimumHeight(50)  # Solo el texto necesario
+        info_text.setMaximumHeight(70)  # Máximo muy reducido
         info_text.setPlainText(self.tr("mount_info").replace('\\n', '\n'))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
@@ -552,8 +551,8 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMinimumHeight(50)  # Más pequeño
-        info_text.setMaximumHeight(80)  # Máximo más reducido
+        info_text.setMinimumHeight(45)  # Muy pequeño
+        info_text.setMaximumHeight(65)  # Máximo muy reducido
         info_text.setPlainText(self.tr("sync_info"))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
@@ -1020,16 +1019,10 @@ class MainWindow(QMainWindow):
                 success, message = DriveDetector.unmount_drive(drive_letter)
                 
                 if success:
-                    QMessageBox.information(
-                        self,
-                        "✅ Éxito",
-                        message
-                    )
+                    self.statusBar().showMessage(f"✅ {message}", 3000)
                     
-                    self.statusBar().showMessage(f"✅ {message}", 5000)
-                    
-                    # Refrescar la detección
-                    self.detect_mounted_drives()
+                    # Esperar 1 segundo y refrescar (la unidad necesita tiempo para liberarse)
+                    QTimer.singleShot(1000, self.detect_mounted_drives)
                 else:
                     QMessageBox.critical(
                         self,
