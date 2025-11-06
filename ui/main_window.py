@@ -897,6 +897,11 @@ class MainWindow(QMainWindow):
                     "Todas las letras están disponibles para montar."
                 )
                 self.unmount_all_btn.setEnabled(False)
+                
+                # OCULTAR el contenedor de botones individuales
+                if hasattr(self, 'individual_buttons_container'):
+                    self.individual_buttons_container.hide()
+                
                 # Limpiar botones individuales si existen
                 if hasattr(self, 'individual_unmount_buttons'):
                     for btn in self.individual_unmount_buttons:
@@ -924,6 +929,10 @@ class MainWindow(QMainWindow):
                 
                 self.drives_list.setPlainText(result_text)
                 self.unmount_all_btn.setEnabled(True)
+                
+                # MOSTRAR el contenedor de botones individuales
+                if hasattr(self, 'individual_buttons_container'):
+                    self.individual_buttons_container.show()
                 
                 # Crear botones individuales de desmontaje
                 self.create_individual_unmount_buttons(detected_drives)
@@ -1022,7 +1031,11 @@ class MainWindow(QMainWindow):
                     self.statusBar().showMessage(f"✅ {message}", 3000)
                     
                     # Esperar 2 segundos para asegurar que la unidad se libere completamente
-                    QTimer.singleShot(2000, self.detect_mounted_drives)
+                    def refresh_ui():
+                        self.detect_mounted_drives()
+                        self.mount_button.setEnabled(True)
+                        self.unmount_button.setEnabled(False)
+                    QTimer.singleShot(2000, refresh_ui)
                 else:
                     # Intentar una segunda vez si falla la primera
                     self.statusBar().showMessage(f"⚠️ Reintentando desmontaje de {drive_letter}...")
@@ -1081,6 +1094,10 @@ class MainWindow(QMainWindow):
                     self.unmount_button.setEnabled(False)
                     self.mount_button.setEnabled(True)
                     self.mount_status_label.setText(self.tr("status_not_mounted"))
+                    
+                    # Ocultar el contenedor de botones individuales
+                    if hasattr(self, 'individual_buttons_container'):
+                        self.individual_buttons_container.hide()
                     
                     QMessageBox.information(
                         self,
