@@ -788,6 +788,9 @@ class MainWindow(QMainWindow):
             self.mount_button.setEnabled(False)
             self.unmount_button.setEnabled(True)
             self.statusBar().showMessage(f"Drive mounted on {drive_letter}:", 5000)
+            
+            # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
+            QTimer.singleShot(3000, self.detect_mounted_drives)
         else:
             # Mensaje de error mejorado con instrucciones
             error_msg = message
@@ -955,6 +958,25 @@ class MainWindow(QMainWindow):
                 "Error de Detección",
                 f"No se pudieron detectar las unidades montadas:\n\n{str(e)}"
             )
+        
+        # ✅ ACTUALIZAR BOTONES DE MONTAJE - Debe ejecutarse SIEMPRE
+        self.mount_button.setEnabled(True)  # El botón de montar siempre está habilitado
+        
+        # Verificar si la letra seleccionada está montada
+        selected_letter = self.drive_letter_input.currentText()
+        
+        # Obtener lista de letras montadas (manejo seguro si no hay unidades)
+        try:
+            mounted_letters = [d['letter'] for d in detected_drives] if detected_drives else []
+        except:
+            mounted_letters = []
+        
+        if selected_letter in mounted_letters:
+            self.unmount_button.setEnabled(True)
+            self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
+        else:
+            self.unmount_button.setEnabled(False)
+            self.mount_status_label.setText(f"⭕ Unidad {selected_letter}: no está montada")
     
     def create_individual_unmount_buttons(self, detected_drives):
         """Crea botones individuales para desmontar cada unidad"""
@@ -1030,33 +1052,31 @@ class MainWindow(QMainWindow):
                 if success:
                     self.statusBar().showMessage(f"✅ {message}", 3000)
                     
-                    # Esperar 2 segundos para asegurar que la unidad se libere completamente
-                    def refresh_ui():
+                    # Función para actualizar la UI completamente
+                    def refresh_ui_complete():
+                        # 1. Refrescar la detección de unidades montadas
                         self.detect_mounted_drives()
+                        
+                        # 2. Rehabilitar el botón "Montar como Unidad"
                         self.mount_button.setEnabled(True)
+                        
+                        # 3. Deshabilitar el botón "Desmontar Unidad"
                         self.unmount_button.setEnabled(False)
-                    QTimer.singleShot(2000, refresh_ui)
-                else:
-                    # Intentar una segunda vez si falla la primera
-                    self.statusBar().showMessage(f"⚠️ Reintentando desmontaje de {drive_letter}...")
-                    import time
-                    time.sleep(1)
+                        
+                        # 4. Actualizar el estado del montaje
+                        self.mount_status_label.setText(self.tr("status_not_mounted"))
                     
-                    # Segunda intento
-                    success2, message2 = DriveDetector.unmount_drive(drive_letter)
-                    if success2:
-                        self.statusBar().showMessage(f"✅ {message2}", 3000)
-                        QTimer.singleShot(2000, self.detect_mounted_drives)
-                    else:
-                        QMessageBox.critical(
-                            self,
-                            "❌ Error",
-                            message
-                        )
-                        self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+                    # Esperar 2 segundos para asegurar que la unidad se libere completamente
+                    QTimer.singleShot(2000, refresh_ui_complete)
+                else:
+                    QMessageBox.critical(
+                        self,
+                        "❌ Error",
+                        message
+                    )
+                    self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
                     
             except Exception as e:
-                error_msg = f"❌ Error inesperado:\n\n{str(e)}"
                 QMessageBox.critical(
                     self,
                     "❌ Error Crítico",
