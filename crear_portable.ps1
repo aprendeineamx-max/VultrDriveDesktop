@@ -4,6 +4,10 @@
 Write-Host "=== Creador de Version Portable - VultrDriveDesktop ===" -ForegroundColor Cyan
 Write-Host ""
 
+# Asegurarse de ejecutar dentro del directorio del script
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+Set-Location $scriptDir
+
 # 1. Verificar Python
 Write-Host "1. Verificando Python..." -ForegroundColor Yellow
 $pythonCmd = $null
@@ -37,9 +41,23 @@ if ($LASTEXITCODE -eq 0) {
 # 3. Crear carpeta de distribución
 Write-Host ""
 Write-Host "3. Preparando carpeta de distribución..." -ForegroundColor Yellow
-$distFolder = ".\VultrDriveDesktop-Portable"
+$distFolder = "\.\VultrDriveDesktop-Portable"
+
+# Asegurarse de que no quede un proceso del portable en ejecución
+$runningPortable = Get-Process -Name "VultrDriveDesktop" -ErrorAction SilentlyContinue
+if ($runningPortable) {
+    Write-Host "   Cerrando instancia previa de VultrDriveDesktop.exe" -ForegroundColor Gray
+    $runningPortable | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Milliseconds 500
+}
+
 if (Test-Path $distFolder) {
-    Remove-Item $distFolder -Recurse -Force
+    Remove-Item $distFolder -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path $distFolder) {
+        # Reintentar con un breve retraso por si algún archivo sigue liberándose
+        Start-Sleep -Milliseconds 500
+        Remove-Item $distFolder -Recurse -Force -ErrorAction SilentlyContinue
+    }
 }
 New-Item -ItemType Directory -Path $distFolder | Out-Null
 Write-Host "   OK - Carpeta creada: $distFolder" -ForegroundColor Green
@@ -61,6 +79,8 @@ $pyinstallerArgs = @(
     "--add-data=s3_handler.py;.",
     "--add-data=rclone_manager.py;.",
     "--add-data=file_watcher.py;.",
+    "--add-data=drive_detector.py;.",
+    "--add-data=splash_screen.py;.",
     "--hidden-import=PyQt6",
     "--hidden-import=boto3",
     "--hidden-import=botocore",
@@ -68,6 +88,9 @@ $pyinstallerArgs = @(
     "--collect-all=PyQt6",
     "--collect-all=boto3",
     "--collect-all=botocore",
+    "--collect-submodules=watchdog",
+    "--collect-submodules=boto3",
+    "--collect-submodules=botocore",
     "--noconsole",
     "app.py"
 )
@@ -97,7 +120,45 @@ if (Test-Path ".\rclone-v1.71.2-windows-amd64\rclone.exe") {
     Write-Host "   OK - Rclone copiado" -ForegroundColor Green
 }
 
-# 7. Copiar documentación
+# 7. Copiar configuración y datos persistentes
+Write-Host "   Copiando configuraciones y datos..." -ForegroundColor Gray
+$configFiles = @(
+    "config.json",
+    "user_preferences.json",
+    "config.default.json",
+    "config.example.json"
+)
+foreach ($file in $configFiles) {
+    if (Test-Path $file) {
+        Copy-Item $file "$distFolder\" -Force
+    }
+}
+Write-Host "   OK - Configuraciones copiadas" -ForegroundColor Green
+
+# 8. Copiar scripts auxiliares (WinFsp y utilidades)
+Write-Host "   Copiando scripts auxiliares..." -ForegroundColor Gray
+$helperItems = @(
+    "INSTALAR_WINFSP.bat",
+    "instalar_winfsp.ps1",
+    "verificar_winfsp.ps1",
+    "run_app.ps1",
+    "start.bat",
+    "start.ps1"
+)
+foreach ($item in $helperItems) {
+    if (Test-Path $item) {
+        Copy-Item $item "$distFolder\" -Force
+    }
+}
+
+# Copiar instaladores WinFsp si existen en la carpeta actual
+$winfspInstallers = Get-ChildItem -Filter "winfsp*.msi" -ErrorAction SilentlyContinue
+foreach ($installer in $winfspInstallers) {
+    Copy-Item $installer.FullName "$distFolder\" -Force
+}
+Write-Host "   OK - Scripts auxiliares listos" -ForegroundColor Green
+
+# 9. Copiar documentación
 Write-Host "   Copiando documentacion..." -ForegroundColor Gray
 $docFiles = @(
     "README_COMPLETO.md",
@@ -112,14 +173,15 @@ foreach ($file in $docFiles) {
 }
 Write-Host "   OK - Documentacion copiada" -ForegroundColor Green
 
-# 8. Crear README para versión portable
+# 10. Crear README para versión portable
 Write-Host "   Creando README portable..." -ForegroundColor Gray
 $readmePortable = @"
 # VultrDriveDesktop - Version Portable
 
-## Que incluye esta version:
 - VultrDriveDesktop.exe (aplicacion completa con Python, PyQt6, boto3)
 - rclone.exe (para montar unidades)
+- config.json y user_preferences.json con tus credenciales y ajustes
+- Scripts auxiliares (INSTALAR_WINFSP.bat, instalar_winfsp.ps1)
 - Documentacion completa
 
 ## REQUISITO UNICO: WinFsp
@@ -128,9 +190,10 @@ Para montar unidades como disco, necesitas instalar WinFsp (solo una vez):
 2. Instala: winfsp-2.0.23075.msi
 
 ## Como usar:
-1. Doble clic en VultrDriveDesktop.exe
-2. Configurar tu perfil de Vultr
-3. Listo!
+1. Copia esta carpeta a la ubicacion que desees (USB, Escritorio, etc.)
+2. Doble clic en VultrDriveDesktop.exe
+3. Tus perfiles y preferencias se cargan automaticamente desde config.json
+4. Listo!
 
 ## Ventajas de esta version:
 - No necesita Python instalado
@@ -142,6 +205,7 @@ Para montar unidades como disco, necesitas instalar WinFsp (solo una vez):
 ## Nota:
 - La primera ejecucion puede tardar 5-10 segundos (descompresion)
 - Los archivos de configuracion se guardan en la carpeta del programa
+- Puedes editar config.json para agregar o cambiar perfiles sin reinstalar
 
 Fecha de compilacion: $(Get-Date -Format "dd/MM/yyyy HH:mm")
 Version: 2.0 Portable
@@ -149,7 +213,7 @@ Version: 2.0 Portable
 Set-Content -Path "$distFolder\README.txt" -Value $readmePortable -Encoding UTF8
 Write-Host "   OK - README creado" -ForegroundColor Green
 
-# 9. Crear script de inicio rapido
+# 11. Crear script de inicio rapido
 $startScript = @"
 @echo off
 echo Iniciando VultrDriveDesktop Portable...
@@ -158,7 +222,7 @@ start VultrDriveDesktop.exe
 Set-Content -Path "$distFolder\Iniciar.bat" -Value $startScript -Encoding ASCII
 Write-Host "   OK - Script de inicio creado" -ForegroundColor Green
 
-# 10. Limpiar archivos temporales
+# 12. Limpiar archivos temporales
 Write-Host ""
 Write-Host "6. Limpiando archivos temporales..." -ForegroundColor Yellow
 Remove-Item ".\build" -Recurse -Force -ErrorAction SilentlyContinue
@@ -166,7 +230,7 @@ Remove-Item ".\dist" -Recurse -Force -ErrorAction SilentlyContinue
 Remove-Item ".\VultrDriveDesktop.spec" -Force -ErrorAction SilentlyContinue
 Write-Host "   OK - Limpieza completada" -ForegroundColor Green
 
-# 11. Calcular tamaño
+# 13. Calcular tamaño
 Write-Host ""
 Write-Host "7. Informacion final..." -ForegroundColor Yellow
 $totalSize = (Get-ChildItem $distFolder -Recurse | Measure-Object -Property Length -Sum).Sum

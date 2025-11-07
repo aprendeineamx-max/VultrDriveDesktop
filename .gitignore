@@ -181,3 +181,5 @@ cython_debug/
 .cursorindexingignore
 
 # Project-specific configuration files
+VultrDriveDesktop-Portable/
+VultrDriveDesktop-Portable.zip
