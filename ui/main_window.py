@@ -941,6 +941,8 @@ class MainWindow(QMainWindow):
         self.drives_list.setPlainText("🔍 Detectando unidades montadas...\n")
         self.drives_list.repaint()
         
+        detected_drives = []  # ✅ Inicializar FUERA del try para que esté disponible después
+        
         try:
             detected_drives = DriveDetector.detect_mounted_drives()
             
