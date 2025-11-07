@@ -428,6 +428,8 @@ class MainWindow(QMainWindow):
         self.drive_letter_input = QComboBox()
         available_drives = [chr(i) for i in range(ord('V'), ord('Z')+1)]
         self.drive_letter_input.addItems(available_drives)
+        # ✅ CONECTAR: Cuando cambia la letra, refrescar si está montada
+        self.drive_letter_input.currentTextChanged.connect(self.update_unmount_button_state)
         drive_letter_layout.addWidget(self.drive_letter_input)
         drive_letter_layout.addStretch()
         mount_layout.addLayout(drive_letter_layout)
@@ -810,20 +812,69 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Mount failed.", 5000)
 
     def unmount_drive(self):
+        """Desmonta SOLO la unidad seleccionada (sin afectar las demás)"""
         drive_letter = self.drive_letter_input.currentText()
-        self.statusBar().showMessage(f"Unmounting drive {drive_letter}:...")
+        self.statusBar().showMessage(f"🔄 Desmontando unidad {drive_letter}:...")
         
         success, message = self.rclone_manager.unmount_drive(drive_letter)
 
         if success:
-            QMessageBox.information(self, "Success", message)
-            self.mount_status_label.setText("Status: Not mounted")
-            self.mount_button.setEnabled(True)
-            self.unmount_button.setEnabled(False)
-            self.statusBar().showMessage("Drive unmounted.", 5000)
+            self.statusBar().showMessage(f"✅ {message}", 3000)
+            
+            # Esperar 2 segundos para que se libere completamente
+            def refresh_after_unmount():
+                # Refrescar la detección de unidades
+                self.detect_mounted_drives()
+                # Actualizar el estado del botón basado en la nueva detección
+                self.update_unmount_button_state()
+                # Mostrar estado
+                self.mount_status_label.setText(f"⭕ Unidad {drive_letter}: no está montada")
+            
+            QTimer.singleShot(2000, refresh_after_unmount)
         else:
-            QMessageBox.critical(self, "Error", message)
-            self.statusBar().showMessage("Unmount failed.", 5000)
+            QMessageBox.critical(
+                self,
+                "❌ Error al desmontar",
+                f"No se pudo desmontar la unidad {drive_letter}:\n\n{message}"
+            )
+            self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+
+    def update_unmount_button_state(self):
+        """✅ Actualizar estado del botón 'Desmontar Unidad' cuando cambia la letra"""
+        selected_letter = self.drive_letter_input.currentText()
+        
+        if not selected_letter:
+            # Si no hay letra seleccionada, deshabilitar todo
+            self.unmount_button.setEnabled(False)
+            self.mount_button.setEnabled(False)
+            self.mount_status_label.setText("⭕ Selecciona una letra de unidad")
+            return
+        
+        # Obtener las unidades montadas actualmente
+        try:
+            detected_drives = DriveDetector.detect_mounted_drives()
+            mounted_letters = [d['letter'] for d in detected_drives] if detected_drives else []
+        except Exception as e:
+            print(f"Error detectando unidades: {e}")
+            mounted_letters = []
+        
+        # Verificar si la letra seleccionada está montada
+        is_mounted = selected_letter in mounted_letters
+        
+        if is_mounted:
+            # ✅ ESTÁ MONTADA: habilitar desmontar, deshabilitar montar
+            self.unmount_button.setEnabled(True)
+            self.unmount_button.setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.mount_button.setEnabled(False)
+            self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
+        else:
+            # ⭕ NO ESTÁ MONTADA: habilitar montar, deshabilitar desmontar
+            self.unmount_button.setEnabled(False)
+            self.unmount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.mount_button.setEnabled(True)
+            self.mount_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.mount_status_label.setText(f"⭕ Unidad {selected_letter}: no está montada")
 
     def format_bucket(self):
         if not self.s3_handler:

@@ -123,7 +123,7 @@ class DriveDetector:
     @staticmethod
     def unmount_drive(drive_letter: str) -> Tuple[bool, str]:
         """
-        Desmonta una unidad específica
+        Desmonta SOLO una unidad específica (sin afectar las demás)
         
         Args:
             drive_letter: Letra de la unidad (ej: 'V')
@@ -135,17 +135,17 @@ class DriveDetector:
             import time
             drive_path = f"{drive_letter}:"
             
-            # Matar TODOS los procesos de rclone (como el botón rojo)
-            # Esto es lo que FUNCIONA en Windows
+            # ESTRATEGIA: Usar 'net use' para desmontar SOLO esa letra
+            # Esto NO afecta las demás unidades montadas
             result = subprocess.run(
-                ['taskkill', '/F', '/IM', 'rclone.exe'],
+                ['net', 'use', drive_path, '/delete', '/yes'],
                 capture_output=True,
                 text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
             
             # Esperar a que se libere
-            time.sleep(1.5)
+            time.sleep(1.0)
             
             # Verificar que se desmontó
             vol_result = subprocess.run(
@@ -158,18 +158,33 @@ class DriveDetector:
             # Si la unidad no existe más, fue exitoso
             if vol_result.returncode != 0:
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
-            
-            # Si la unidad sigue existiendo, intentar net use
-            result2 = subprocess.run(
-                ['net', 'use', drive_path, '/delete', '/yes'],
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
-            
-            if result2.returncode == 0 or result.returncode == 0:
-                return True, f"Unidad {drive_letter}: desmontada exitosamente"
             else:
+                # Si 'net use' no funcionó, intentar con el comando de WinFsp
+                # (rclone usa WinFsp para montar en Windows)
+                try:
+                    import ctypes
+                    from ctypes import wintypes
+                    # Intentar desmontar usando la API de Windows
+                    result2 = subprocess.run(
+                        ['winfsp-x64.exe', 'net', 'use', drive_path, '/delete', '/yes'],
+                        capture_output=True,
+                        text=True,
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                    )
+                    time.sleep(1.0)
+                    
+                    vol_result2 = subprocess.run(
+                        ['cmd', '/c', 'vol', drive_path],
+                        capture_output=True,
+                        text=True,
+                        creationflags=subprocess.CREATE_NO_WINDOW
+                    )
+                    
+                    if vol_result2.returncode != 0:
+                        return True, f"Unidad {drive_letter}: desmontada exitosamente"
+                except:
+                    pass
+                
                 return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
                 
         except Exception as e:

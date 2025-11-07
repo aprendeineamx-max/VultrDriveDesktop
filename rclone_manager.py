@@ -255,17 +255,60 @@ class RcloneManager:
             return False, f"Error al montar: {str(e)}"
 
     def unmount_drive(self, drive_letter):
-        """Unmount the drive"""
-        if self.mount_process:
-            try:
-                self.mount_process.terminate()
-                self.mount_process.wait(timeout=5)
-                self.mount_process = None
+        """Unmount the drive usando net use (específico para esa letra)"""
+        try:
+            import time
+            drive_path = f"{drive_letter}:"
+            
+            # Primero intentar con net use para desmontar SOLO esa letra
+            result = subprocess.run(
+                ['net', 'use', drive_path, '/delete', '/yes'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            
+            time.sleep(1.0)
+            
+            # Verificar si se desmontó
+            vol_result = subprocess.run(
+                ['cmd', '/c', 'vol', drive_path],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            
+            if vol_result.returncode != 0:
+                # Se desmontó exitosamente
+                if self.mount_process:
+                    self.mount_process = None
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
-            except Exception as e:
-                return False, f"Error al desmontar: {str(e)}"
-        else:
-            return False, "No se encontró unidad montada"
+            
+            # Si net use no funcionó, terminar el proceso rclone
+            if self.mount_process:
+                try:
+                    self.mount_process.terminate()
+                    self.mount_process.wait(timeout=2)
+                    self.mount_process = None
+                    time.sleep(0.5)
+                except:
+                    pass
+            
+            # Verificar nuevamente
+            vol_result2 = subprocess.run(
+                ['cmd', '/c', 'vol', drive_path],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            
+            if vol_result2.returncode != 0:
+                return True, f"Unidad {drive_letter}: desmontada exitosamente"
+            else:
+                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                
+        except Exception as e:
+            return False, f"Error al desmontar: {str(e)}"
 
     def is_mounted(self):
         """Check if a drive is currently mounted"""
