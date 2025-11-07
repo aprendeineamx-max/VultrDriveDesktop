@@ -180,6 +180,4 @@ cython_debug/
 .cursorignore
 .cursorindexingignore
 
-# Project-specific configuration files with sensitive data
-config.json
-user_preferences.json
+# Project-specific configuration files
