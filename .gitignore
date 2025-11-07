@@ -183,3 +183,4 @@ cython_debug/
 # Project-specific configuration files
 VultrDriveDesktop-Portable/
 VultrDriveDesktop-Portable.zip
+winfsp-*.msi

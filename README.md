@@ -43,6 +43,7 @@ Una aplicación de escritorio completa para gestionar tu almacenamiento en Vultr
 - watchdog
 - pywin32
 - rclone (incluido en el proyecto)
+- WinFsp (instalador `.msi` incluido en la versión portable)
 
 ## Uso
 

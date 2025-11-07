@@ -2,6 +2,11 @@ import sys
 import json
 import os
 
+try:
+    import ctypes
+except ImportError:  # pragma: no cover
+    ctypes = None
+
 def get_base_path():
     """Get the base path for the application (works with PyInstaller)"""
     if getattr(sys, 'frozen', False):
@@ -68,34 +73,70 @@ def install_winfsp_silent():
     
     # Buscar el instalador MSI
     msi_files = []
-    for file in os.listdir(base_path):
-        if file.startswith("winfsp") and file.endswith(".msi"):
-            msi_files.append(os.path.join(base_path, file))
+    search_paths = [base_path, os.path.join(base_path, "dependencies"), os.path.join(base_path, "winfsp")]
+    for directory in search_paths:
+        if os.path.isdir(directory):
+            for file in os.listdir(directory):
+                if file.lower().startswith("winfsp") and file.lower().endswith(".msi"):
+                    msi_files.append(os.path.join(directory, file))
     
     if not msi_files and not os.path.exists(installer_bat):
         return False
     
     try:
+        def is_admin():
+            if ctypes is None:
+                return False
+            try:
+                return ctypes.windll.shell32.IsUserAnAdmin() != 0
+            except Exception:
+                return False
+
+        def run_msiexec(path):
+            msiexec_args = ['/i', path, '/quiet', '/norestart']
+            if is_admin():
+                result = subprocess.run(['msiexec'] + msiexec_args, check=False, timeout=180)
+                return result.returncode == 0
+            else:
+                ps_command = (
+                    "Start-Process msiexec "
+                    "-ArgumentList '/i `"{0}`" /quiet /norestart' "
+                    "-Verb runAs -Wait"
+                ).format(path.replace("'", "''"))
+                subprocess.run(
+                    ['powershell', '-NoLogo', '-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps_command],
+                    check=False,
+                    timeout=240
+                )
+                return True
+
+        def run_installer(target):
+            if target.endswith('.msi'):
+                return run_msiexec(target)
+            # BAT u otros scripts
+            if is_admin():
+                result = subprocess.run([target], check=False, timeout=240)
+                return result.returncode == 0
+            ps_command = (
+                "Start-Process -FilePath `"{0}`" -Verb runAs -Wait"
+            ).format(target.replace("'", "''"))
+            subprocess.run(
+                ['powershell', '-NoLogo', '-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps_command],
+                check=False,
+                timeout=240
+            )
+            return True
+
         if msi_files:
             # Instalar directamente el MSI en modo silencioso
             msi_path = msi_files[0]
-            # /i = install, /quiet = sin UI, /norestart = no reiniciar
-            subprocess.run(
-                ['msiexec', '/i', msi_path, '/quiet', '/norestart'],
-                check=False,
-                timeout=120  # Timeout de 2 minutos
-            )
+            run_installer(msi_path)
         elif os.path.exists(installer_bat):
             # Ejecutar el BAT (que descargará e instalará)
-            subprocess.run(
-                [installer_bat],
-                check=False,
-                timeout=120,
-                creationflags=subprocess.CREATE_NO_WINDOW  # Sin ventana
-            )
+            run_installer(installer_bat)
         
         # Esperar un momento para que finalice la instalación
-        time.sleep(3)
+        time.sleep(5)
         
         # Verificar si se instaló correctamente
         return check_winfsp()
@@ -119,18 +160,21 @@ def main():
                 success = False
             self.finished.emit(success)
 
-    def start_component_check(window):
-        """Verifica componentes después de mostrar la ventana principal"""
+    def start_component_check(window, manual=False, force_install=False):
+        """Verifica e instala componentes sin bloquear la UI"""
 
-        if getattr(window, "_component_check_started", False):
+        if getattr(window, "_winfsp_thread", None) and window._winfsp_thread.isRunning():
+            window.statusBar().showMessage(window.tr("status_installing_winfsp"), 5000)
             return
 
-        window._component_check_started = True
-        window.statusBar().showMessage(window.tr("status_checking_components"))
+        if not manual and getattr(window, "_component_check_completed", False) and not force_install:
+            return
 
-        if check_winfsp():
-            window.statusBar().showMessage(window.tr("status_components_ready"))
-            QTimer.singleShot(3000, lambda: window.statusBar().showMessage(window.tr("ready")))
+        window.statusBar().showMessage(window.tr("status_checking_components"), 3000)
+
+        if check_winfsp() and not force_install:
+            window._component_check_completed = True
+            window.statusBar().showMessage(window.tr("status_components_ready"), 5000)
             return
 
         window.statusBar().showMessage(window.tr("status_installing_winfsp"))
@@ -140,12 +184,13 @@ def main():
         installer.moveToThread(thread)
 
         def finish(success):
-            if success:
-                window.statusBar().showMessage(window.tr("status_install_finished"))
+            if success and check_winfsp():
+                window._component_check_completed = True
+                window.statusBar().showMessage(window.tr("status_install_finished"), 8000)
+            elif success:
+                window.statusBar().showMessage(window.tr("status_install_cancelled"), 8000)
             else:
-                window.statusBar().showMessage(window.tr("status_install_failed"))
-
-            QTimer.singleShot(4000, lambda: window.statusBar().showMessage(window.tr("ready")))
+                window.statusBar().showMessage(window.tr("status_install_failed"), 8000)
 
             if thread.isRunning():
                 thread.quit()
@@ -213,6 +258,10 @@ def main():
         app.processEvents()
     
     window = MainWindow(theme_manager, translations, save_user_preferences)
+    if hasattr(window, "set_winfsp_installer"):
+        window.set_winfsp_installer(lambda: start_component_check(window, manual=True, force_install=True))
+    window.trigger_component_check = lambda: start_component_check(window)
+    window.manual_install_winfsp = lambda: start_component_check(window, manual=True, force_install=True)
     
     # Cerrar splash y mostrar ventana principal
     if splash:

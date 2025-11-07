@@ -85,6 +85,7 @@ class MainWindow(QMainWindow):
         self.real_time_sync = None
         self.upload_thread = None
         self.backup_thread = None
+    self.install_winfsp_callback = None
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -784,7 +785,7 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(f"Mounting {bucket_name} on {drive_letter}:...")
         success, message = self.rclone_manager.mount_drive(profile_name, drive_letter, bucket_name)
 
-        if success:
+    if success:
             QMessageBox.information(self, "Success", message)
             self.mount_status_label.setText(f"Status: Mounted on {drive_letter}:")
             self.mount_button.setEnabled(False)
@@ -796,7 +797,8 @@ class MainWindow(QMainWindow):
         else:
             # Mensaje de error mejorado con instrucciones
             error_msg = message
-            if "WinFsp" in message or "not supported" in message:
+            needs_winfsp = "winfsp" in message.lower()
+            if needs_winfsp or "not supported" in message.lower():
                 error_msg += "\n\n💡 Solución:\n"
                 error_msg += "1. WinFsp es requerido para montar unidades\n"
                 error_msg += "2. Ejecuta: .\\instalar_winfsp.ps1\n"
@@ -808,8 +810,21 @@ class MainWindow(QMainWindow):
             msg_box.setText("No se pudo montar la unidad")
             msg_box.setInformativeText(error_msg)
             msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            install_button = None
+            if needs_winfsp and self.install_winfsp_callback:
+                install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
+
             msg_box.exec()
+
+            if install_button and msg_box.clickedButton() == install_button:
+                self.statusBar().showMessage(self.tr("status_installing_winfsp"))
+                self.install_winfsp_callback()
+
             self.statusBar().showMessage("Mount failed.", 5000)
+
+    def set_winfsp_installer(self, callback):
+        """Registrar callback para instalar WinFsp desde la UI"""
+        self.install_winfsp_callback = callback
 
     def unmount_drive(self):
         """Desmonta la unidad seleccionada usando la misma lógica del botón naranja"""

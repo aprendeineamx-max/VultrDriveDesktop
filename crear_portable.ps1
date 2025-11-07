@@ -151,10 +151,26 @@ foreach ($item in $helperItems) {
     }
 }
 
-# Copiar instaladores WinFsp si existen en la carpeta actual
-$winfspInstallers = Get-ChildItem -Filter "winfsp*.msi" -ErrorAction SilentlyContinue
-foreach ($installer in $winfspInstallers) {
-    Copy-Item $installer.FullName "$distFolder\" -Force
+# Incluir instalador WinFsp (descarga automática si no existe)
+$winfspFileName = "winfsp-2.0.23075.msi"
+$winfspLocalPath = Join-Path $scriptDir $winfspFileName
+if (-not (Test-Path $winfspLocalPath)) {
+    Write-Host "   Descargando WinFsp $winfspFileName..." -ForegroundColor Gray
+    try {
+        $progressPreferenceBackup = $global:ProgressPreference
+        $global:ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri "https://github.com/winfsp/winfsp/releases/download/v2.0/$winfspFileName" -OutFile $winfspLocalPath -UseBasicParsing
+    } catch {
+        Write-Host "   ADVERTENCIA: No se pudo descargar WinFsp automáticamente." -ForegroundColor Yellow
+    } finally {
+        $global:ProgressPreference = $progressPreferenceBackup
+    }
+}
+if (Test-Path $winfspLocalPath) {
+    Copy-Item $winfspLocalPath "$distFolder\" -Force
+    Write-Host "   OK - WinFsp incluido en la carpeta portable" -ForegroundColor Green
+} else {
+    Write-Host "   ⚠️  WinFsp no está incluido. El usuario necesitará conexión a internet." -ForegroundColor Yellow
 }
 Write-Host "   OK - Scripts auxiliares listos" -ForegroundColor Green
 
