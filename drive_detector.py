@@ -137,19 +137,23 @@ class DriveDetector:
             
             print(f"[DEBUG] Iniciando desmontaje de {drive_letter}:")
             
-            # ESTRATEGIA SIMPLIFICADA: 
-            # 1. Buscar PIDs de rclone que contengan esta letra en su comando
-            # 2. Matar SOLO esos PIDs
-            # 3. Verificar que se desmontó
+            # ESTRATEGIA CON POWERSHELL (más confiable que WMIC)
+            # PowerShell puede filtrar directamente por CommandLine
             
-            # PASO 1: Usar WMIC para encontrar procesos rclone con esta letra
-            print(f"[DEBUG] Buscando PIDs de rclone para {drive_letter}:")
+            # PASO 1: Buscar el PID usando PowerShell
+            print(f"[DEBUG] Buscando PID con PowerShell para {drive_letter}:")
             
-            # Comando WMIC simplificado
-            wmic_cmd = f'wmic process where "name=\'rclone.exe\'" get ProcessId,CommandLine /format:list'
+            ps_command = f"""
+            $processes = Get-WmiObject Win32_Process -Filter "name='rclone.exe'"
+            foreach ($p in $processes) {{
+                if ($p.CommandLine -like "* {drive_letter}:*") {{
+                    Write-Output $p.ProcessId
+                }}
+            }}
+            """
             
             result = subprocess.run(
-                ['cmd', '/c', wmic_cmd],
+                ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_command],
                 capture_output=True,
                 text=True,
                 encoding='utf-8',
@@ -158,80 +162,43 @@ class DriveDetector:
                 timeout=15
             )
             
-            print(f"[DEBUG] WMIC resultado exitoso")
+            print(f"[DEBUG] PowerShell stdout: {result.stdout.strip()}")
+            print(f"[DEBUG] PowerShell stderr: {result.stderr.strip()}")
             
-            # Buscar PIDs que contengan la letra de unidad
-            pids = []
-            current_pid = None
-            current_cmdline = None
-            
-            for line in result.stdout.split('\n'):
+            # Extraer PIDs de la salida
+            pids_to_kill = []
+            for line in result.stdout.strip().split('\n'):
                 line = line.strip()
-                
-                if line.startswith('CommandLine='):
-                    current_cmdline = line.split('=', 1)[1] if '=' in line else ''
-                elif line.startswith('ProcessId='):
-                    pid_str = line.split('=', 1)[1].strip() if '=' in line else ''
-                    if pid_str and pid_str.isdigit():
-                        current_pid = pid_str
-                
-                # Si tenemos ambos, verificar si contiene nuestra letra
-                if current_pid and current_cmdline:
-                    # Buscar "V:" o " V:" en la línea de comandos
-                    if f" {drive_letter}:" in current_cmdline or f"={drive_letter}:" in current_cmdline:
-                        print(f"[DEBUG] Encontrado PID {current_pid} para {drive_letter}:")
-                        pids.append(current_pid)
-                    current_pid = None
-                    current_cmdline = None
+                if line and line.isdigit():
+                    print(f"[DEBUG] Encontrado PID: {line}")
+                    pids_to_kill.append(line)
             
-            if not pids:
-                print(f"[DEBUG] No se encontraron PIDs especificos para {drive_letter}:")
-                print(f"[DEBUG] Intentando metodo alternativo...")
+            if not pids_to_kill:
+                print(f"[DEBUG] No se encontro PID especifico para {drive_letter}:")
+                print(f"[DEBUG] Verificando si la unidad esta montada...")
                 
-                # Método alternativo: usar tasklist y buscar
-                tasklist_result = subprocess.run(
-                    ['tasklist', '/FI', 'IMAGENAME eq rclone.exe', '/FO', 'CSV', '/NH'],
+                # Verificar si la unidad existe
+                vol_result = subprocess.run(
+                    ['cmd', '/c', 'vol', drive_path],
                     capture_output=True,
                     text=True,
                     creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=10
+                    timeout=5
                 )
                 
-                # Si hay procesos rclone pero no encontramos el específico,
-                # como último recurso intentamos net use
-                if 'rclone.exe' in tasklist_result.stdout:
-                    print(f"[DEBUG] Hay procesos rclone corriendo, intentando net use...")
-                    
-                    # Intentar forzar desmontaje con net use
-                    result = subprocess.run(
-                        ['net', 'use', drive_path, '/delete', '/yes'],
-                        capture_output=True,
-                        text=True,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
-                        timeout=10
-                    )
-                    time.sleep(1.5)
-                    
-                    # Verificar si se desmontó
-                    vol_result = subprocess.run(
-                        ['cmd', '/c', 'vol', drive_path],
-                        capture_output=True,
-                        text=True,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
-                        timeout=5
-                    )
-                    
-                    if vol_result.returncode != 0:
-                        print(f"[DEBUG] Desmontado con net use")
-                        return True, f"Unidad {drive_letter}: desmontada exitosamente"
+                if vol_result.returncode != 0:
+                    # La unidad no existe, ya está desmontada
+                    print(f"[DEBUG] La unidad {drive_letter}: no esta montada")
+                    return True, f"La unidad {drive_letter}: no esta montada o ya fue desmontada"
                 
-                # Si nada funcionó
-                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                # La unidad existe pero no encontramos el proceso
+                print(f"[DEBUG] La unidad existe pero no hay proceso rclone asociado")
+                return False, f"No se pudo desmontar la unidad {drive_letter}:\nNo se encontro el proceso rclone asociado.\nIntenta usar 'Desmontar Todas' o reiniciar la aplicacion."
             
-            # PASO 2: Matar SOLO los PIDs específicos
-            print(f"[DEBUG] Matando {len(pids)} proceso(s): {', '.join(pids)}")
+            # PASO 2: Matar los PIDs específicos
+            print(f"[DEBUG] Matando {len(pids_to_kill)} proceso(s): {', '.join(pids_to_kill)}")
             
-            for pid in pids:
+            for pid in pids_to_kill:
                 print(f"[DEBUG] Ejecutando taskkill /F /PID {pid}")
                 result = subprocess.run(
                     ['taskkill', '/F', '/PID', pid],
@@ -240,10 +207,14 @@ class DriveDetector:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                     timeout=5
                 )
-                print(f"[DEBUG] Taskkill resultado: {result.returncode}")
+                if result.returncode == 0:
+                    print(f"[DEBUG] PID {pid} terminado exitosamente")
+                else:
+                    print(f"[DEBUG] Error al terminar PID {pid}: {result.stderr}")
             
-            # Esperar a que se libere
-            time.sleep(2.0)
+            # Esperar a que se libere la unidad
+            print(f"[DEBUG] Esperando a que se libere la unidad...")
+            time.sleep(2.5)
             
             # PASO 3: Verificar que se desmontó
             vol_result = subprocess.run(
@@ -258,34 +229,13 @@ class DriveDetector:
                 print(f"[DEBUG] Unidad {drive_letter}: desmontada exitosamente")
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
             else:
-                print(f"[DEBUG] La unidad aun esta montada, intentando net use...")
-                
-                # Último intento con net use
-                result = subprocess.run(
-                    ['net', 'use', drive_path, '/delete', '/yes'],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=10
-                )
-                time.sleep(1.5)
-                
-                # Verificar de nuevo
-                vol_result = subprocess.run(
-                    ['cmd', '/c', 'vol', drive_path],
-                    capture_output=True,
-                    text=True,
-                    creationflags=subprocess.CREATE_NO_WINDOW,
-                    timeout=5
-                )
-                
-                if vol_result.returncode != 0:
-                    return True, f"Unidad {drive_letter}: desmontada exitosamente"
-                else:
-                    return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                print(f"[DEBUG] La unidad todavia existe despues de matar el proceso")
+                return False, f"No se pudo desmontar completamente la unidad {drive_letter}:\nEl proceso fue terminado pero la unidad aun responde.\nIntenta cerrar archivos abiertos y usa 'Desmontar Todas'."
                 
         except Exception as e:
             print(f"[DEBUG] Excepcion: {str(e)}")
+            import traceback
+            traceback.print_exc()
             return False, f"Error al desmontar: {str(e)}"
     
     @staticmethod
