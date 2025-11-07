@@ -812,64 +812,49 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage("Mount failed.", 5000)
 
     def unmount_drive(self):
-        """Desmonta SOLO la unidad seleccionada (sin afectar las demás)"""
+        """Desmonta la unidad seleccionada usando la misma lógica del botón naranja"""
         drive_letter = self.drive_letter_input.currentText()
-        self.statusBar().showMessage(f"🔄 Desmontando unidad {drive_letter}:...")
-        
-        success, message = self.rclone_manager.unmount_drive(drive_letter)
 
-        if success:
-            self.statusBar().showMessage(f"✅ {message}", 3000)
-            
-            # Esperar 2 segundos para que se libere completamente
-            def refresh_after_unmount():
-                # Refrescar la detección de unidades
-                self.detect_mounted_drives()
-                # Actualizar el estado del botón basado en la nueva detección
-                self.update_unmount_button_state()
-                # Mostrar estado
-                self.mount_status_label.setText(f"⭕ Unidad {drive_letter}: no está montada")
-            
-            QTimer.singleShot(2000, refresh_after_unmount)
-        else:
-            QMessageBox.critical(
+        if not drive_letter:
+            QMessageBox.warning(
                 self,
-                "❌ Error al desmontar",
-                f"No se pudo desmontar la unidad {drive_letter}:\n\n{message}"
+                "⚠️ Selecciona una letra",
+                "Debes elegir una letra de unidad antes de intentar desmontar."
             )
-            self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+            return
 
-    def update_unmount_button_state(self):
-        """✅ Actualizar estado del botón 'Desmontar Unidad' cuando cambia la letra"""
+        self.unmount_specific_drive(drive_letter)
+
+    def update_unmount_button_state(self, *args, detected_drives=None):
+        """Actualizar el estado de los botones de acuerdo con la letra seleccionada"""
         selected_letter = self.drive_letter_input.currentText()
-        
+
         if not selected_letter:
-            # Si no hay letra seleccionada, deshabilitar todo
             self.unmount_button.setEnabled(False)
             self.mount_button.setEnabled(False)
             self.mount_status_label.setText("⭕ Selecciona una letra de unidad")
             return
-        
-        # Obtener las unidades montadas actualmente
-        try:
-            detected_drives = DriveDetector.detect_mounted_drives()
+
+        mounted_letters = []
+
+        if detected_drives is not None:
             mounted_letters = [d['letter'] for d in detected_drives] if detected_drives else []
-        except Exception as e:
-            print(f"Error detectando unidades: {e}")
-            mounted_letters = []
-        
-        # Verificar si la letra seleccionada está montada
+        else:
+            try:
+                detected = DriveDetector.detect_mounted_drives()
+                mounted_letters = [d['letter'] for d in detected] if detected else []
+            except Exception as e:
+                print(f"Error detectando unidades: {e}")
+
         is_mounted = selected_letter in mounted_letters
-        
+
         if is_mounted:
-            # ✅ ESTÁ MONTADA: habilitar desmontar, deshabilitar montar
             self.unmount_button.setEnabled(True)
             self.unmount_button.setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.mount_button.setEnabled(False)
             self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
         else:
-            # ⭕ NO ESTÁ MONTADA: habilitar montar, deshabilitar desmontar
             self.unmount_button.setEnabled(False)
             self.unmount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.mount_button.setEnabled(True)
@@ -1005,31 +990,15 @@ class MainWindow(QMainWindow):
             error_msg += "Asegúrate de que tienes los permisos necesarios."
             self.drives_list.setPlainText(error_msg)
             self.unmount_all_btn.setEnabled(False)
+            detected_drives = []
             
             QMessageBox.critical(
                 self,
                 "Error de Detección",
                 f"No se pudieron detectar las unidades montadas:\n\n{str(e)}"
             )
-        
-        # ✅ ACTUALIZAR BOTONES DE MONTAJE - Debe ejecutarse SIEMPRE
-        self.mount_button.setEnabled(True)  # El botón de montar siempre está habilitado
-        
-        # Verificar si la letra seleccionada está montada
-        selected_letter = self.drive_letter_input.currentText()
-        
-        # Obtener lista de letras montadas (manejo seguro si no hay unidades)
-        try:
-            mounted_letters = [d['letter'] for d in detected_drives] if detected_drives else []
-        except:
-            mounted_letters = []
-        
-        if selected_letter in mounted_letters:
-            self.unmount_button.setEnabled(True)
-            self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
-        else:
-            self.unmount_button.setEnabled(False)
-            self.mount_status_label.setText(f"⭕ Unidad {selected_letter}: no está montada")
+        finally:
+            self.update_unmount_button_state(detected_drives=detected_drives)
     
     def create_individual_unmount_buttons(self, detected_drives):
         """Crea botones individuales para desmontar cada unidad"""
