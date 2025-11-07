@@ -104,12 +104,66 @@ def install_winfsp_silent():
         return False
 
 def main():
-    # ===== OPTIMIZACIÓN 1: Verificar WinFsp primero (0.06ms) =====
-    winfsp_installed = check_winfsp()
-    
     # ===== OPTIMIZACIÓN 2: Crear QApplication lo más rápido posible =====
     from PyQt6.QtWidgets import QApplication, QMessageBox
-    from PyQt6.QtCore import Qt, QTimer
+    from PyQt6.QtCore import Qt, QTimer, QObject, pyqtSignal, QThread
+
+    class WinFspInstaller(QObject):
+        """Worker en segundo plano para instalar WinFsp sin bloquear la UI"""
+
+        finished = pyqtSignal(bool)
+
+        def run(self):
+            success = install_winfsp_silent()
+            if success and not check_winfsp():
+                success = False
+            self.finished.emit(success)
+
+    def start_component_check(window):
+        """Verifica componentes después de mostrar la ventana principal"""
+
+        if getattr(window, "_component_check_started", False):
+            return
+
+        window._component_check_started = True
+        window.statusBar().showMessage(window.tr("status_checking_components"))
+
+        if check_winfsp():
+            window.statusBar().showMessage(window.tr("status_components_ready"))
+            QTimer.singleShot(3000, lambda: window.statusBar().showMessage(window.tr("ready")))
+            return
+
+        window.statusBar().showMessage(window.tr("status_installing_winfsp"))
+
+        installer = WinFspInstaller()
+        thread = QThread()
+        installer.moveToThread(thread)
+
+        def finish(success):
+            if success:
+                window.statusBar().showMessage(window.tr("status_install_finished"))
+            else:
+                window.statusBar().showMessage(window.tr("status_install_failed"))
+
+            QTimer.singleShot(4000, lambda: window.statusBar().showMessage(window.tr("ready")))
+
+            if thread.isRunning():
+                thread.quit()
+                thread.wait()
+            else:
+                thread.wait(100)
+
+            installer.deleteLater()
+            thread.deleteLater()
+            window._winfsp_installer = None
+            window._winfsp_thread = None
+
+        installer.finished.connect(finish)
+        thread.started.connect(installer.run)
+
+        window._winfsp_installer = installer
+        window._winfsp_thread = thread
+        thread.start()
     
     app = QApplication(sys.argv)
     
@@ -122,30 +176,9 @@ def main():
         app.processEvents()  # Forzar renderizado del splash
     except:
         pass  # Si falla el splash, continuar sin él
-    
-    # Si WinFsp no está instalado, instalarlo automáticamente (SOLO SI NO ESTÁ)
-    if not winfsp_installed:
-        if splash:
-            splash.showMessage("Instalando WinFsp automáticamente...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-            app.processEvents()
-        
-        # Intentar instalar WinFsp en segundo plano
-        success = install_winfsp_silent()
-        
-        if success:
-            if splash:
-                splash.showMessage("✅ WinFsp instalado correctamente", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-                app.processEvents()
-        else:
-            # Si falla la instalación automática, continuar sin WinFsp
-            if splash:
-                splash.showMessage("⚠️ Continuando sin WinFsp...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-                app.processEvents()
-    else:
-        # WinFsp ya está instalado, no hacer nada
-        if splash:
-            splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-            app.processEvents()
+    if splash:
+        splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+        app.processEvents()
     
     # ===== OPTIMIZACIÓN 4: Cargar módulos pesados con feedback =====
     if splash:
@@ -202,6 +235,9 @@ def main():
     
     # Ejecutar en 500ms (medio segundo después de mostrar ventana)
     QTimer.singleShot(500, cleanup_mounted_drives)
+
+    # Verificar componentes sin bloquear la apertura
+    QTimer.singleShot(800, lambda: start_component_check(window))
     
     sys.exit(app.exec())
 
