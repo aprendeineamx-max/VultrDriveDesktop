@@ -100,7 +100,7 @@ def install_winfsp_silent():
             else:
                 ps_command = (
                     "Start-Process msiexec "
-                    "-ArgumentList '/i `"{0}`" /quiet /norestart' "
+                    "-ArgumentList '/i `\"{0}`\" /quiet /norestart' "
                     "-Verb runAs -Wait"
                 ).format(path.replace("'", "''"))
                 subprocess.run(
@@ -118,7 +118,7 @@ def install_winfsp_silent():
                 result = subprocess.run([target], check=False, timeout=240)
                 return result.returncode == 0
             ps_command = (
-                "Start-Process -FilePath `"{0}`" -Verb runAs -Wait"
+                "Start-Process -FilePath `\"{0}`\" -Verb runAs -Wait"
             ).format(target.replace("'", "''"))
             subprocess.run(
                 ['powershell', '-NoLogo', '-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps_command],
