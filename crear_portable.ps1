@@ -41,7 +41,7 @@ if ($LASTEXITCODE -eq 0) {
 # 3. Crear carpeta de distribución
 Write-Host ""
 Write-Host "3. Preparando carpeta de distribución..." -ForegroundColor Yellow
-$distFolder = "\.\VultrDriveDesktop-Portable"
+$distFolder = Join-Path $scriptDir "VultrDriveDesktop-Portable"
 
 # Asegurarse de que no quede un proceso del portable en ejecución
 $runningPortable = Get-Process -Name "VultrDriveDesktop" -ErrorAction SilentlyContinue

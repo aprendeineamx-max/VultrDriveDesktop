@@ -85,7 +85,7 @@ class MainWindow(QMainWindow):
         self.real_time_sync = None
         self.upload_thread = None
         self.backup_thread = None
-    self.install_winfsp_callback = None
+        self.install_winfsp_callback = None
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -784,14 +784,13 @@ class MainWindow(QMainWindow):
 
         self.statusBar().showMessage(f"Mounting {bucket_name} on {drive_letter}:...")
         success, message = self.rclone_manager.mount_drive(profile_name, drive_letter, bucket_name)
-
-    if success:
+        if success:
             QMessageBox.information(self, "Success", message)
             self.mount_status_label.setText(f"Status: Mounted on {drive_letter}:")
             self.mount_button.setEnabled(False)
             self.unmount_button.setEnabled(True)
             self.statusBar().showMessage(f"Drive mounted on {drive_letter}:", 5000)
-            
+
             # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
             QTimer.singleShot(3000, self.detect_mounted_drives)
         else:
@@ -803,7 +802,7 @@ class MainWindow(QMainWindow):
                 error_msg += "1. WinFsp es requerido para montar unidades\n"
                 error_msg += "2. Ejecuta: .\\instalar_winfsp.ps1\n"
                 error_msg += "3. O descarga desde: https://winfsp.dev/rel/"
-            
+
             msg_box = QMessageBox(self)
             msg_box.setIcon(QMessageBox.Icon.Critical)
             msg_box.setWindowTitle("Error de Montaje")
