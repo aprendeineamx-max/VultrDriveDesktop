@@ -449,10 +449,35 @@ class MainWindow(QMainWindow):
         buttons_layout = QHBoxLayout()
         self.mount_button = QPushButton(self.tr("mount_drive"))
         self.mount_button.clicked.connect(self.mount_drive)
+
+        self.open_drive_button = QPushButton(self.tr("open_drive"))
+        self.open_drive_button.setEnabled(False)
+        self.open_drive_button.setToolTip(self.tr("open_drive_tooltip"))
+        self.open_drive_button.clicked.connect(self.open_drive)
+        self.open_drive_button.setStyleSheet("""
+            QPushButton {
+                background-color: #2980b9;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                font-size: 11pt;
+                font-weight: bold;
+                border-radius: 5px;
+            }
+            QPushButton:hover {
+                background-color: #1f6391;
+            }
+            QPushButton:disabled {
+                background-color: #95a5a6;
+            }
+        """)
+
         self.unmount_button = QPushButton(self.tr("unmount_drive"))
         self.unmount_button.clicked.connect(self.unmount_drive)
         self.unmount_button.setEnabled(False)
+
         buttons_layout.addWidget(self.mount_button)
+        buttons_layout.addWidget(self.open_drive_button)
         buttons_layout.addWidget(self.unmount_button)
 
         actions_layout.addLayout(buttons_layout)
@@ -464,8 +489,8 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMinimumHeight(50)  # Solo el texto necesario
-        info_text.setMaximumHeight(70)  # Máximo muy reducido
+        info_text.setMinimumHeight(80)
+        info_text.setMaximumHeight(160)
         info_text.setPlainText(self.tr("mount_info").replace('\\n', '\n'))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
@@ -554,8 +579,8 @@ class MainWindow(QMainWindow):
         info_layout = QVBoxLayout()
         info_text = QTextEdit()
         info_text.setReadOnly(True)
-        info_text.setMinimumHeight(45)  # Muy pequeño
-        info_text.setMaximumHeight(65)  # Máximo muy reducido
+        info_text.setMinimumHeight(80)
+        info_text.setMaximumHeight(160)
         info_text.setPlainText(self.tr("sync_info"))
         info_layout.addWidget(info_text)
         info_group.setLayout(info_layout)
@@ -789,6 +814,7 @@ class MainWindow(QMainWindow):
             self.mount_status_label.setText(f"Status: Mounted on {drive_letter}:")
             self.mount_button.setEnabled(False)
             self.unmount_button.setEnabled(True)
+            self.open_drive_button.setEnabled(True)
             self.statusBar().showMessage(f"Drive mounted on {drive_letter}:", 5000)
 
             # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
@@ -820,10 +846,28 @@ class MainWindow(QMainWindow):
                 self.install_winfsp_callback()
 
             self.statusBar().showMessage("Mount failed.", 5000)
+            self.open_drive_button.setEnabled(False)
 
     def set_winfsp_installer(self, callback):
         """Registrar callback para instalar WinFsp desde la UI"""
         self.install_winfsp_callback = callback
+
+    def open_drive(self):
+        """Abrir la unidad montada en el Explorador de archivos"""
+        drive_letter = self.drive_letter_input.currentText()
+        if not drive_letter:
+            return
+
+        path = f"{drive_letter}:\\"
+        if not os.path.exists(path):
+            QMessageBox.warning(self, self.tr("warning"), self.tr("drive_not_ready").format(drive_letter))
+            self.open_drive_button.setEnabled(False)
+            return
+
+        try:
+            os.startfile(path)
+        except Exception as ex:
+            QMessageBox.critical(self, self.tr("error"), self.tr("drive_open_failed").format(drive_letter, str(ex)))
 
     def unmount_drive(self):
         """Desmonta la unidad seleccionada usando la misma lógica del botón naranja"""
@@ -845,6 +889,7 @@ class MainWindow(QMainWindow):
 
         if not selected_letter:
             self.unmount_button.setEnabled(False)
+            self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(False)
             self.mount_status_label.setText("⭕ Selecciona una letra de unidad")
             return
@@ -865,12 +910,14 @@ class MainWindow(QMainWindow):
         if is_mounted:
             self.unmount_button.setEnabled(True)
             self.unmount_button.setStyleSheet("background-color: #2196F3; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.open_drive_button.setEnabled(True)
             self.mount_button.setEnabled(False)
             self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
         else:
             self.unmount_button.setEnabled(False)
             self.unmount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(True)
             self.mount_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.mount_status_label.setText(f"⭕ Unidad {selected_letter}: no está montada")
@@ -952,6 +999,7 @@ class MainWindow(QMainWindow):
                     "Todas las letras están disponibles para montar."
                 )
                 self.unmount_all_btn.setEnabled(False)
+                self.open_drive_button.setEnabled(False)
                 
                 # OCULTAR el contenedor de botones individuales
                 if hasattr(self, 'individual_buttons_container'):
@@ -1098,6 +1146,9 @@ class MainWindow(QMainWindow):
                         
                         # 3. Deshabilitar el botón "Desmontar Unidad"
                         self.unmount_button.setEnabled(False)
+
+                        # 3b. Deshabilitar botón de abrir hasta que vuelva a montarse
+                        self.open_drive_button.setEnabled(False)
                         
                         # 4. Actualizar el estado del montaje
                         self.mount_status_label.setText(self.tr("status_not_mounted"))
@@ -1148,6 +1199,7 @@ class MainWindow(QMainWindow):
                     
                     # También actualizar el estado del botón de unmount principal
                     self.unmount_button.setEnabled(False)
+                    self.open_drive_button.setEnabled(False)
                     self.mount_button.setEnabled(True)
                     self.mount_status_label.setText(self.tr("status_not_mounted"))
                     
