@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import (QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
+from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
                              QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
-                             QMenu, QScrollArea, QSizePolicy)
+                             QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
+                             QStyle)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from config_manager import ConfigManager
@@ -86,6 +87,11 @@ class MainWindow(QMainWindow):
         self.upload_thread = None
         self.backup_thread = None
         self.install_winfsp_callback = None
+        self.tray_icon = None
+        self._tray_menu = None
+        self._tray_actions = {}
+        self._is_in_tray = False
+        self._force_quit = False
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -134,6 +140,9 @@ class MainWindow(QMainWindow):
         else:
             self.statusBar().showMessage(self.tr("no_profiles_found"))
 
+        self.setup_tray_icon()
+        self.update_background_button_text()
+
     def tr(self, key, *args):
         """Translate text using the translations system"""
         if self.translations:
@@ -156,13 +165,54 @@ class MainWindow(QMainWindow):
         self.theme_button.setObjectName("themeButton")
         self.update_theme_button_text()
         self.theme_button.clicked.connect(self.toggle_theme)
+
+        # Send to background button (system tray quick action)
+        self.background_button = QToolButton()
+        self.background_button.setObjectName("backgroundButton")
+        self.background_button.setAutoRaise(True)
+        self.background_button.clicked.connect(lambda: self.send_to_tray(show_message=True))
+        self.background_button.setToolTip(self.tr("send_to_background_tooltip"))
+        self.update_background_button_text()
         
         top_layout.addWidget(language_label)
         top_layout.addWidget(self.language_button)
         top_layout.addStretch()
         top_layout.addWidget(self.theme_button)
+        top_layout.addWidget(self.background_button)
         
         self.main_layout.addLayout(top_layout)
+
+    def setup_tray_icon(self):
+        """Configura el icono en la bandeja del sistema"""
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            self.tray_icon = None
+            return
+
+        icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
+        self.tray_icon = QSystemTrayIcon(icon, self)
+        self.tray_icon.setToolTip(self.windowTitle())
+
+        self._tray_menu = QMenu()
+        self._tray_actions = {}
+
+        open_action = QAction(self.tr("tray_open"), self)
+        open_action.triggered.connect(self.restore_from_tray)
+        self._tray_menu.addAction(open_action)
+        self._tray_actions['open'] = open_action
+
+        unmount_action = QAction(self.tr("tray_unmount_all"), self)
+        unmount_action.triggered.connect(self.tray_unmount_all)
+        self._tray_menu.addAction(unmount_action)
+        self._tray_actions['unmount'] = unmount_action
+
+        exit_action = QAction(self.tr("tray_exit"), self)
+        exit_action.triggered.connect(self.exit_from_tray)
+        self._tray_menu.addAction(exit_action)
+        self._tray_actions['exit'] = exit_action
+
+        self.tray_icon.setContextMenu(self._tray_menu)
+        self.tray_icon.activated.connect(self._on_tray_activated)
+        self.tray_icon.show()
 
     def update_language_button_text(self):
         """Update the language button text"""
@@ -183,6 +233,95 @@ class MainWindow(QMainWindow):
                 self.theme_button.setText(available_themes[current_theme])
             else:
                 self.theme_button.setText(self.tr("theme"))
+
+    def update_background_button_text(self):
+        """Update the send-to-background button label"""
+        if hasattr(self, 'background_button'):
+            self.background_button.setText(self.tr("send_to_background"))
+            self.background_button.setToolTip(self.tr("send_to_background_tooltip"))
+        if hasattr(self, '_tray_actions') and self._tray_actions:
+            self._tray_actions['open'].setText(self.tr("tray_open"))
+            self._tray_actions['unmount'].setText(self.tr("tray_unmount_all"))
+            self._tray_actions['exit'].setText(self.tr("tray_exit"))
+        if self.tray_icon:
+            self.tray_icon.setToolTip(self.windowTitle())
+
+    def send_to_tray(self, show_message=False):
+        """Envía la aplicación a segundo plano"""
+        if self.tray_icon:
+            self.hide()
+            self._is_in_tray = True
+            if show_message:
+                self.tray_icon.showMessage(
+                    self.tr("background_running_title"),
+                    self.tr("background_notification"),
+                    QSystemTrayIcon.MessageIcon.Information,
+                    4000
+                )
+        else:
+            self.showMinimized()
+
+    def restore_from_tray(self):
+        """Restaurar la ventana principal desde la bandeja"""
+        self.showNormal()
+        self.activateWindow()
+        self.raise_()
+        self._is_in_tray = False
+
+    def _on_tray_activated(self, reason):
+        """Manejar la activación del icono en la bandeja"""
+        if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
+            self.restore_from_tray()
+
+    def tray_unmount_all(self):
+        """Permitir desmontar unidades desde la bandeja"""
+        self.restore_from_tray()
+        QTimer.singleShot(100, self.unmount_all_detected_drives)
+
+    def exit_from_tray(self):
+        """Cerrar la aplicación desde el menú de la bandeja"""
+        self._force_quit = True
+        self.restore_from_tray()
+        self.close()
+
+    def _should_keep_in_background(self):
+        """Determinar si la app debe quedarse en segundo plano"""
+        sync_running = self.real_time_sync and self.real_time_sync.is_running()
+        drive_mounted = False
+        try:
+            drive_mounted = self.rclone_manager.is_mounted()
+        except Exception:
+            drive_mounted = False
+        return sync_running or drive_mounted
+
+    def _execute_shutdown_tasks(self):
+        """Realizar tareas de limpieza antes de salir"""
+        if self.real_time_sync and self.real_time_sync.is_running():
+            reply = QMessageBox.question(
+                self,
+                'Sync Still Running',
+                'Real-time sync is still active. Do you want to stop it before closing?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.real_time_sync.stop()
+
+        if self.rclone_manager.is_mounted():
+            reply = QMessageBox.question(
+                self,
+                'Drive Still Mounted',
+                'A drive is still mounted. Do you want to unmount it before closing?',
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.Yes
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.rclone_manager.unmount_drive(self.drive_letter_input.currentText())
+
+        if self.tray_icon:
+            self.tray_icon.hide()
 
     def show_language_menu(self):
         """Show language selection menu"""
@@ -226,6 +365,7 @@ class MainWindow(QMainWindow):
             
             # Update button text
             self.update_language_button_text()
+            self.update_background_button_text()
 
     def toggle_theme(self):
         """Toggle between dark and light theme"""
@@ -1233,33 +1373,31 @@ class MainWindow(QMainWindow):
                 )
 
     def closeEvent(self, event):
-        """Handle application close event"""
-        # Stop real-time sync if running
-        if self.real_time_sync and self.real_time_sync.is_running():
-            reply = QMessageBox.question(
-                self,
-                'Sync Still Running',
-                'Real-time sync is still active. Do you want to stop it before closing?',
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.Yes
-            )
+        """Gestionar el cierre de la aplicación con opción de segundo plano"""
+        if self._force_quit or not self._should_keep_in_background():
+            self._execute_shutdown_tasks()
+            event.accept()
+            return
 
-            if reply == QMessageBox.StandardButton.Yes:
-                self.real_time_sync.stop()
+        dialog = QMessageBox(self)
+        dialog.setIcon(QMessageBox.Icon.Information)
+        dialog.setWindowTitle(self.tr("background_running_title"))
+        dialog.setText(self.tr("background_running_message"))
+        keep_btn = dialog.addButton(self.tr("background_keep_running"), QMessageBox.ButtonRole.AcceptRole)
+        exit_btn = dialog.addButton(self.tr("background_exit"), QMessageBox.ButtonRole.DestructiveRole)
+        cancel_btn = dialog.addButton(QMessageBox.StandardButton.Cancel)
 
-        # Unmount drive if mounted
-        if self.rclone_manager.is_mounted():
-            reply = QMessageBox.question(
-                self,
-                'Drive Still Mounted',
-                'A drive is still mounted. Do you want to unmount it before closing?',
-                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-                QMessageBox.StandardButton.Yes
-            )
+        dialog.exec()
 
-            if reply == QMessageBox.StandardButton.Yes:
-                self.rclone_manager.unmount_drive(self.drive_letter_input.currentText())
-
-        event.accept()
+        clicked = dialog.clickedButton()
+        if clicked == keep_btn:
+            event.ignore()
+            self.send_to_tray(show_message=True)
+        elif clicked == exit_btn:
+            self._force_quit = True
+            self._execute_shutdown_tasks()
+            event.accept()
+        else:
+            event.ignore()
 
 
