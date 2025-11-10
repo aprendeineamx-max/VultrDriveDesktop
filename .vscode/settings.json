@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+    "python.defaultInterpreterPath": "C:\\Users\\Administrator\\AppData\\Local\\Programs\\Python\\Python311\\python.exe",
+    "code-runner.executorMap": {
+    "python": "C:/Users/Administrator/AppData/Local/Programs/Python/Python311/python.exe -u"
+    },
+    "code-runner.runInTerminal": true,
+    "code-runner.preserveFocus": false,
+    "code-runner.clearPreviousOutput": true
+}
