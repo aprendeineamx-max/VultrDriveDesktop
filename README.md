@@ -1,195 +1,331 @@
-# Vultr Drive Desktop
+# VultrDrive Desktop 🚀
 
-Una aplicación de escritorio completa para gestionar tu almacenamiento en Vultr Object Storage.
+**Sistema de montaje y sincronización de almacenamiento Vultr S3 como unidad local en Windows**
 
-## Características
-
-### ✨ Funcionalidades Principales
-
-1. **Gestión de Perfiles**
-   - Añadir múltiples cuentas de Vultr Object Storage
-   - Cambiar entre perfiles fácilmente
-   - Editar y eliminar perfiles existentes
-
-2. **Operaciones de Archivos**
-   - Subir archivos individuales
-   - Backup completo de carpetas
-   - Barra de progreso para operaciones largas
-   - Selección de bucket de destino
-
-3. **Montaje de Disco** 🔥
-   - Monta tu Object Storage como una unidad de disco en "Este equipo"
-   - Elige la letra de unidad que prefieras (V-Z)
-   - Accede a tus archivos como si estuvieran en tu PC
-   - Desmonta la unidad de forma segura cuando termines
-
-4. **Opciones Avanzadas**
-   - Formatear buckets (con confirmación doble para seguridad)
-   - Eliminar todos los archivos de un bucket
-
-5. **Backup Rápido desde Escritorio**
-   - Acceso directo en el escritorio para backups instantáneos
-   - Sin necesidad de abrir la aplicación principal
-
-## Instalación
-
-### Requisitos Previos
-- Windows 10/11 o Windows Server
-- Python 3.9 o superior
-
-### Dependencias ya instaladas
-- PyQt6
-- boto3
-- watchdog
-- pywin32
-- rclone (incluido en el proyecto)
-- WinFsp (instalador `.msi` incluido en la versión portable)
-
-## Uso
-
-### Iniciar la Aplicación
-
-```powershell
-cd c:\Users\lvarg\Desktop\VultrDriveDesktop
-py app.py
-```
-
-### Crear Acceso Directo de Backup en el Escritorio
-
-```powershell
-py create_shortcut.py
-```
-
-Esto creará un acceso directo llamado "Vultr Backup Now" en tu escritorio que te permitirá hacer backups rápidos sin abrir la aplicación principal.
-
-## Guía de Uso
-
-### 1. Configurar un Perfil
-
-1. Abre la aplicación
-2. Haz clic en "⚙️ Manage Profiles"
-3. Completa el formulario:
-   - **Profile Name**: Nombre descriptivo (ej: "almacen-de-backups-cuenta-destino")
-   - **Access Key**: Tu Access Key de Vultr
-   - **Secret Key**: Tu Secret Key de Vultr
-   - **Hostname**: El hostname de tu región (ej: lax1.vultrobjects.com)
-4. Haz clic en "Save Profile"
-
-**Nota**: Ya tienes un perfil preconfigurado con tus credenciales.
-
-### 2. Subir Archivos
-
-1. Selecciona tu perfil en la pestaña "Main"
-2. Elige el bucket de destino
-3. Haz clic en "📁 Upload File"
-4. Selecciona el archivo
-5. Espera a que se complete la subida
-
-### 3. Hacer Backup de una Carpeta
-
-1. Selecciona tu perfil y bucket
-2. Haz clic en "💾 Backup Folder"
-3. Selecciona la carpeta que deseas respaldar
-4. La barra de progreso mostrará el avance
-5. Recibirás una confirmación al finalizar
-
-### 4. Montar como Disco (¡INCREÍBLE!)
-
-1. Ve a la pestaña "Drive Mount"
-2. Selecciona la letra de unidad que desees (V, W, X, Y, Z)
-3. Asegúrate de tener un perfil y bucket seleccionados
-4. Haz clic en "🔗 Mount Drive"
-5. ¡Ahora puedes acceder a tu almacenamiento desde "Este equipo"!
-
-**Para desmontar:**
-- Haz clic en "🔌 Unmount Drive" cuando termines
-- O cierra la aplicación (te preguntará si deseas desmontar)
-
-### 5. Formatear un Bucket (⚠️ Usar con precaución)
-
-1. Ve a la pestaña "Advanced"
-2. Asegúrate de tener el bucket correcto seleccionado
-3. Haz clic en "🗑️ Format Selected Bucket"
-4. Lee las advertencias cuidadosamente
-5. Confirma escribiendo el nombre del bucket
-6. Todos los archivos serán eliminados permanentemente
-
-## Estructura del Proyecto
-
-```
-VultrDriveDesktop/
-├── app.py                  # Aplicación principal
-├── s3_handler.py          # Gestión de operaciones S3/Vultr
-├── config_manager.py      # Gestión de perfiles y configuración
-├── rclone_manager.py      # Gestión de montaje de disco
-├── file_watcher.py        # Monitoreo de archivos (tiempo real)
-├── backup_now.py          # Script de backup rápido
-├── create_shortcut.py     # Creador de acceso directo
-├── config.json            # Almacenamiento de perfiles (generado)
-├── rclone.exe            # Herramienta de montaje
-├── ui/
-│   ├── main_window.py    # Interfaz principal
-│   ├── settings_window.py # Ventana de configuración
-│   └── style.qss         # Hoja de estilos
-└── README.md             # Este archivo
-```
-
-## Solución de Problemas
-
-### La unidad no se monta
-- Verifica que la letra de unidad no esté en uso
-- Asegúrate de que las credenciales sean correctas
-- Revisa que el bucket exista
-
-### Error al subir archivos
-- Verifica tu conexión a internet
-- Confirma que las credenciales sean válidas
-- Asegúrate de que el bucket exista y tengas permisos
-
-### La aplicación no inicia
-- Verifica que Python esté instalado correctamente
-- Asegúrate de que todas las dependencias estén instaladas
-- Ejecuta: `py -m pip install PyQt6 boto3 watchdog pywin32`
-
-## Mejoras Futuras Sugeridas
-
-1. **Sincronización en Tiempo Real**
-   - Monitorear carpetas y subir cambios automáticamente
-   - Similar a Google Drive o Dropbox
-
-2. **Cifrado de Archivos**
-   - Cifrar archivos antes de subirlos
-   - Mayor seguridad para datos sensibles
-
-3. **Bandeja del Sistema**
-   - Icono en la bandeja del sistema
-   - Menú contextual para acciones rápidas
-   - Notificaciones de progreso
-
-4. **Múltiples Selecciones**
-   - Subir a múltiples buckets simultáneamente
-   - Backup sincronizado entre varias cuentas
-
-5. **Programador de Backups**
-   - Backups automáticos programados
-   - Backups incrementales
-
-6. **Historial de Versiones**
-   - Mantener versiones anteriores de archivos
-   - Restaurar archivos a versiones previas
-
-## Créditos
-
-Desarrollado con:
-- PyQt6 - Interfaz de usuario moderna
-- boto3 - SDK de AWS (compatible con S3)
-- rclone - Montaje de almacenamiento en la nube
-- watchdog - Monitoreo de sistema de archivos
-
-## Licencia
-
-Uso personal y comercial permitido.
+[![Portable](https://img.shields.io/badge/Portable-100%25-brightgreen)](docs/SISTEMA_PORTABLE_COMPLETO.md)
+[![WinFsp](https://img.shields.io/badge/WinFsp-Auto--Install-blue)](docs/INSTALACION_AUTOMATICA_WINFSP.md)
+[![Windows](https://img.shields.io/badge/Windows-10%2F11-0078D6)](https://www.microsoft.com/windows)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB)](https://www.python.org/)
 
 ---
 
-¿Preguntas o problemas? Revisa la documentación de Vultr Object Storage: https://www.vultr.com/docs/vultr-object-storage/
+## ✨ Características Principales
+
+- 🔌 **Montaje de unidades** - Monta tu almacenamiento Vultr S3 como disco local (V:, W:, X:, etc.)
+- 🔄 **Sincronización bidireccional** - Sincroniza archivos entre local y nube
+- 📦 **100% Portable** - Funciona en cualquier PC Windows sin instalación
+- 🤖 **Instalación automática** - WinFsp se instala automáticamente al primer uso
+- 🌐 **Multi-idioma** - Español e Inglés
+- 🎨 **Temas** - Dark y Light theme
+- ⚡ **Rápido y ligero** - Inicio en menos de 3 segundos
+
+---
+
+## 🚀 Inicio Rápido
+
+### 1️⃣ Ejecutar el Programa
+
+```batch
+ejecutar_app.bat
+```
+
+### 2️⃣ Primera Vez (instalación automática de WinFsp)
+
+1. Se detecta que WinFsp no está instalado
+2. Aparece ventana UAC pidiendo permisos
+3. Haz clic en **"Sí"**
+4. WinFsp se instala automáticamente (~10 seg)
+5. ¡El programa inicia!
+
+### 3️⃣ Configurar Credenciales
+
+1. Ve a la pestaña **"Avanzado"**
+2. Ingresa tus credenciales de Vultr S3:
+   - Access Key ID
+   - Secret Access Key
+   - Endpoint URL
+   - Bucket Name
+3. Guarda la configuración
+
+### 4️⃣ Montar Unidad
+
+1. Ve a la pestaña **"Montar Disco"**
+2. Selecciona letra de unidad (V:, W:, etc.)
+3. Haz clic en **"Montar como Unidad"**
+4. ¡Tu disco aparece en el Explorador de Windows!
+
+---
+
+## 📂 Estructura del Proyecto
+
+```
+VultrDriveDesktop/
+│
+├── 📄 ejecutar_app.bat          ← EJECUTA ESTO para iniciar
+├── 📄 app.py                    ← Código principal
+├── 📄 config.json               ← Configuración
+├── 📄 requirements.txt          ← Dependencias Python
+├── 📄 LICENSE                   ← Licencia MIT
+├── 📄 LEEME_PRIMERO.txt         ← Guía de inicio rápido
+│
+├── 📁 ui/                       ← Interfaz gráfica (PyQt6)
+│   ├── main_window.py
+│   ├── settings_window.py
+│   └── style.qss
+│
+├── 📁 dependencies/             ← Componentes necesarios
+│   └── winfsp-2.0.23075.msi    ← Instalador WinFsp (2.1 MB)
+│
+├── 📁 rclone-v1.71.2-windows-amd64/  ← Rclone portable
+│   └── rclone.exe
+│
+├── 📁 docs/                     ← 📚 DOCUMENTACIÓN
+│   ├── README.md                     → Índice de docs
+│   ├── SISTEMA_PORTABLE_COMPLETO.md  → Guía completa
+│   ├── INSTALACION_AUTOMATICA_WINFSP.md
+│   ├── QUICK_START.md
+│   ├── SECURITY.md
+│   └── ... más guías
+│
+├── 📁 scripts/                  ← 🔧 SCRIPTS DE UTILIDAD
+│   ├── README.md                     → Índice de scripts
+│   ├── check_portable.ps1            → Verificar componentes
+│   ├── crear_distribucion_portable.ps1
+│   └── ... más scripts
+│
+├── 📁 tests/                    ← 🧪 TESTS Y PRUEBAS
+│   ├── README.md
+│   ├── test_performance.py
+│   └── ... más tests
+│
+└── 📁 archive/                  ← 📦 ARCHIVO HISTÓRICO
+    └── ... documentos antiguos
+```
+
+---
+
+## 📚 Documentación
+
+| Documento | Descripción |
+|-----------|-------------|
+| **[LEEME_PRIMERO.txt](LEEME_PRIMERO.txt)** | 🚀 **EMPIEZA AQUÍ** - Guía rápida |
+| [docs/SISTEMA_PORTABLE_COMPLETO.md](docs/SISTEMA_PORTABLE_COMPLETO.md) | Sistema portable completo |
+| [docs/INSTALACION_AUTOMATICA_WINFSP.md](docs/INSTALACION_AUTOMATICA_WINFSP.md) | Instalación automática WinFsp |
+| [docs/QUICK_START.md](docs/QUICK_START.md) | Inicio rápido |
+| [docs/SECURITY.md](docs/SECURITY.md) | Seguridad y privacidad |
+| [docs/README.md](docs/README.md) | Índice completo de documentación |
+
+---
+
+## 🛠️ Requisitos
+
+### Sistema Operativo
+- **Windows 10/11** (64-bit)
+- Permisos de administrador (solo para instalar WinFsp)
+
+### Automáticamente Incluido
+- ✅ **Rclone** (portable, incluido)
+- ✅ **WinFsp** (se instala automáticamente)
+- ✅ **Python** (si usas el ejecutable empaquetado)
+
+### Si ejecutas desde Python
+```bash
+pip install -r requirements.txt
+```
+
+Dependencias:
+- PyQt6 >= 6.6.0
+- boto3 >= 1.34.0
+- watchdog >= 4.0.0
+- pywin32 >= 306
+
+---
+
+## 🎯 Características Avanzadas
+
+### Montaje de Unidades
+- Monta buckets S3 como discos locales (V:, W:, X:, Y:, Z:)
+- Acceso en tiempo real vía Explorador de Windows
+- Detección automática de unidades montadas
+- Desmontaje limpio y seguro
+
+### Sincronización
+- Sincronización bidireccional automática
+- Detección de cambios en tiempo real
+- Sincronización manual bajo demanda
+- Logs detallados de operaciones
+
+### Configuración
+- Multi-cuenta (múltiples credenciales S3)
+- Configuración persistente
+- Importar/Exportar configuración
+- Tema personalizable (Dark/Light)
+
+---
+
+## 🔧 Scripts de Utilidad
+
+Ver carpeta: [`scripts/`](scripts/)
+
+### Empaquetado y Distribución
+```powershell
+.\scripts\crear_distribucion_portable.ps1    # Crear versión portable
+.\scripts\compilar_y_empaquetar.ps1          # Compilar a .exe
+```
+
+### Verificación
+```powershell
+.\scripts\check_portable.ps1                 # Verificar componentes
+.\scripts\verificar_winfsp.ps1               # Verificar WinFsp
+```
+
+### Instalación
+```powershell
+.\scripts\instalar_winfsp.ps1                # Instalar WinFsp manualmente
+```
+
+---
+
+## 🧪 Tests
+
+Ver carpeta: [`tests/`](tests/)
+
+```bash
+# Test de rendimiento
+python tests\test_performance.py
+
+# Test de traducciones
+python tests\test_translations.py
+
+# Benchmark de inicio
+python tests\benchmark_startup.py
+```
+
+---
+
+## 📦 Distribución Portable
+
+### Crear Versión para Distribuir
+
+```powershell
+cd scripts
+.\crear_distribucion_portable.ps1
+```
+
+Esto crea una carpeta `VultrDrive_Portable_YYYYMMDD_HHMMSS/` lista para:
+- Copiar a otro PC
+- Compartir con usuarios
+- Subir a servidor
+- Guardar en USB
+
+### Características Portables
+
+✅ **No requiere instalación** - Solo copiar y ejecutar  
+✅ **Incluye todo lo necesario** - WinFsp, Rclone, etc.  
+✅ **Funciona offline** - Sin necesidad de internet para instalar  
+✅ **Cualquier ubicación** - Escritorio, USB, Documentos, etc.  
+✅ **Auto-instala WinFsp** - Primera vez pide permisos UAC  
+
+---
+
+## 🔐 Seguridad
+
+- Credenciales encriptadas localmente
+- Comunicación HTTPS con Vultr S3
+- WinFsp: Software de código abierto y auditado
+- Sin telemetría ni tracking
+- Datos almacenados localmente
+
+Ver: [docs/SECURITY.md](docs/SECURITY.md)
+
+---
+
+## 🐛 Solución de Problemas
+
+### ❌ "No se pudo instalar WinFsp"
+**Solución**: Ejecuta como administrador
+```batch
+Clic derecho en ejecutar_app.bat → "Ejecutar como administrador"
+```
+
+### ❌ "No se encontró el instalador MSI"
+**Solución**: Verifica que existe `dependencies\winfsp-2.0.23075.msi`
+
+### ❌ No se puede montar la unidad
+**Solución**:
+1. Verifica que WinFsp está instalado: `scripts\verificar_winfsp.ps1`
+2. Verifica credenciales en configuración
+3. Revisa logs en la pestaña de sincronización
+
+### 🔍 Más ayuda
+Ver: [docs/INSTALACION_AUTOMATICA_WINFSP.md](docs/INSTALACION_AUTOMATICA_WINFSP.md)
+
+---
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el repositorio
+2. Crea una rama para tu feature: `git checkout -b feature/nueva-caracteristica`
+3. Commit tus cambios: `git commit -am 'Añade nueva característica'`
+4. Push a la rama: `git push origin feature/nueva-caracteristica`
+5. Abre un Pull Request
+
+---
+
+## 📄 Licencia
+
+Este proyecto está bajo la licencia MIT. Ver [LICENSE](LICENSE) para más detalles.
+
+---
+
+## 🔗 Enlaces Útiles
+
+- **Vultr**: https://vultr.com
+- **WinFsp**: https://winfsp.dev
+- **Rclone**: https://rclone.org
+- **PyQt6**: https://www.riverbankcomputing.com/software/pyqt/
+
+---
+
+## 📞 Soporte
+
+¿Necesitas ayuda?
+
+1. Lee la documentación en [`docs/`](docs/)
+2. Revisa [LEEME_PRIMERO.txt](LEEME_PRIMERO.txt)
+3. Ejecuta `scripts\check_portable.ps1` para diagnosticar
+4. Abre un issue en GitHub
+
+---
+
+## 📝 Changelog
+
+### Versión Actual (Noviembre 2025)
+- ✅ Sistema portable 100% funcional
+- ✅ Instalación automática de WinFsp
+- ✅ Instalador incluido (dependencies/)
+- ✅ Documentación completa
+- ✅ Estructura organizada
+- ✅ Scripts de utilidad
+- ✅ Tests incluidos
+
+---
+
+## 🎉 Créditos
+
+Desarrollado con ❤️ para usuarios de Vultr
+
+**Tecnologías utilizadas**:
+- Python 3.11+
+- PyQt6
+- Rclone
+- WinFsp
+- Boto3 (AWS SDK para S3)
+
+---
+
+**¡Gracias por usar VultrDrive Desktop!** 🚀
+
+Si te gusta el proyecto, ¡dale una ⭐ en GitHub!

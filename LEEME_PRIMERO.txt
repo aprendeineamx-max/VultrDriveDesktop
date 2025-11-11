@@ -28,19 +28,23 @@
 
 ═══════════════════════════════════════════════════════════════════════
 
-📂 ARCHIVOS IMPORTANTES
+📂 ESTRUCTURA DEL PROYECTO
 
-   📄 app.py                            → Programa principal (CORREGIDO)
-   📁 dependencies\winfsp-*.msi         → Instalador de WinFsp (2.1 MB)
-   📄 ejecutar_app.bat                  → Ejecutar programa
+   📄 ejecutar_app.bat                  → Ejecutar programa (PRINCIPAL)
+   📄 app.py                            → Código principal
+   📄 README.md                         → Documentación general
+   📁 dependencies\                     → Instalador de WinFsp (2.1 MB)
+   📁 ui\                               → Interfaz gráfica
+   📁 rclone-*\                         → Rclone portable
    
-   📚 DOCUMENTACIÓN:
-   📄 SISTEMA_PORTABLE_COMPLETO.md      → Guía completa (LÉELO!)
-   📄 INSTALACION_AUTOMATICA_WINFSP.md  → Detalles técnicos
+   📚 DOCUMENTACIÓN: (carpeta docs/)
+   📄 docs\SISTEMA_PORTABLE_COMPLETO.md        → Guía completa (LÉELO!)
+   📄 docs\INSTALACION_AUTOMATICA_WINFSP.md    → Detalles técnicos
+   📄 docs\QUICK_START.md                      → Inicio rápido
    
-   🔧 SCRIPTS ÚTILES:
-   📄 check_portable.ps1                → Verificar componentes
-   📄 crear_distribucion_portable.ps1   → Crear versión para distribuir
+   🔧 SCRIPTS ÚTILES: (carpeta scripts/)
+   📄 scripts\check_portable.ps1               → Verificar componentes
+   📄 scripts\crear_distribucion_portable.ps1  → Crear versión distribuir
 
 ═══════════════════════════════════════════════════════════════════════
 
@@ -134,18 +138,21 @@
 
    Lee estos archivos para más detalles:
    
-   1. SISTEMA_PORTABLE_COMPLETO.md
+   1. docs\SISTEMA_PORTABLE_COMPLETO.md
       → Explicación completa de todo el sistema
       → Detalles técnicos
       → Guía de distribución
    
-   2. INSTALACION_AUTOMATICA_WINFSP.md
+   2. docs\INSTALACION_AUTOMATICA_WINFSP.md
       → Cómo funciona la instalación automática
       → Seguridad y privacidad
       → Solución de problemas
    
    3. README.md
       → Documentación general del proyecto
+   
+   4. docs\README.md
+      → Índice de toda la documentación
 
 ═══════════════════════════════════════════════════════════════════════
 
