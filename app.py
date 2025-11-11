@@ -236,6 +236,7 @@ def main():
         app.processEvents()
     
     # ===== VERIFICAR E INSTALAR WINFSP AUTOMÁTICAMENTE =====
+    winfsp_installed_during_startup = False
     if not check_winfsp():
         print("[VultrDrive] WinFsp no está instalado. Intentando instalación automática...")
         if splash:
@@ -247,6 +248,7 @@ def main():
         
         if success:
             print("[VultrDrive] WinFsp instalado exitosamente")
+            winfsp_installed_during_startup = True
             if splash:
                 splash.showMessage("WinFsp instalado correctamente", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
                 app.processEvents()
@@ -301,6 +303,11 @@ def main():
         splash.finish(window)
     
     window.show()
+    
+    # ===== NOTIFICAR INSTALACIÓN DE WINFSP =====
+    # Notificar si WinFsp se instaló durante el inicio
+    if winfsp_installed_during_startup and hasattr(window, 'notification_manager') and window.notification_manager:
+        QTimer.singleShot(2000, lambda: window.notification_manager.notify_winfsp_installed())
     
     # ===== OPTIMIZACIÓN 5: Ejecutar tareas en segundo plano DESPUÉS de mostrar ventana =====
     # Detectar y desmontar discos montados (sin bloquear la UI)

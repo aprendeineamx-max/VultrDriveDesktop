@@ -11,6 +11,8 @@ from ui.settings_window import SettingsWindow
 from rclone_manager import RcloneManager
 from file_watcher import RealTimeSync
 from drive_detector import DriveDetector
+from startup_manager import StartupManager
+from notification_manager import NotificationManager, NotificationType
 import os
 
 class UploadThread(QThread):
@@ -92,6 +94,14 @@ class MainWindow(QMainWindow):
         self._tray_actions = {}
         self._is_in_tray = False
         self._force_quit = False
+        self._tray_notified = False
+        
+        # ===== QUICK WINS: Inicializar gestores =====
+        # Gestor de inicio automático
+        self.startup_manager = StartupManager()
+        
+        # Gestor de notificaciones (se inicializará después del tray_icon)
+        self.notification_manager = None
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -183,36 +193,83 @@ class MainWindow(QMainWindow):
         self.main_layout.addLayout(top_layout)
 
     def setup_tray_icon(self):
-        """Configura el icono en la bandeja del sistema"""
+        """Configura el icono en la bandeja del sistema con menú mejorado"""
         if not QSystemTrayIcon.isSystemTrayAvailable():
             self.tray_icon = None
             return
 
         icon = self.style().standardIcon(QStyle.StandardPixmap.SP_ComputerIcon)
         self.tray_icon = QSystemTrayIcon(icon, self)
-        self.tray_icon.setToolTip(self.windowTitle())
+        self._update_tray_tooltip()
 
+        # ===== MENÚ CONTEXTUAL MEJORADO =====
         self._tray_menu = QMenu()
         self._tray_actions = {}
 
-        open_action = QAction(self.tr("tray_open"), self)
+        # Acción: Mostrar ventana
+        open_action = QAction("📂 " + self.tr("tray_open"), self)
         open_action.triggered.connect(self.restore_from_tray)
         self._tray_menu.addAction(open_action)
         self._tray_actions['open'] = open_action
 
-        unmount_action = QAction(self.tr("tray_unmount_all"), self)
+        self._tray_menu.addSeparator()
+
+        # Sección: Montar/Desmontar
+        mount_action = QAction("➕ Montar Nuevo Bucket", self)
+        mount_action.triggered.connect(self.show_mount_tab)
+        self._tray_menu.addAction(mount_action)
+        self._tray_actions['mount'] = mount_action
+
+        unmount_action = QAction("🗑 " + self.tr("tray_unmount_all"), self)
         unmount_action.triggered.connect(self.tray_unmount_all)
         self._tray_menu.addAction(unmount_action)
         self._tray_actions['unmount'] = unmount_action
 
-        exit_action = QAction(self.tr("tray_exit"), self)
-        exit_action.triggered.connect(self.exit_from_tray)
+        self._tray_menu.addSeparator()
+
+        # Acción: Configuración
+        settings_action = QAction("⚙️ Configuración", self)
+        settings_action.triggered.connect(self.open_settings)
+        self._tray_menu.addAction(settings_action)
+        self._tray_actions['settings'] = settings_action
+
+        self._tray_menu.addSeparator()
+
+        # Acción: Salir
+        exit_action = QAction("❌ " + self.tr("tray_exit"), self)
+        exit_action.triggered.connect(self.quit_application)
         self._tray_menu.addAction(exit_action)
         self._tray_actions['exit'] = exit_action
 
         self.tray_icon.setContextMenu(self._tray_menu)
         self.tray_icon.activated.connect(self._on_tray_activated)
         self.tray_icon.show()
+        
+        # ===== INICIALIZAR GESTOR DE NOTIFICACIONES =====
+        self.notification_manager = NotificationManager(self.tray_icon)
+        
+        # Notificar inicio de aplicación
+        QTimer.singleShot(1000, lambda: self.notification_manager.notify_app_started())
+    
+    def _update_tray_tooltip(self):
+        """Actualizar tooltip del icono en bandeja"""
+        try:
+            from drive_detector import DriveDetector
+            detected = DriveDetector.detect_mounted_drives()
+            mounted_count = len(detected) if detected else 0
+            tooltip = f"VultrDrive Desktop\n{mounted_count} unidad(es) montada(s)"
+        except:
+            tooltip = "VultrDrive Desktop"
+        
+        if self.tray_icon:
+            self.tray_icon.setToolTip(tooltip)
+    
+    def show_mount_tab(self):
+        """Mostrar ventana y cambiar a pestaña de montaje"""
+        self.restore_from_tray()
+        if hasattr(self, 'tabs'):
+            # Cambiar a pestaña "Montar Disco" (índice 1)
+            self.tabs.setCurrentIndex(1)
 
     def update_language_button_text(self):
         """Update the language button text"""
@@ -270,7 +327,14 @@ class MainWindow(QMainWindow):
 
     def _on_tray_activated(self, reason):
         """Manejar la activación del icono en la bandeja"""
-        if reason in (QSystemTrayIcon.ActivationReason.Trigger, QSystemTrayIcon.ActivationReason.DoubleClick):
+        if reason == QSystemTrayIcon.ActivationReason.Trigger:
+            # Clic izquierdo: mostrar/ocultar ventana
+            if self.isVisible():
+                self.hide()
+            else:
+                self.restore_from_tray()
+        elif reason == QSystemTrayIcon.ActivationReason.DoubleClick:
+            # Doble clic: siempre mostrar
             self.restore_from_tray()
 
     def tray_unmount_all(self):
@@ -278,11 +342,40 @@ class MainWindow(QMainWindow):
         self.restore_from_tray()
         QTimer.singleShot(100, self.unmount_all_detected_drives)
 
+    def quit_application(self):
+        """Salir completamente de la aplicación"""
+        reply = QMessageBox.question(
+            self,
+            'Confirmar Salida',
+            '¿Estás seguro de que quieres salir?\nSe desmontarán todas las unidades.',
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply == QMessageBox.StandardButton.Yes:
+            # Desmontar todas las unidades
+            try:
+                from drive_detector import DriveDetector
+                DriveDetector.unmount_all_drives()
+            except:
+                pass
+            
+            # Notificar
+            if self.notification_manager:
+                self.notification_manager.info(
+                    "VultrDrive Desktop",
+                    "Cerrando aplicación..."
+                )
+            
+            # Marcar para salir realmente
+            self._force_quit = True
+            
+            # Cerrar
+            QApplication.quit()
+    
     def exit_from_tray(self):
-        """Cerrar la aplicación desde el menú de la bandeja"""
-        self._force_quit = True
-        self.restore_from_tray()
-        self.close()
+        """Cerrar la aplicación desde el menú de la bandeja (compatibilidad)"""
+        self.quit_application()
 
     def _should_keep_in_background(self):
         """Determinar si la app debe quedarse en segundo plano"""
@@ -956,6 +1049,13 @@ class MainWindow(QMainWindow):
             self.unmount_button.setEnabled(True)
             self.open_drive_button.setEnabled(True)
             self.statusBar().showMessage(f"Drive mounted on {drive_letter}:", 5000)
+            
+            # ===== NOTIFICACIÓN DE ÉXITO =====
+            if self.notification_manager:
+                self.notification_manager.notify_mount_success(drive_letter, bucket_name)
+            
+            # Actualizar tooltip de bandeja
+            self._update_tray_tooltip()
 
             # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
             QTimer.singleShot(3000, self.detect_mounted_drives)
@@ -987,6 +1087,10 @@ class MainWindow(QMainWindow):
 
             self.statusBar().showMessage("Mount failed.", 5000)
             self.open_drive_button.setEnabled(False)
+            
+            # ===== NOTIFICACIÓN DE ERROR =====
+            if self.notification_manager:
+                self.notification_manager.notify_mount_failed(drive_letter, message)
 
     def set_winfsp_installer(self, callback):
         """Registrar callback para instalar WinFsp desde la UI"""
@@ -1106,7 +1210,7 @@ class MainWindow(QMainWindow):
                 self.statusBar().showMessage("Format cancelled.", 3000)
 
     def open_settings(self):
-        self.settings_window = SettingsWindow(self.config_manager)
+        self.settings_window = SettingsWindow(self.config_manager, self)
         self.settings_window.profiles_updated.connect(self.update_profiles)
         self.settings_window.show()
 
@@ -1276,6 +1380,13 @@ class MainWindow(QMainWindow):
                 if success:
                     self.statusBar().showMessage(f"✅ {message}", 3000)
                     
+                    # ===== NOTIFICACIÓN DE DESMONTAJE =====
+                    if self.notification_manager:
+                        self.notification_manager.notify_unmount_success(drive_letter)
+                    
+                    # Actualizar tooltip de bandeja
+                    self._update_tray_tooltip()
+                    
                     # Función para actualizar la UI completamente
                     def refresh_ui_complete():
                         # 1. Refrescar la detección de unidades montadas
@@ -1379,6 +1490,21 @@ class MainWindow(QMainWindow):
             event.accept()
             return
 
+        # Si hay icono en bandeja, minimizar a bandeja en lugar de cerrar
+        if self.tray_icon and self.tray_icon.isVisible():
+            event.ignore()
+            self.hide()
+            
+            # Notificar la primera vez
+            if not self._tray_notified and self.notification_manager:
+                self.notification_manager.info(
+                    "VultrDrive Desktop",
+                    "La aplicación sigue ejecutándose en la bandeja del sistema"
+                )
+                self._tray_notified = True
+            return
+
+        # Si no hay bandeja, mostrar diálogo
         dialog = QMessageBox(self)
         dialog.setIcon(QMessageBox.Icon.Information)
         dialog.setWindowTitle(self.tr("background_running_title"))
