@@ -5,6 +5,16 @@ import configparser
 import time
 from pathlib import Path
 
+# ===== MEJORA #48: Manejo de Errores Mejorado =====
+try:
+    from error_handler import handle_error, MountError, ConnectionError, PermissionError
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
+    MountError = Exception
+    ConnectionError = Exception
+    PermissionError = Exception
+
 class RcloneManager:
     def __init__(self, config_manager):
         self.config_manager = config_manager
@@ -249,9 +259,19 @@ class RcloneManager:
                 
                 return False, f"Error al montar: {error_msg}"
                 
-        except FileNotFoundError:
+        except FileNotFoundError as e:
+            if ERROR_HANDLING_AVAILABLE:
+                error = MountError(
+                    f"Ejecutable de Rclone no encontrado en: {rclone_path}",
+                    suggestion="Verifica que rclone.exe esté en la carpeta del programa",
+                    original_error=e
+                )
+                return False, error.get_user_message()
             return False, f"Ejecutable de Rclone no encontrado en: {rclone_path}"
         except Exception as e:
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context=f"mount_drive({profile_name}, {drive_letter}, {bucket_name})")
+                return False, error.get_user_message()
             return False, f"Error al montar: {str(e)}"
 
     def unmount_drive(self, drive_letter):

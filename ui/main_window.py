@@ -13,6 +13,14 @@ from file_watcher import RealTimeSync
 from drive_detector import DriveDetector
 from startup_manager import StartupManager
 from notification_manager import NotificationManager, NotificationType
+
+# ===== MEJORA #48: Manejo de Errores Mejorado =====
+try:
+    from error_handler import handle_error, get_error_handler
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
+
 import os
 
 class UploadThread(QThread):
@@ -116,6 +124,16 @@ class MainWindow(QMainWindow):
         self.tabs = QTabWidget()
         self.main_layout.addWidget(self.tabs)
 
+        # Tab 0: Dashboard (NUEVO - Mejora #52)
+        try:
+            from dashboard_widget import DashboardWidget
+            self.dashboard_tab = DashboardWidget(self)
+            self.dashboard_tab.update_requested.connect(self.update_dashboard_stats)
+            self.tabs.addTab(self.dashboard_tab, "📊 Dashboard")
+        except ImportError:
+            # Si no está disponible, continuar sin dashboard
+            pass
+
         # Tab 1: Main Operations
         self.main_tab = QWidget()
         self.setup_main_tab()
@@ -152,6 +170,17 @@ class MainWindow(QMainWindow):
 
         self.setup_tray_icon()
         self.update_background_button_text()
+        
+        # ===== MEJORA #52: Inicializar dashboard =====
+        if hasattr(self, 'dashboard_tab'):
+            QTimer.singleShot(1000, self.update_dashboard_stats)
+        
+        # ===== MEJORA #56: Atajos de Teclado =====
+        try:
+            from keyboard_shortcuts import KeyboardShortcuts
+            self.keyboard_shortcuts = KeyboardShortcuts(self)
+        except ImportError:
+            pass
 
     def tr(self, key, *args):
         """Translate text using the translations system"""
@@ -1041,56 +1070,73 @@ class MainWindow(QMainWindow):
         bucket_name = self.bucket_selector.currentText()
 
         self.statusBar().showMessage(f"Mounting {bucket_name} on {drive_letter}:...")
-        success, message = self.rclone_manager.mount_drive(profile_name, drive_letter, bucket_name)
-        if success:
-            QMessageBox.information(self, "Success", message)
-            self.mount_status_label.setText(f"Status: Mounted on {drive_letter}:")
-            self.mount_button.setEnabled(False)
-            self.unmount_button.setEnabled(True)
-            self.open_drive_button.setEnabled(True)
-            self.statusBar().showMessage(f"Drive mounted on {drive_letter}:", 5000)
+        
+        try:
+            success, message = self.rclone_manager.mount_drive(profile_name, drive_letter, bucket_name)
+            if success:
+                QMessageBox.information(self, "Éxito", message)
+                self.mount_status_label.setText(f"Status: Montado en {drive_letter}:")
+                self.mount_button.setEnabled(False)
+                self.unmount_button.setEnabled(True)
+                self.open_drive_button.setEnabled(True)
+                self.statusBar().showMessage(f"Unidad montada en {drive_letter}:", 5000)
+                
+                # ===== NOTIFICACIÓN DE ÉXITO =====
+                if self.notification_manager:
+                    self.notification_manager.notify_mount_success(drive_letter, bucket_name)
+                
+                # Actualizar tooltip de bandeja
+                self._update_tray_tooltip()
+
+                # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
+                QTimer.singleShot(3000, self.detect_mounted_drives)
+            else:
+                # ===== MEJORA #48: Mensaje de error mejorado =====
+                error_msg = message
+                needs_winfsp = "winfsp" in message.lower()
+                
+                msg_box = QMessageBox(self)
+                msg_box.setIcon(QMessageBox.Icon.Critical)
+                msg_box.setWindowTitle("❌ Error de Montaje")
+                msg_box.setText("No se pudo montar la unidad")
+                msg_box.setInformativeText(error_msg)
+                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+                
+                install_button = None
+                if needs_winfsp and self.install_winfsp_callback:
+                    install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
+
+                msg_box.exec()
+
+                if install_button and msg_box.clickedButton() == install_button:
+                    self.statusBar().showMessage(self.tr("status_installing_winfsp"))
+                    self.install_winfsp_callback()
+
+                self.statusBar().showMessage("Error al montar", 5000)
+                self.open_drive_button.setEnabled(False)
+                
+                # ===== NOTIFICACIÓN DE ERROR =====
+                if self.notification_manager:
+                    self.notification_manager.notify_mount_failed(drive_letter, message)
+        except Exception as e:
+            # ===== MEJORA #48: Manejo de errores mejorado =====
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context="mount_drive")
+                error_msg = error.get_user_message()
+            else:
+                error_msg = f"Error inesperado: {str(e)}"
             
-            # ===== NOTIFICACIÓN DE ÉXITO =====
-            if self.notification_manager:
-                self.notification_manager.notify_mount_success(drive_letter, bucket_name)
+            QMessageBox.critical(
+                self,
+                "❌ Error",
+                error_msg
+            )
             
-            # Actualizar tooltip de bandeja
-            self._update_tray_tooltip()
-
-            # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
-            QTimer.singleShot(3000, self.detect_mounted_drives)
-        else:
-            # Mensaje de error mejorado con instrucciones
-            error_msg = message
-            needs_winfsp = "winfsp" in message.lower()
-            if needs_winfsp or "not supported" in message.lower():
-                error_msg += "\n\n💡 Solución:\n"
-                error_msg += "1. WinFsp es requerido para montar unidades\n"
-                error_msg += "2. Ejecuta: .\\instalar_winfsp.ps1\n"
-                error_msg += "3. O descarga desde: https://winfsp.dev/rel/"
-
-            msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Icon.Critical)
-            msg_box.setWindowTitle("Error de Montaje")
-            msg_box.setText("No se pudo montar la unidad")
-            msg_box.setInformativeText(error_msg)
-            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-            install_button = None
-            if needs_winfsp and self.install_winfsp_callback:
-                install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
-
-            msg_box.exec()
-
-            if install_button and msg_box.clickedButton() == install_button:
-                self.statusBar().showMessage(self.tr("status_installing_winfsp"))
-                self.install_winfsp_callback()
-
-            self.statusBar().showMessage("Mount failed.", 5000)
+            self.statusBar().showMessage("Error al montar", 5000)
             self.open_drive_button.setEnabled(False)
             
-            # ===== NOTIFICACIÓN DE ERROR =====
             if self.notification_manager:
-                self.notification_manager.notify_mount_failed(drive_letter, message)
+                self.notification_manager.notify_mount_failed(drive_letter, str(e))
 
     def set_winfsp_installer(self, callback):
         """Registrar callback para instalar WinFsp desde la UI"""
@@ -1525,5 +1571,54 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
+    
+    def update_dashboard_stats(self):
+        """Actualizar estadísticas del dashboard (Mejora #52)"""
+        if not hasattr(self, 'dashboard_tab'):
+            return
+        
+        try:
+            from datetime import datetime
+            stats = {}
+            
+            # Obtener espacio usado/disponible del bucket
+            if self.s3_handler and self.bucket_selector.count() > 0:
+                try:
+                    bucket_name = self.bucket_selector.currentText()
+                    # Intentar obtener estadísticas del bucket
+                    # Nota: Esto requiere implementación en s3_handler
+                    stats['space_used'] = 0  # TODO: Implementar
+                    stats['space_total'] = 0  # TODO: Implementar
+                except:
+                    pass
+            
+            # Obtener archivos sincronizados hoy
+            stats['files_synced_today'] = 0  # TODO: Implementar contador
+            
+            # Velocidad de transferencia
+            stats['transfer_speed'] = 0.0  # TODO: Implementar
+            
+            # Última sincronización
+            if self.real_time_sync and self.real_time_sync.is_running():
+                stats['last_sync'] = datetime.now()
+            else:
+                stats['last_sync'] = None
+            
+            # Unidades montadas
+            try:
+                from drive_detector import DriveDetector
+                detected = DriveDetector.detect_mounted_drives()
+                stats['mounted_drives'] = [d['letter'] for d in detected] if detected else []
+            except:
+                stats['mounted_drives'] = []
+            
+            # Actualizar dashboard
+            self.dashboard_tab.update_stats(stats)
+        except Exception as e:
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context="update_dashboard_stats")
+                if self.notification_manager:
+                    self.notification_manager.warning("Dashboard", f"Error al actualizar: {error.message}")
+            pass
 
 

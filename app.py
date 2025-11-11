@@ -2,6 +2,17 @@ import sys
 import json
 import os
 
+# ===== MEJORA #47: Sistema de Logging Robusto =====
+try:
+    from logger_manager import get_logger_manager
+    logger_manager = get_logger_manager("VultrDrive")
+    logger = logger_manager.get_logger()
+    LOGGING_AVAILABLE = True
+except ImportError:
+    LOGGING_AVAILABLE = False
+    logger = None
+    print("[app] Advertencia: logger_manager no disponible. Usando print() para logging.")
+
 try:
     import ctypes
 except ImportError:  # pragma: no cover
@@ -238,7 +249,11 @@ def main():
     # ===== VERIFICAR E INSTALAR WINFSP AUTOMÁTICAMENTE =====
     winfsp_installed_during_startup = False
     if not check_winfsp():
-        print("[VultrDrive] WinFsp no está instalado. Intentando instalación automática...")
+        if LOGGING_AVAILABLE:
+            logger.info("WinFsp no está instalado. Intentando instalación automática...")
+        else:
+            print("[VultrDrive] WinFsp no está instalado. Intentando instalación automática...")
+        
         if splash:
             splash.showMessage("Instalando componentes requeridos (WinFsp)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
             app.processEvents()
@@ -247,18 +262,27 @@ def main():
         success = install_winfsp_silent()
         
         if success:
-            print("[VultrDrive] WinFsp instalado exitosamente")
+            if LOGGING_AVAILABLE:
+                logger.info("WinFsp instalado exitosamente")
+            else:
+                print("[VultrDrive] WinFsp instalado exitosamente")
             winfsp_installed_during_startup = True
             if splash:
                 splash.showMessage("WinFsp instalado correctamente", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
                 app.processEvents()
         else:
-            print("[VultrDrive] No se pudo instalar WinFsp automáticamente")
+            if LOGGING_AVAILABLE:
+                logger.warning("No se pudo instalar WinFsp automáticamente")
+            else:
+                print("[VultrDrive] No se pudo instalar WinFsp automáticamente")
             if splash:
                 splash.showMessage("Continuando sin WinFsp (instalación pendiente)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
                 app.processEvents()
     else:
-        print("[VultrDrive] WinFsp ya está instalado")
+        if LOGGING_AVAILABLE:
+            logger.debug("WinFsp ya está instalado")
+        else:
+            print("[VultrDrive] WinFsp ya está instalado")
     
     # ===== OPTIMIZACIÓN 4: Cargar módulos pesados con feedback =====
     if splash:
@@ -298,11 +322,24 @@ def main():
     window.trigger_component_check = lambda: start_component_check(window)
     window.manual_install_winfsp = lambda: start_component_check(window, manual=True, force_install=True)
     
+    # ===== MEJORA #36: Migrar configuraciones a encriptación =====
+    if hasattr(window, 'config_manager') and window.config_manager.is_encryption_enabled():
+        try:
+            migrated = window.config_manager.migrate_to_encryption()
+            if migrated > 0 and LOGGING_AVAILABLE:
+                logger.info(f"Migrados {migrated} perfil(es) a encriptación")
+        except Exception as e:
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al migrar configuraciones: {e}")
+    
     # Cerrar splash y mostrar ventana principal
     if splash:
         splash.finish(window)
     
     window.show()
+    
+    if LOGGING_AVAILABLE:
+        logger.info("Aplicación iniciada correctamente")
     
     # ===== NOTIFICAR INSTALACIÓN DE WINFSP =====
     # Notificar si WinFsp se instaló durante el inicio
