@@ -61,62 +61,97 @@ def check_winfsp():
     return False
 
 def install_winfsp_silent():
+    """Instala WinFsp de forma silenciosa con privilegios de administrador"""
     import subprocess
     import os
     import time
 
     def run_msiexec_admin(path):
-        ps_command = (
-            "Start-Process msiexec -ArgumentList '/i `\"{0}`\" /quiet /norestart' -Verb runAs -Wait"
-        ).format(path.replace("'", "''"))
-        result = subprocess.run(
-            ['powershell', '-NoLogo', '-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps_command],
-            check=False,
-            timeout=240
-        )
-        return result.returncode == 0
-
-    def run_installer_admin(target):
-        if target.endswith('.msi'):
-            return run_msiexec_admin(target)
-        ps_command = (
-            "Start-Process -FilePath `\"{0}`\" -Verb runAs -Wait"
-        ).format(target.replace("'", "''"))
-        result = subprocess.run(
-            ['powershell', '-NoLogo', '-NoProfile', '-WindowStyle', 'Hidden', '-Command', ps_command],
-            check=False,
-            timeout=240
-        )
-        return result.returncode == 0
+        """Ejecuta el instalador MSI con privilegios de administrador"""
+        try:
+            # Comando PowerShell mejorado para instalación silenciosa
+            ps_command = f"""
+$process = Start-Process -FilePath 'msiexec.exe' -ArgumentList '/i', '"{path}"', '/quiet', '/norestart' -Verb RunAs -PassThru -Wait
+exit $process.ExitCode
+"""
+            result = subprocess.run(
+                ['powershell', '-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', ps_command],
+                check=False,
+                timeout=300,  # 5 minutos de timeout
+                capture_output=True,
+                text=True
+            )
+            print(f"[WinFsp Installer] MSI Exit Code: {result.returncode}")
+            if result.stdout:
+                print(f"[WinFsp Installer] Output: {result.stdout}")
+            if result.stderr:
+                print(f"[WinFsp Installer] Errors: {result.stderr}")
+            return result.returncode == 0
+        except subprocess.TimeoutExpired:
+            print("[WinFsp Installer] Timeout durante la instalación")
+            return False
+        except Exception as e:
+            print(f"[WinFsp Installer] Error: {e}")
+            return False
 
     try:
         base_path = get_base_path()
-        installer_bat = os.path.join(base_path, "INSTALAR_WINFSP.bat")
+        
+        # Buscar el instalador MSI en múltiples ubicaciones
         msi_files = []
-        search_paths = [base_path, os.path.join(base_path, "dependencies"), os.path.join(base_path, "winfsp")]
+        search_paths = [
+            os.path.join(base_path, "dependencies"),
+            os.path.join(base_path, "winfsp"),
+            base_path
+        ]
+        
+        print("[WinFsp Installer] Buscando instalador MSI...")
         for directory in search_paths:
             if os.path.isdir(directory):
                 for file in os.listdir(directory):
                     if file.lower().startswith("winfsp") and file.lower().endswith(".msi"):
-                        msi_files.append(os.path.join(directory, file))
+                        full_path = os.path.join(directory, file)
+                        msi_files.append(full_path)
+                        print(f"[WinFsp Installer] Encontrado: {full_path}")
 
-        if msi_files:
-            # Instalar MSI con privilegios de administrador
-            msi_path = msi_files[0]
-            ok = run_installer_admin(msi_path)
-        elif os.path.exists(installer_bat):
-            # Ejecutar BAT con privilegios de administrador
-            ok = run_installer_admin(installer_bat)
-        else:
-            ok = False
+        if not msi_files:
+            print("[WinFsp Installer] No se encontró ningún instalador MSI")
+            return False
+
+        # Usar el primer instalador encontrado
+        msi_path = msi_files[0]
+        print(f"[WinFsp Installer] Instalando desde: {msi_path}")
         
-        # Esperar un momento para que finalice la instalación
-        time.sleep(5)
+        # Verificar que el archivo existe
+        if not os.path.exists(msi_path):
+            print(f"[WinFsp Installer] ERROR: El archivo no existe: {msi_path}")
+            return False
+        
+        # Instalar MSI con privilegios de administrador
+        print("[WinFsp Installer] Iniciando instalación...")
+        ok = run_msiexec_admin(msi_path)
+        
+        if not ok:
+            print("[WinFsp Installer] La instalación falló o fue cancelada")
+            return False
+        
+        # Esperar a que la instalación finalice completamente
+        print("[WinFsp Installer] Esperando a que finalice la instalación...")
+        time.sleep(8)
         
         # Verificar si se instaló correctamente
-        return check_winfsp() and ok
+        installed = check_winfsp()
+        if installed:
+            print("[WinFsp Installer] ¡WinFsp instalado exitosamente!")
+        else:
+            print("[WinFsp Installer] WinFsp no se detectó después de la instalación")
+        
+        return installed
     
     except Exception as e:
+        print(f"[WinFsp Installer] Excepción: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 # Importaciones de PyQt6 para las clases siguientes
@@ -199,6 +234,29 @@ def main():
     if splash:
         splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
         app.processEvents()
+    
+    # ===== VERIFICAR E INSTALAR WINFSP AUTOMÁTICAMENTE =====
+    if not check_winfsp():
+        print("[VultrDrive] WinFsp no está instalado. Intentando instalación automática...")
+        if splash:
+            splash.showMessage("Instalando componentes requeridos (WinFsp)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+            app.processEvents()
+        
+        # Intentar instalar WinFsp automáticamente
+        success = install_winfsp_silent()
+        
+        if success:
+            print("[VultrDrive] WinFsp instalado exitosamente")
+            if splash:
+                splash.showMessage("WinFsp instalado correctamente", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+                app.processEvents()
+        else:
+            print("[VultrDrive] No se pudo instalar WinFsp automáticamente")
+            if splash:
+                splash.showMessage("Continuando sin WinFsp (instalación pendiente)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+                app.processEvents()
+    else:
+        print("[VultrDrive] WinFsp ya está instalado")
     
     # ===== OPTIMIZACIÓN 4: Cargar módulos pesados con feedback =====
     if splash:
