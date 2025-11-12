@@ -87,8 +87,14 @@ class BackupThread(QThread):
 
 
 class MainWindow(QMainWindow):
+    # Señal para actualizar UI desde hilos
+    mount_finished = pyqtSignal(bool, str, str, str)  # success, message, drive_letter, bucket_name
+    
     def __init__(self, theme_manager=None, translations=None, save_preferences_callback=None):
         super().__init__()
+        
+        # Conectar señal de montaje
+        self.mount_finished.connect(self._handle_mount_result)
         
         # Store references to theme manager and translations
         self.theme_manager = theme_manager
@@ -1239,72 +1245,36 @@ class MainWindow(QMainWindow):
         profile_name = self.profile_selector.currentText()
         bucket_name = self.bucket_selector.currentText()
 
-        # ===== MEJORA #5: Barra de Progreso para Montaje =====
-        progress_dialog = ProgressDialog(
-            self, 
-            title=f"Montando {bucket_name} en {drive_letter}:",
-            can_cancel=False
-        )
-        progress_dialog.set_status(f"Conectando con {bucket_name}...")
-        progress_dialog.update_progress(10)
-        progress_dialog.start()
+        # Mostrar mensaje inmediatamente en la barra de estado
+        self.statusBar().showMessage(f"🔄 Montando {bucket_name} en {drive_letter}:...")
         
-        # Ejecutar montaje en hilo separado con actualizaciones de progreso
-        class MountThread(QThread):
-            progress_updated = pyqtSignal(int, str)  # value, status_text
-            finished_signal = pyqtSignal(bool, str)  # success, message
-            
-            def __init__(self, rclone_manager, profile_name, drive_letter, bucket_name):
-                super().__init__()
-                self.rclone_manager = rclone_manager
-                self.profile_name = profile_name
-                self.drive_letter = drive_letter
-                self.bucket_name = bucket_name
-            
-            def run(self):
-                try:
-                    import time
-                    # Simular progreso inicial
-                    time.sleep(0.5)
-                    self.progress_updated.emit(30, "Configurando rclone...")
-                    
-                    success, message = self.rclone_manager.mount_drive(
-                        self.profile_name, 
-                        self.drive_letter, 
-                        self.bucket_name
-                    )
-                    
-                    if success:
-                        time.sleep(0.3)
-                        self.progress_updated.emit(80, "Verificando montaje...")
-                        time.sleep(0.5)
-                        self.progress_updated.emit(100, "Montaje completado")
-                        self.finished_signal.emit(True, message)
-                    else:
-                        self.finished_signal.emit(False, message)
-                        
-                except Exception as e:
-                    error_msg = f"Error inesperado: {str(e)}"
-                    self.finished_signal.emit(False, error_msg)
+        # Ejecutar montaje en hilo separado de forma segura
+        def mount_in_thread():
+            try:
+                success, message = self.rclone_manager.mount_drive(
+                    profile_name, 
+                    drive_letter, 
+                    bucket_name
+                )
+                # Emitir señal para actualizar UI desde el hilo principal
+                self.mount_finished.emit(success, message, drive_letter, bucket_name)
+            except Exception as e:
+                error_msg = f"Error inesperado: {str(e)}"
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error al montar unidad: {error_msg}", exc_info=True)
+                self.mount_finished.emit(False, error_msg, drive_letter, bucket_name)
         
-        # Crear y configurar hilo
-        mount_thread = MountThread(self.rclone_manager, profile_name, drive_letter, bucket_name)
-        
-        # Conectar señales
-        def on_progress(value, status):
-            progress_dialog.update_progress(value, status_text=status)
-        
-        def on_finished(success, message):
-            if success:
-                progress_dialog.finish(True, "Unidad montada exitosamente")
-                QTimer.singleShot(2000, lambda: self._on_mount_success(drive_letter, bucket_name, message))
-            else:
-                progress_dialog.finish(False, f"Error: {message}")
-                QTimer.singleShot(2000, lambda: self._on_mount_error(message))
-        
-        mount_thread.progress_updated.connect(on_progress)
-        mount_thread.finished_signal.connect(on_finished)
+        # Ejecutar en hilo separado usando threading (más seguro que QThread anidado)
+        from threading import Thread
+        mount_thread = Thread(target=mount_in_thread, daemon=True)
         mount_thread.start()
+    
+    def _handle_mount_result(self, success, message, drive_letter, bucket_name):
+        """Manejar resultado del montaje desde señal (thread-safe)"""
+        if success:
+            self._on_mount_success(drive_letter, bucket_name, message)
+        else:
+            self._on_mount_error(message)
     
     def _on_mount_success(self, drive_letter, bucket_name, message):
         """Manejar éxito del montaje"""
@@ -1313,7 +1283,7 @@ class MainWindow(QMainWindow):
             self.mount_button.setEnabled(False)
             self.unmount_button.setEnabled(True)
             self.open_drive_button.setEnabled(True)
-            self.statusBar().showMessage(f"Unidad montada en {drive_letter}:", 5000)
+            self.statusBar().showMessage(f"✅ Unidad {drive_letter}: montada exitosamente", 5000)
             
             # ===== NOTIFICACIÓN DE ÉXITO =====
             if self.notification_manager:
