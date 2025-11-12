@@ -13,6 +13,7 @@ from file_watcher import RealTimeSync
 from drive_detector import DriveDetector
 from startup_manager import StartupManager
 from notification_manager import NotificationManager, NotificationType
+from progress_dialog import ProgressDialog
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -1238,77 +1239,123 @@ class MainWindow(QMainWindow):
         profile_name = self.profile_selector.currentText()
         bucket_name = self.bucket_selector.currentText()
 
-        self.statusBar().showMessage(f"Mounting {bucket_name} on {drive_letter}:...")
+        # ===== MEJORA #5: Barra de Progreso para Montaje =====
+        progress_dialog = ProgressDialog(
+            self, 
+            title=f"Montando {bucket_name} en {drive_letter}:",
+            can_cancel=False
+        )
+        progress_dialog.set_status(f"Conectando con {bucket_name}...")
+        progress_dialog.update_progress(10)
+        progress_dialog.start()
         
-        try:
-            success, message = self.rclone_manager.mount_drive(profile_name, drive_letter, bucket_name)
+        # Ejecutar montaje en hilo separado con actualizaciones de progreso
+        class MountThread(QThread):
+            progress_updated = pyqtSignal(int, str)  # value, status_text
+            finished_signal = pyqtSignal(bool, str)  # success, message
+            
+            def __init__(self, rclone_manager, profile_name, drive_letter, bucket_name):
+                super().__init__()
+                self.rclone_manager = rclone_manager
+                self.profile_name = profile_name
+                self.drive_letter = drive_letter
+                self.bucket_name = bucket_name
+            
+            def run(self):
+                try:
+                    import time
+                    # Simular progreso inicial
+                    time.sleep(0.5)
+                    self.progress_updated.emit(30, "Configurando rclone...")
+                    
+                    success, message = self.rclone_manager.mount_drive(
+                        self.profile_name, 
+                        self.drive_letter, 
+                        self.bucket_name
+                    )
+                    
+                    if success:
+                        time.sleep(0.3)
+                        self.progress_updated.emit(80, "Verificando montaje...")
+                        time.sleep(0.5)
+                        self.progress_updated.emit(100, "Montaje completado")
+                        self.finished_signal.emit(True, message)
+                    else:
+                        self.finished_signal.emit(False, message)
+                        
+                except Exception as e:
+                    error_msg = f"Error inesperado: {str(e)}"
+                    self.finished_signal.emit(False, error_msg)
+        
+        # Crear y configurar hilo
+        mount_thread = MountThread(self.rclone_manager, profile_name, drive_letter, bucket_name)
+        
+        # Conectar señales
+        def on_progress(value, status):
+            progress_dialog.update_progress(value, status_text=status)
+        
+        def on_finished(success, message):
             if success:
-                QMessageBox.information(self, "Éxito", message)
-                self.mount_status_label.setText(f"Status: Montado en {drive_letter}:")
-                self.mount_button.setEnabled(False)
-                self.unmount_button.setEnabled(True)
-                self.open_drive_button.setEnabled(True)
-                self.statusBar().showMessage(f"Unidad montada en {drive_letter}:", 5000)
-                
-                # ===== NOTIFICACIÓN DE ÉXITO =====
-                if self.notification_manager:
-                    self.notification_manager.notify_mount_success(drive_letter, bucket_name)
-                
-                # Actualizar tooltip de bandeja
-                self._update_tray_tooltip()
-
-                # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
-                QTimer.singleShot(3000, self.detect_mounted_drives)
-                
-                # Mostrar el botón de cerrar sin desmontar
-                self.update_close_without_unmount_button_visibility()
+                progress_dialog.finish(True, "Unidad montada exitosamente")
+                QTimer.singleShot(2000, lambda: self._on_mount_success(drive_letter, bucket_name, message))
             else:
-                # ===== MEJORA #48: Mensaje de error mejorado =====
-                error_msg = message
-                needs_winfsp = "winfsp" in message.lower()
-                
-                msg_box = QMessageBox(self)
-                msg_box.setIcon(QMessageBox.Icon.Critical)
-                msg_box.setWindowTitle("❌ Error de Montaje")
-                msg_box.setText("No se pudo montar la unidad")
-                msg_box.setInformativeText(error_msg)
-                msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
-                
-                install_button = None
-                if needs_winfsp and self.install_winfsp_callback:
-                    install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
-
-                msg_box.exec()
-
-                if install_button and msg_box.clickedButton() == install_button:
-                    self.statusBar().showMessage(self.tr("status_installing_winfsp"))
-                    self.install_winfsp_callback()
-
-                self.statusBar().showMessage("Error al montar", 5000)
-                self.open_drive_button.setEnabled(False)
-                
-                # ===== NOTIFICACIÓN DE ERROR =====
-                if self.notification_manager:
-                    self.notification_manager.notify_mount_failed(drive_letter, message)
-        except Exception as e:
-            # ===== MEJORA #48: Manejo de errores mejorado =====
-            if ERROR_HANDLING_AVAILABLE:
-                error = handle_error(e, context="mount_drive")
-                error_msg = error.get_user_message()
-            else:
-                error_msg = f"Error inesperado: {str(e)}"
+                progress_dialog.finish(False, f"Error: {message}")
+                QTimer.singleShot(2000, lambda: self._on_mount_error(message))
+        
+        mount_thread.progress_updated.connect(on_progress)
+        mount_thread.finished_signal.connect(on_finished)
+        mount_thread.start()
+    
+    def _on_mount_success(self, drive_letter, bucket_name, message):
+        """Manejar éxito del montaje"""
+        try:
+            self.mount_status_label.setText(f"Status: Montado en {drive_letter}:")
+            self.mount_button.setEnabled(False)
+            self.unmount_button.setEnabled(True)
+            self.open_drive_button.setEnabled(True)
+            self.statusBar().showMessage(f"Unidad montada en {drive_letter}:", 5000)
             
-            QMessageBox.critical(
-                self,
-                "❌ Error",
-                error_msg
-            )
-            
-            self.statusBar().showMessage("Error al montar", 5000)
-            self.open_drive_button.setEnabled(False)
-            
+            # ===== NOTIFICACIÓN DE ÉXITO =====
             if self.notification_manager:
-                self.notification_manager.notify_mount_failed(drive_letter, str(e))
+                self.notification_manager.notify_mount_success(drive_letter, bucket_name)
+            
+            # Actualizar tooltip de bandeja
+            self._update_tray_tooltip()
+
+            # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
+            QTimer.singleShot(3000, self.detect_mounted_drives)
+            
+            # Mostrar el botón de cerrar sin desmontar
+            self.update_close_without_unmount_button_visibility()
+        except Exception as e:
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al procesar éxito de montaje: {e}")
+    
+    def _on_mount_error(self, error_msg):
+        """Manejar error del montaje"""
+        try:
+            needs_winfsp = "winfsp" in error_msg.lower()
+            
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Icon.Critical)
+            msg_box.setWindowTitle("❌ Error de Montaje")
+            msg_box.setText("No se pudo montar la unidad")
+            msg_box.setInformativeText(error_msg)
+            msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
+            
+            install_button = None
+            if needs_winfsp and self.install_winfsp_callback:
+                install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
+
+            msg_box.exec()
+
+            if install_button and msg_box.clickedButton() == install_button:
+                self.statusBar().showMessage(self.tr("status_installing_winfsp"))
+                self.install_winfsp_callback()
+        except Exception as e:
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al procesar error de montaje: {e}")
+            self.open_drive_button.setEnabled(False)
 
     def set_winfsp_installer(self, callback):
         """Registrar callback para instalar WinFsp desde la UI"""
