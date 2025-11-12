@@ -112,6 +112,7 @@ class MainWindow(QMainWindow):
         self._is_in_tray = False
         self._force_quit = False
         self._tray_notified = False
+        self._close_without_unmount = False  # Flag para cerrar sin desmontar
         
         # ===== QUICK WINS: Inicializar gestores =====
         # Gestor de inicio automático
@@ -201,6 +202,9 @@ class MainWindow(QMainWindow):
             self.load_profile(profile_name)
             # Refrescar buckets automáticamente después de cargar perfil
             QTimer.singleShot(1000, self.refresh_buckets)
+        
+        # Verificar visibilidad del botón de cerrar sin desmontar al iniciar
+        QTimer.singleShot(2000, self.update_close_without_unmount_button_visibility)
 
     def tr(self, key, *args):
         """Translate text using the translations system"""
@@ -233,11 +237,19 @@ class MainWindow(QMainWindow):
         self.background_button.setToolTip(self.tr("send_to_background_tooltip"))
         self.update_background_button_text()
         
+        # ===== MEJORA: Botón para cerrar sin desmontar unidades =====
+        self.close_without_unmount_button = QPushButton("🚪 Cerrar sin Desmontar Unidades")
+        self.close_without_unmount_button.setObjectName("closeWithoutUnmountButton")
+        self.close_without_unmount_button.setToolTip("Cierra el programa sin desmontar las unidades montadas")
+        self.close_without_unmount_button.clicked.connect(self.close_without_unmounting)
+        self.close_without_unmount_button.hide()  # Ocultar inicialmente
+        
         top_layout.addWidget(language_label)
         top_layout.addWidget(self.language_button)
         top_layout.addStretch()
         top_layout.addWidget(self.theme_button)
         top_layout.addWidget(self.background_button)
+        top_layout.addWidget(self.close_without_unmount_button)
         
         self.main_layout.addLayout(top_layout)
 
@@ -422,6 +434,39 @@ class MainWindow(QMainWindow):
             # Cerrar
             QApplication.quit()
     
+    def close_without_unmounting(self):
+        """Cerrar la aplicación sin desmontar las unidades montadas"""
+        # Detener sincronización si está activa (pero no desmontar)
+        if self.real_time_sync and self.real_time_sync.is_running():
+            try:
+                self.real_time_sync.stop()
+                if LOGGING_AVAILABLE:
+                    logger.info("Sincronización detenida antes de cerrar (sin desmontar)")
+            except Exception as e:
+                if LOGGING_AVAILABLE:
+                    logger.warning(f"Error al detener sincronización: {e}")
+        
+        # Ocultar icono de bandeja si existe
+        if self.tray_icon:
+            try:
+                self.tray_icon.hide()
+            except:
+                pass
+        
+        # Notificar
+        if self.notification_manager:
+            self.notification_manager.info(
+                "VultrDrive Desktop",
+                "Aplicación cerrada. Las unidades montadas siguen activas."
+            )
+        
+        # Marcar para salir sin desmontar (evita el diálogo de "Drive Still Mounted")
+        self._force_quit = True
+        self._close_without_unmount = True  # Flag para evitar diálogo de desmontaje
+        
+        # Cerrar aplicación (las unidades permanecerán montadas)
+        QApplication.quit()
+    
     def exit_from_tray(self):
         """Cerrar la aplicación desde el menú de la bandeja (compatibilidad)"""
         self.quit_application()
@@ -438,6 +483,20 @@ class MainWindow(QMainWindow):
 
     def _execute_shutdown_tasks(self):
         """Realizar tareas de limpieza antes de salir"""
+        # Si se cerró sin desmontar, no mostrar diálogos
+        if self._close_without_unmount:
+            # Solo detener sincronización silenciosamente
+            if self.real_time_sync and self.real_time_sync.is_running():
+                try:
+                    self.real_time_sync.stop()
+                except:
+                    pass
+            
+            if self.tray_icon:
+                self.tray_icon.hide()
+            return
+        
+        # Comportamiento normal (con diálogos)
         if self.real_time_sync and self.real_time_sync.is_running():
             reply = QMessageBox.question(
                 self,
@@ -1200,6 +1259,9 @@ class MainWindow(QMainWindow):
 
                 # ✅ Refrescar la detección después de 3 segundos para mostrar la nueva unidad
                 QTimer.singleShot(3000, self.detect_mounted_drives)
+                
+                # Mostrar el botón de cerrar sin desmontar
+                self.update_close_without_unmount_button_visibility()
             else:
                 # ===== MEJORA #48: Mensaje de error mejorado =====
                 error_msg = message
@@ -1382,6 +1444,24 @@ class MainWindow(QMainWindow):
         else:
             self.load_profile(None)
     
+    def update_close_without_unmount_button_visibility(self):
+        """Actualiza la visibilidad del botón 'Cerrar sin Desmontar' basado en unidades montadas"""
+        try:
+            from drive_detector import DriveDetector
+            detected_drives = DriveDetector.detect_mounted_drives()
+            
+            if detected_drives and len(detected_drives) > 0:
+                # Hay unidades montadas, mostrar el botón
+                self.close_without_unmount_button.show()
+            else:
+                # No hay unidades montadas, ocultar el botón
+                self.close_without_unmount_button.hide()
+        except Exception as e:
+            # Si hay error, ocultar el botón por seguridad
+            self.close_without_unmount_button.hide()
+            if LOGGING_AVAILABLE:
+                logger.warning(f"Error al actualizar visibilidad del botón: {e}")
+    
     def detect_mounted_drives(self):
         """Detecta todas las unidades montadas por rclone"""
         self.drives_list.setPlainText("🔍 Detectando unidades montadas...\n")
@@ -1391,6 +1471,9 @@ class MainWindow(QMainWindow):
         
         try:
             detected_drives = DriveDetector.detect_mounted_drives()
+            
+            # Actualizar visibilidad del botón
+            self.update_close_without_unmount_button_visibility()
             
             if not detected_drives:
                 self.drives_list.setPlainText(
@@ -1536,6 +1619,9 @@ class MainWindow(QMainWindow):
                 if success:
                     self.statusBar().showMessage(f"✅ {message}", 3000)
                     
+                    # Actualizar visibilidad del botón después de desmontar
+                    QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
+                    
                     # ===== NOTIFICACIÓN DE DESMONTAJE =====
                     if self.notification_manager:
                         self.notification_manager.notify_unmount_success(drive_letter)
@@ -1597,6 +1683,9 @@ class MainWindow(QMainWindow):
                 success, message = DriveDetector.unmount_all_drives()
                 
                 if success:
+                    # Actualizar visibilidad del botón después de desmontar todas
+                    QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
+                    
                     self.drives_list.setPlainText(
                         f"✅ {message}\n\n"
                         "Todas las unidades han sido desmontadas correctamente.\n"
@@ -1691,16 +1780,41 @@ class MainWindow(QMainWindow):
             from datetime import datetime
             stats = {}
             
-            # Obtener espacio usado/disponible del bucket
+            # Obtener espacio usado del bucket
             if self.s3_handler and self.bucket_selector.count() > 0:
                 try:
                     bucket_name = self.bucket_selector.currentText()
-                    # Intentar obtener estadísticas del bucket
-                    # Nota: Esto requiere implementación en s3_handler
-                    stats['space_used'] = 0  # TODO: Implementar
-                    stats['space_total'] = 0  # TODO: Implementar
-                except:
-                    pass
+                    # Obtener tamaño real del bucket
+                    space_used, error_msg = self.s3_handler.get_bucket_size(bucket_name)
+                    
+                    if error_msg:
+                        if LOGGING_AVAILABLE:
+                            logger.warning(f"Error al obtener tamaño del bucket: {error_msg}")
+                        stats['space_used'] = 0
+                        stats['space_total'] = 0
+                    else:
+                        stats['space_used'] = space_used if space_used else 0
+                        # Vultr Object Storage: Los planes típicos son:
+                        # - Starter: 250 GB
+                        # - Performance: 1 TB (1024 GB)
+                        # - Enterprise: Ilimitado
+                        # Por defecto usamos 1 TB, pero el usuario puede tener más
+                        # Si el espacio usado es mayor a 1 TB, ajustamos el total
+                        if space_used > 1024 * 1024 * 1024 * 1024:  # Si usa más de 1 TB
+                            # Estimar que tiene al menos 2x lo usado, o usar 10 TB como máximo razonable
+                            estimated_total = max(space_used * 2, 10 * 1024 * 1024 * 1024 * 1024)
+                            stats['space_total'] = estimated_total
+                        else:
+                            # Usar 1 TB como referencia estándar
+                            stats['space_total'] = 1024 * 1024 * 1024 * 1024  # 1 TB en bytes
+                except Exception as e:
+                    if LOGGING_AVAILABLE:
+                        logger.error(f"Error al obtener estadísticas del bucket: {e}")
+                    stats['space_used'] = 0
+                    stats['space_total'] = 0
+            else:
+                stats['space_used'] = 0
+                stats['space_total'] = 0
             
             # Obtener archivos sincronizados hoy
             stats['files_synced_today'] = 0  # TODO: Implementar contador
@@ -1729,6 +1843,7 @@ class MainWindow(QMainWindow):
                 error = handle_error(e, context="update_dashboard_stats")
                 if self.notification_manager:
                     self.notification_manager.warning("Dashboard", f"Error al actualizar: {error.message}")
-            pass
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al actualizar dashboard: {e}", exc_info=True)
 
 

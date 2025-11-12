@@ -46,16 +46,27 @@ QPushButton:disabled {
 }
 
 /* Language and Theme buttons */
-QPushButton#languageButton, QPushButton#themeButton {
+QPushButton#languageButton, QPushButton#themeButton, QPushButton#closeWithoutUnmountButton {
     background-color: #6c757d;
     border: 1px solid #6c757d;
     padding: 6px 12px;
     font-size: 9pt;
 }
 
-QPushButton#languageButton:hover, QPushButton#themeButton:hover {
+QPushButton#languageButton:hover, QPushButton#themeButton:hover, QPushButton#closeWithoutUnmountButton:hover {
     background-color: #5a6268;
     border: 1px solid #5a6268;
+}
+
+/* Botón de cerrar sin desmontar - color ligeramente diferente */
+QPushButton#closeWithoutUnmountButton {
+    background-color: #e67e22;
+    border: 1px solid #e67e22;
+}
+
+QPushButton#closeWithoutUnmountButton:hover {
+    background-color: #d35400;
+    border: 1px solid #d35400;
 }
 
 QComboBox {

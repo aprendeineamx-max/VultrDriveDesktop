@@ -164,6 +164,57 @@ class S3Handler:
         except Exception as e:
             print(f"Error listing objects: {e}")
             return []
+    
+    def get_bucket_size(self, bucket_name):
+        """
+        Obtener el tamaño total usado en un bucket
+        
+        Args:
+            bucket_name: Nombre del bucket
+            
+        Returns:
+            tuple: (size_bytes, error_message)
+                   size_bytes: Tamaño total en bytes, None si hay error
+                   error_message: Mensaje de error si hubo problema, None si fue exitoso
+        """
+        try:
+            if LOGGING_AVAILABLE:
+                logger.debug(f"Calculando tamaño del bucket '{bucket_name}'")
+            
+            total_size = 0
+            paginator = self.client.get_paginator('list_objects_v2')
+            
+            for page in paginator.paginate(Bucket=bucket_name):
+                if 'Contents' in page:
+                    for obj in page['Contents']:
+                        total_size += obj.get('Size', 0)
+            
+            if LOGGING_AVAILABLE:
+                logger.info(f"Tamaño del bucket '{bucket_name}': {total_size} bytes ({total_size / (1024*1024):.2f} MB)")
+            
+            return total_size, None
+            
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_msg = e.response.get('Error', {}).get('Message', str(e))
+            message = f"Error al obtener tamaño del bucket: {error_msg}"
+            
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al obtener tamaño del bucket: {error_code} - {error_msg}")
+            
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context="get_bucket_size")
+                return None, error.message
+            return None, message
+            
+        except Exception as e:
+            message = f"Error inesperado al obtener tamaño del bucket: {str(e)}"
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error inesperado: {str(e)}", exc_info=True)
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context="get_bucket_size")
+                return None, error.message
+            return None, message
 
     def delete_object(self, bucket_name, object_name):
         try:
