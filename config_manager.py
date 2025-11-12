@@ -11,7 +11,8 @@ except ImportError:
     print("[ConfigManager] Advertencia: encryption_manager no disponible. Credenciales se guardarán en texto plano.")
 
 class ConfigManager:
-    def __init__(self, config_file='config.json', enable_encryption=True):
+    def __init__(self, config_file='config.json', enable_encryption=False):
+        # ===== DESHABILITAR ENCRIPTACIÓN: Credenciales en texto plano para portabilidad =====
         # Detectar si estamos ejecutando desde PyInstaller
         if getattr(sys, 'frozen', False):
             # Ejecutando desde ejecutable empaquetado
@@ -22,16 +23,9 @@ class ConfigManager:
         
         self.config_file = os.path.join(base_path, config_file)
         
-        # ===== MEJORA #36: Inicializar encriptación =====
-        self.encryption_enabled = enable_encryption and ENCRYPTION_AVAILABLE
-        if self.encryption_enabled:
-            try:
-                self.encryption_manager = get_encryption_manager()
-            except Exception as e:
-                print(f"[ConfigManager] Error al inicializar encriptación: {e}")
-                self.encryption_enabled = False
-        else:
-            self.encryption_manager = None
+        # ===== ENCRIPTACIÓN DESHABILITADA: Siempre usar texto plano =====
+        self.encryption_enabled = False  # Forzar deshabilitado
+        self.encryption_manager = None
         
         self.configs = self.load_configs()
 
@@ -42,19 +36,65 @@ class ConfigManager:
                 with open(self.config_file, 'r', encoding='utf-8') as f:
                     configs = json.load(f)
                 
-                # ===== MEJORA #36: Desencriptar credenciales =====
-                if self.encryption_enabled and configs:
+                # ===== SIN ENCRIPTACIÓN: Decodificar base64 y guardar en texto plano =====
+                # Decodificar credenciales de base64 a texto plano para portabilidad
+                if configs:
+                    import base64
+                    needs_save = False
+                    
                     for profile_name, profile_data in configs.items():
                         if isinstance(profile_data, dict):
-                            try:
-                                decrypted = self.encryption_manager.decrypt_dict(
-                                    profile_data,
-                                    ['access_key', 'secret_key']
-                                )
-                                configs[profile_name] = decrypted
-                            except EncryptionError as e:
-                                print(f"[ConfigManager] Error al desencriptar perfil '{profile_name}': {e}")
-                                # Continuar con datos sin desencriptar (puede ser texto plano antiguo)
+                            # Decodificar access_key si está en base64
+                            if 'access_key' in profile_data and profile_data['access_key']:
+                                access_key = profile_data['access_key']
+                                # Si parece ser base64, decodificar
+                                if len(access_key) > 50 and ('=' in access_key or access_key.replace('+', '').replace('/', '').replace('=', '').replace('-', '').replace('_', '').isalnum()):
+                                    try:
+                                        decoded_bytes = base64.b64decode(access_key)
+                                        decoded_str = decoded_bytes.decode('utf-8', errors='ignore')
+                                        
+                                        # Si es un token Fernet (gAAAAA), simplemente ignorarlo
+                                        # No hacer nada, dejar que el usuario reingrese las credenciales manualmente
+                                        if decoded_str.startswith('gAAAAA'):
+                                            # Token Fernet - no se puede usar, dejar vacío
+                                            profile_data['access_key'] = ''
+                                            needs_save = True
+                                        elif not (decoded_str.startswith('Z0FB') or decoded_str.startswith('gAAAAA')):
+                                            # Es texto plano válido después de decodificar
+                                            if access_key != decoded_str:
+                                                profile_data['access_key'] = decoded_str
+                                                needs_save = True
+                                    except Exception as e:
+                                        print(f"[ConfigManager] No se pudo decodificar access_key: {e}")
+                            
+                            # Decodificar secret_key si está en base64
+                            if 'secret_key' in profile_data and profile_data['secret_key']:
+                                secret_key = profile_data['secret_key']
+                                if len(secret_key) > 50 and ('=' in secret_key or secret_key.replace('+', '').replace('/', '').replace('=', '').replace('-', '').replace('_', '').isalnum()):
+                                    try:
+                                        decoded_bytes = base64.b64decode(secret_key)
+                                        decoded_str = decoded_bytes.decode('utf-8', errors='ignore')
+                                        
+                                        if decoded_str.startswith('gAAAAA'):
+                                            # Token Fernet - no se puede usar, dejar vacío
+                                            profile_data['secret_key'] = ''
+                                            needs_save = True
+                                        elif not (decoded_str.startswith('Z0FB') or decoded_str.startswith('gAAAAA')):
+                                            # Es texto plano válido
+                                            if secret_key != decoded_str:
+                                                profile_data['secret_key'] = decoded_str
+                                                needs_save = True
+                                    except Exception as e:
+                                        print(f"[ConfigManager] No se pudo decodificar secret_key: {e}")
+                    
+                    # Guardar configuraciones decodificadas si hubo cambios
+                    if needs_save:
+                        try:
+                            self.configs = configs
+                            self.save_configs()
+                            print(f"[ConfigManager] Credenciales decodificadas y guardadas en texto plano")
+                        except Exception as e:
+                            print(f"[ConfigManager] Error al guardar credenciales decodificadas: {e}")
                 
                 return configs
             except json.JSONDecodeError as e:
@@ -66,23 +106,18 @@ class ConfigManager:
         return {}
 
     def save_configs(self):
-        """Guardar configuraciones y encriptar credenciales"""
+        """Guardar configuraciones en texto plano (sin encriptación)"""
         try:
-            # ===== MEJORA #36: Encriptar credenciales antes de guardar =====
-            configs_to_save = self.configs.copy()
-            
-            if self.encryption_enabled:
-                for profile_name, profile_data in configs_to_save.items():
-                    if isinstance(profile_data, dict):
-                        try:
-                            encrypted = self.encryption_manager.encrypt_dict(
-                                profile_data,
-                                ['access_key', 'secret_key']
-                            )
-                            configs_to_save[profile_name] = encrypted
-                        except EncryptionError as e:
-                            print(f"[ConfigManager] Error al encriptar perfil '{profile_name}': {e}")
-                            # Guardar sin encriptar si falla (fallback)
+            # ===== SIN ENCRIPTACIÓN: Guardar credenciales en texto plano =====
+            # Limpiar campos internos antes de guardar
+            configs_to_save = {}
+            for profile_name, profile_data in self.configs.items():
+                if isinstance(profile_data, dict):
+                    clean_data = {k: v for k, v in profile_data.items() 
+                                 if not k.startswith('_')}  # Excluir campos internos
+                    configs_to_save[profile_name] = clean_data
+                else:
+                    configs_to_save[profile_name] = profile_data
             
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(configs_to_save, f, indent=4, ensure_ascii=False)
@@ -94,7 +129,7 @@ class ConfigManager:
         """
         Agregar o actualizar configuración de perfil
         
-        Las credenciales se encriptarán automáticamente al guardar
+        Las credenciales se guardan en texto plano (sin encriptación) para portabilidad
         """
         self.configs[profile_name] = {
             'access_key': access_key,

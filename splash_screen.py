@@ -1,7 +1,7 @@
 # Splash screen con tipografía adaptable
 from PyQt6.QtWidgets import QSplashScreen
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QPixmap, QPainter, QColor, QFont, QFontMetrics
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtGui import QPixmap, QPainter, QColor, QFont, QFontMetrics, QKeyEvent
 
 
 class FastSplashScreen(QSplashScreen):
@@ -18,6 +18,24 @@ class FastSplashScreen(QSplashScreen):
         self._message = "Iniciando..."
         self._message_color = QColor(210, 220, 235)
         self._message_alignment = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom
+        
+        # ===== MEJORA: Timeout automático y soporte ESC =====
+        self._auto_close_timer = QTimer()
+        self._auto_close_timer.setSingleShot(True)
+        self._auto_close_timer.timeout.connect(self._force_close)
+        self._auto_close_timer.start(5000)  # Cerrar automáticamente después de 5 segundos
+    
+    def _force_close(self):
+        """Forzar cierre del splash"""
+        self.close()
+    
+    def keyPressEvent(self, event: QKeyEvent):
+        """Permitir cerrar con ESC"""
+        if event.key() == Qt.Key.Key_Escape:
+            self._auto_close_timer.stop()
+            self._force_close()
+        else:
+            super().keyPressEvent(event)
 
     def showMessage(self, message, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom, color=QColor(210, 220, 235)):
         self._message = message or ""

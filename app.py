@@ -316,27 +316,57 @@ def main():
         splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
         app.processEvents()
     
-    window = MainWindow(theme_manager, translations, save_user_preferences)
-    if hasattr(window, "set_winfsp_installer"):
-        window.set_winfsp_installer(lambda: start_component_check(window, manual=True, force_install=True))
-    window.trigger_component_check = lambda: start_component_check(window)
-    window.manual_install_winfsp = lambda: start_component_check(window, manual=True, force_install=True)
-    
-    # ===== MEJORA #36: Migrar configuraciones a encriptación =====
-    if hasattr(window, 'config_manager') and window.config_manager.is_encryption_enabled():
-        try:
-            migrated = window.config_manager.migrate_to_encryption()
-            if migrated > 0 and LOGGING_AVAILABLE:
-                logger.info(f"Migrados {migrated} perfil(es) a encriptación")
-        except Exception as e:
-            if LOGGING_AVAILABLE:
-                logger.error(f"Error al migrar configuraciones: {e}")
-    
-    # Cerrar splash y mostrar ventana principal
+    # Cerrar splash ANTES de crear MainWindow para evitar bloqueos
     if splash:
-        splash.finish(window)
+        splash.showMessage("Cargando aplicación...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+        app.processEvents()
     
-    window.show()
+    try:
+        window = MainWindow(theme_manager, translations, save_user_preferences)
+        if hasattr(window, "set_winfsp_installer"):
+            window.set_winfsp_installer(lambda: start_component_check(window, manual=True, force_install=True))
+        window.trigger_component_check = lambda: start_component_check(window)
+        window.manual_install_winfsp = lambda: start_component_check(window, manual=True, force_install=True)
+        
+        # ===== ENCRIPTACIÓN DESHABILITADA: No migrar configuraciones =====
+        
+        # Cerrar splash INMEDIATAMENTE antes de mostrar ventana
+        if splash:
+            try:
+                splash.finish(window)
+            except:
+                pass
+            try:
+                splash.close()
+            except:
+                pass
+            splash = None  # Limpiar referencia
+            app.processEvents()  # Procesar eventos para cerrar splash
+        
+        window.show()
+        app.processEvents()  # Asegurar que la ventana se muestre
+        
+        # Asegurar que el splash esté cerrado (por si acaso)
+        QTimer.singleShot(100, lambda: app.processEvents())
+    except Exception as e:
+        # Si hay error al crear la ventana, cerrar splash de todas formas
+        if splash:
+            splash.close()
+        if LOGGING_AVAILABLE:
+            logger.error(f"Error crítico al inicializar MainWindow: {e}", exc_info=True)
+        else:
+            print(f"[VultrDrive] Error crítico al inicializar MainWindow: {e}")
+        import traceback
+        traceback.print_exc()
+        # Mostrar error al usuario
+        from PyQt6.QtWidgets import QMessageBox
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Icon.Critical)
+        msg.setWindowTitle("Error al Iniciar")
+        msg.setText("Error al inicializar la aplicación.")
+        msg.setDetailedText(str(e))
+        msg.exec()
+        sys.exit(1)
     
     if LOGGING_AVAILABLE:
         logger.info("Aplicación iniciada correctamente")

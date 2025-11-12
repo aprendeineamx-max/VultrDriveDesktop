@@ -1,25 +1,147 @@
 import boto3
 from botocore.client import Config
+from botocore.exceptions import ClientError, NoCredentialsError, EndpointConnectionError
 import os
+
+# ===== MEJORA #48: Manejo de Errores Mejorado =====
+try:
+    from error_handler import handle_error, AuthenticationError, ConnectionError as CustomConnectionError
+    ERROR_HANDLING_AVAILABLE = True
+except ImportError:
+    ERROR_HANDLING_AVAILABLE = False
+
+# ===== MEJORA #47: Sistema de Logging =====
+try:
+    from logger_manager import get_logger
+    logger = get_logger(__name__)
+    LOGGING_AVAILABLE = True
+except ImportError:
+    LOGGING_AVAILABLE = False
+    logger = None
 
 class S3Handler:
     def __init__(self, access_key, secret_key, host_base):
-        self.session = boto3.session.Session()
-        self.client = self.session.client(
-            's3',
-            aws_access_key_id=access_key,
-            aws_secret_access_key=secret_key,
-            endpoint_url=f'https://{host_base}',
-            config=Config(s3={'addressing_style': 'virtual'})
-        )
+        self.access_key = access_key
+        self.secret_key = secret_key
+        self.host_base = host_base
+        self.last_error = None
+        
+        # Validar credenciales antes de crear el cliente
+        if not access_key or not secret_key:
+            error_msg = "Credenciales vacías. Verifica tu perfil."
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        if not host_base:
+            error_msg = "Host base no especificado. Verifica tu perfil."
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(error_msg)
+            raise ValueError(error_msg)
+        
+        try:
+            self.session = boto3.session.Session()
+            self.client = self.session.client(
+                's3',
+                aws_access_key_id=access_key,
+                aws_secret_access_key=secret_key,
+                endpoint_url=f'https://{host_base}',
+                config=Config(s3={'addressing_style': 'virtual'})
+            )
+            if LOGGING_AVAILABLE:
+                logger.debug(f"S3Handler inicializado para {host_base}")
+        except Exception as e:
+            error_msg = f"Error al inicializar cliente S3: {str(e)}"
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(error_msg)
+            raise
 
     def list_buckets(self):
+        """
+        Listar buckets disponibles
+        
+        Returns:
+            tuple: (buckets_list, error_message)
+                   buckets_list: Lista de nombres de buckets
+                   error_message: Mensaje de error si hubo problema, None si fue exitoso
+        """
+        self.last_error = None
+        
         try:
+            if LOGGING_AVAILABLE:
+                logger.debug(f"Intentando listar buckets desde {self.host_base}")
+            
             response = self.client.list_buckets()
-            return [bucket['Name'] for bucket in response['Buckets']]
+            buckets = [bucket['Name'] for bucket in response['Buckets']]
+            
+            if LOGGING_AVAILABLE:
+                logger.info(f"Encontrados {len(buckets)} buckets: {buckets}")
+            
+            return buckets, None
+            
+        except ClientError as e:
+            error_code = e.response.get('Error', {}).get('Code', 'Unknown')
+            error_msg = e.response.get('Error', {}).get('Message', str(e))
+            
+            # Errores comunes de autenticación
+            if error_code in ['InvalidAccessKeyId', 'SignatureDoesNotMatch']:
+                message = f"Credenciales inválidas. Verifica tu Access Key y Secret Key.\n\nError: {error_msg}"
+                self.last_error = message
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error de autenticación: {error_code} - {error_msg}")
+                if ERROR_HANDLING_AVAILABLE:
+                    error = handle_error(AuthenticationError(message), context="list_buckets")
+                    return [], error.message
+                return [], message
+            
+            # Error de conexión
+            elif error_code in ['EndpointConnectionError', 'ConnectionError']:
+                message = f"No se pudo conectar al servidor {self.host_base}.\n\nVerifica:\n- Tu conexión a Internet\n- Que el host base sea correcto\n\nError: {error_msg}"
+                self.last_error = message
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error de conexión: {error_code} - {error_msg}")
+                if ERROR_HANDLING_AVAILABLE:
+                    error = handle_error(CustomConnectionError(message), context="list_buckets")
+                    return [], error.message
+                return [], message
+            
+            # Otros errores
+            else:
+                message = f"Error al listar buckets: {error_msg}\n\nCódigo de error: {error_code}"
+                self.last_error = message
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error al listar buckets: {error_code} - {error_msg}")
+                return [], message
+                
+        except NoCredentialsError as e:
+            message = "No se encontraron credenciales. Verifica tu perfil."
+            self.last_error = message
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error de credenciales: {str(e)}")
+            return [], message
+            
+        except EndpointConnectionError as e:
+            message = f"No se pudo conectar al endpoint {self.host_base}.\n\nVerifica:\n- Tu conexión a Internet\n- Que el host base sea correcto (ej: ewr1.vultrobjects.com)"
+            self.last_error = message
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error de conexión al endpoint: {str(e)}")
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(CustomConnectionError(message), context="list_buckets")
+                return [], error.message
+            return [], message
+            
         except Exception as e:
-            print(f"Error listing buckets: {e}")
-            return []
+            message = f"Error inesperado al listar buckets: {str(e)}"
+            self.last_error = message
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error inesperado: {str(e)}", exc_info=True)
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(e, context="list_buckets")
+                return [], error.message
+            return [], message
 
     def upload_file(self, bucket_name, file_path, object_name=None):
         if object_name is None:

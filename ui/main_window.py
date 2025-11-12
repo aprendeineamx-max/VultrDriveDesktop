@@ -21,6 +21,15 @@ try:
 except ImportError:
     ERROR_HANDLING_AVAILABLE = False
 
+# ===== MEJORA #47: Sistema de Logging =====
+try:
+    from logger_manager import get_logger
+    logger = get_logger(__name__)
+    LOGGING_AVAILABLE = True
+except ImportError:
+    LOGGING_AVAILABLE = False
+    logger = None
+
 import os
 
 class UploadThread(QThread):
@@ -163,8 +172,11 @@ class MainWindow(QMainWindow):
         self.progress_bar.setVisible(False)
         self.main_layout.addWidget(self.progress_bar)
 
+        # ===== MEJORA: Cargar perfil automáticamente al iniciar =====
+        # Cargar el primer perfil disponible automáticamente
         if self.profile_selector.count() > 0:
-            self.load_profile(self.profile_selector.currentText())
+            # Cargar perfil después de que la ventana se muestre (no bloquear inicio)
+            QTimer.singleShot(500, lambda: self._auto_load_profile())
         else:
             self.statusBar().showMessage(self.tr("no_profiles_found"))
 
@@ -181,6 +193,14 @@ class MainWindow(QMainWindow):
             self.keyboard_shortcuts = KeyboardShortcuts(self)
         except ImportError:
             pass
+
+    def _auto_load_profile(self):
+        """Cargar perfil automáticamente al iniciar"""
+        if self.profile_selector.count() > 0:
+            profile_name = self.profile_selector.currentText()
+            self.load_profile(profile_name)
+            # Refrescar buckets automáticamente después de cargar perfil
+            QTimer.singleShot(1000, self.refresh_buckets)
 
     def tr(self, key, *args):
         """Translate text using the translations system"""
@@ -974,12 +994,37 @@ class MainWindow(QMainWindow):
             return
 
         self.bucket_selector.clear()
-        buckets = self.s3_handler.list_buckets()
-        if buckets:
+        
+        # ===== MEJORA #48: Manejo de errores mejorado =====
+        buckets, error_message = self.s3_handler.list_buckets()
+        
+        if error_message:
+            # Mostrar error detallado al usuario
+            self.statusBar().showMessage(f"❌ Error: {error_message[:100]}...")
+            
+            # Mostrar diálogo con error completo
+            from PyQt6.QtWidgets import QMessageBox
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Icon.Warning)
+            msg.setWindowTitle("Error al Listar Buckets")
+            msg.setText("No se pudieron listar los buckets.")
+            msg.setDetailedText(error_message)
+            msg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            msg.exec()
+            
+            # Logging
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al refrescar buckets: {error_message}")
+        elif buckets:
             self.bucket_selector.addItems(buckets)
             self.statusBar().showMessage(self.tr("buckets_found").format(len(buckets)))
+            if LOGGING_AVAILABLE:
+                logger.info(f"Buckets cargados exitosamente: {len(buckets)}")
         else:
+            # No hay buckets pero tampoco hay error (puede ser que realmente no haya buckets)
             self.statusBar().showMessage(self.tr("no_buckets_found"))
+            if LOGGING_AVAILABLE:
+                logger.info("No se encontraron buckets (puede ser normal si no hay buckets creados)")
 
     def load_profile(self, profile_name):
         if not profile_name:
@@ -989,9 +1034,74 @@ class MainWindow(QMainWindow):
             
         config = self.config_manager.get_config(profile_name)
         if config:
-            self.s3_handler = S3Handler(config['access_key'], config['secret_key'], config['host_base'])
-            self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
-            self.refresh_buckets()
+            try:
+                # Validar que las credenciales no estén vacías
+                access_key = config.get('access_key', '').strip()
+                secret_key = config.get('secret_key', '').strip()
+                host_base = config.get('host_base', '').strip()
+                
+                if not access_key or not secret_key:
+                    error_msg = "Las credenciales del perfil están vacías. Por favor, edita el perfil y verifica tus credenciales."
+                    self.statusBar().showMessage(f"❌ {error_msg}")
+                    if LOGGING_AVAILABLE:
+                        logger.error(f"Perfil '{profile_name}' tiene credenciales vacías")
+                    
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Error de Credenciales", error_msg)
+                    return
+                
+                if not host_base:
+                    error_msg = "El host base del perfil está vacío. Por favor, edita el perfil y verifica la configuración."
+                    self.statusBar().showMessage(f"❌ {error_msg}")
+                    if LOGGING_AVAILABLE:
+                        logger.error(f"Perfil '{profile_name}' tiene host_base vacío")
+                    
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Error de Configuración", error_msg)
+                    return
+                
+                # Intentar crear el handler
+                self.s3_handler = S3Handler(access_key, secret_key, host_base)
+                self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
+                
+                if LOGGING_AVAILABLE:
+                    logger.info(f"Perfil '{profile_name}' cargado exitosamente")
+                
+                # Refrescar buckets
+                self.refresh_buckets()
+                
+            except ValueError as e:
+                # Error de validación (credenciales vacías, etc.)
+                error_msg = str(e)
+                self.statusBar().showMessage(f"❌ {error_msg}")
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error al cargar perfil '{profile_name}': {error_msg}")
+                
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, "Error al Cargar Perfil", error_msg)
+                self.s3_handler = None
+                
+            except Exception as e:
+                # Otros errores
+                error_msg = f"Error inesperado al cargar el perfil: {str(e)}"
+                self.statusBar().showMessage(f"❌ {error_msg}")
+                if LOGGING_AVAILABLE:
+                    logger.error(f"Error inesperado al cargar perfil '{profile_name}': {str(e)}", exc_info=True)
+                
+                if ERROR_HANDLING_AVAILABLE:
+                    error = handle_error(e, context="load_profile")
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Error al Cargar Perfil", error.message)
+                else:
+                    from PyQt6.QtWidgets import QMessageBox
+                    QMessageBox.warning(self, "Error al Cargar Perfil", error_msg)
+                self.s3_handler = None
+        else:
+            error_msg = f"No se encontró la configuración del perfil '{profile_name}'"
+            self.statusBar().showMessage(f"❌ {error_msg}")
+            if LOGGING_AVAILABLE:
+                logger.error(error_msg)
+            self.s3_handler = None
 
     def upload_file(self):
         if not self.s3_handler:

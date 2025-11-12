@@ -85,26 +85,77 @@ class EncryptionManager:
         Desencriptar texto
         
         Args:
-            ciphertext: Texto encriptado (base64)
+            ciphertext: Texto encriptado (base64) o texto plano en base64
             
         Returns:
-            Texto desencriptado
+            Texto desencriptado o decodificado
         """
         if not ciphertext:
             return ""
         
-        # Detectar si el texto ya está encriptado
-        if not self._is_encrypted(ciphertext):
-            # Texto plano (compatibilidad con configuraciones antiguas)
-            return ciphertext
+        # PASO 1: Verificar si es base64 estándar (puede contener Fernet encriptado)
+        # Las credenciales pueden estar: base64(Fernet(texto)) o base64(texto)
+        if len(ciphertext) > 50 and ('=' in ciphertext or ciphertext.replace('+', '').replace('/', '').replace('=', '').replace('-', '').replace('_', '').isalnum()):
+            try:
+                # Intentar decodificar como base64 estándar primero
+                decoded_bytes = base64.b64decode(ciphertext)
+                decoded_str = decoded_bytes.decode('utf-8', errors='ignore')
+                
+                # PASO 2: Si el resultado decodificado empieza con "gAAAAA" es un token Fernet
+                # Intentar desencriptar con Fernet
+                if decoded_str.startswith('gAAAAA'):
+                    try:
+                        key = self._get_key()
+                        # El token Fernet ya está decodificado, solo necesitamos desencriptarlo
+                        decrypted = key.decrypt(decoded_bytes)
+                        return decrypted.decode('utf-8')
+                    except Exception:
+                        # No se pudo desencriptar con nuestra clave (puede ser de otra computadora)
+                        # En este caso, las credenciales fueron encriptadas en otra máquina
+                        # Devolver None o lanzar error para que el usuario reingrese las credenciales
+                        raise EncryptionError("Las credenciales fueron encriptadas en otra computadora. Por favor, reingresa las credenciales originales.")
+                
+                # PASO 2.5: Si el resultado decodificado parece ser base64 también (empieza con "Z0FB")
+                # Puede ser base64(base64(texto)) o base64(Fernet) que no se pudo desencriptar
+                if decoded_str.startswith('Z0FB') and len(decoded_str) > 100:
+                    # Intentar decodificar nuevamente
+                    try:
+                        double_decoded = base64.b64decode(decoded_str)
+                        double_decoded_str = double_decoded.decode('utf-8', errors='ignore')
+                        # Si el resultado doble decodificado empieza con "gAAAAA", es Fernet
+                        if double_decoded_str.startswith('gAAAAA'):
+                            try:
+                                key = self._get_key()
+                                decrypted = key.decrypt(double_decoded)
+                                return decrypted.decode('utf-8')
+                            except Exception:
+                                raise EncryptionError("Las credenciales fueron encriptadas en otra computadora. Por favor, reingresa las credenciales originales.")
+                        # Si no es Fernet, puede ser texto plano
+                        if any(c.isprintable() for c in double_decoded_str[:50]):
+                            return double_decoded_str
+                    except Exception:
+                        pass
+                
+                # PASO 3: No es Fernet, es texto plano en base64
+                if decoded_str and len(decoded_str) > 0:
+                    if any(c.isprintable() for c in decoded_str[:50]):
+                        return decoded_str
+            except Exception:
+                # No es base64 válido, continuar con otros métodos
+                pass
         
-        try:
-            key = self._get_key()
-            decoded = base64.urlsafe_b64decode(ciphertext.encode())
-            decrypted = key.decrypt(decoded)
-            return decrypted.decode()
-        except Exception as e:
-            raise EncryptionError(f"Error al desencriptar: {str(e)}")
+        # PASO 4: Intentar como Fernet directo (base64 URL-safe)
+        if self._is_encrypted(ciphertext):
+            try:
+                key = self._get_key()
+                decoded = base64.urlsafe_b64decode(ciphertext.encode())
+                decrypted = key.decrypt(decoded)
+                return decrypted.decode()
+            except Exception as e:
+                raise EncryptionError(f"Error al desencriptar: {str(e)}")
+        
+        # PASO 5: Texto plano (compatibilidad con configuraciones antiguas)
+        return ciphertext
     
     def _is_encrypted(self, text: str) -> bool:
         """
@@ -181,10 +232,23 @@ class EncryptionManager:
         for field in fields:
             if field in decrypted_data and decrypted_data[field]:
                 try:
-                    decrypted_data[field] = self.decrypt(decrypted_data[field])
+                    decrypted_value = self.decrypt(decrypted_data[field])
+                    # Solo actualizar si se desencriptó/decodificó correctamente
+                    if decrypted_value != decrypted_data[field] or not self._is_encrypted(decrypted_data[field]):
+                        decrypted_data[field] = decrypted_value
                 except EncryptionError:
-                    # Si falla, mantener el valor original (puede ser texto plano antiguo)
-                    pass
+                    # Si falla con Fernet, intentar decodificar base64 directamente
+                    try:
+                        import base64
+                        original = decrypted_data[field]
+                        if len(original) > 50:
+                            decoded = base64.b64decode(original)
+                            decoded_str = decoded.decode('utf-8', errors='ignore')
+                            if decoded_str and any(c.isprintable() for c in decoded_str[:50]):
+                                decrypted_data[field] = decoded_str
+                    except:
+                        # Si todo falla, mantener el valor original
+                        pass
         
         return decrypted_data
 
