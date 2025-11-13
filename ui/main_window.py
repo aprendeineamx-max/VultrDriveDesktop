@@ -272,7 +272,7 @@ class MainWindow(QMainWindow):
         self._tray_actions = {}
 
         # Acción: Mostrar ventana
-        open_action = QAction("📂 " + self.tr("tray_open"), self)
+        open_action = QAction(f"📂 {self.tr('tray_open')}", self)
         open_action.triggered.connect(self.restore_from_tray)
         self._tray_menu.addAction(open_action)
         self._tray_actions['open'] = open_action
@@ -280,12 +280,12 @@ class MainWindow(QMainWindow):
         self._tray_menu.addSeparator()
 
         # Sección: Montar/Desmontar
-        mount_action = QAction("➕ Montar Nuevo Bucket", self)
+        mount_action = QAction(f"➕ {self.tr('tray_mount_new_bucket')}", self)
         mount_action.triggered.connect(self.show_mount_tab)
         self._tray_menu.addAction(mount_action)
         self._tray_actions['mount'] = mount_action
 
-        unmount_action = QAction("🗑 " + self.tr("tray_unmount_all"), self)
+        unmount_action = QAction(f"🗑 {self.tr('tray_unmount_all')}", self)
         unmount_action.triggered.connect(self.tray_unmount_all)
         self._tray_menu.addAction(unmount_action)
         self._tray_actions['unmount'] = unmount_action
@@ -293,7 +293,7 @@ class MainWindow(QMainWindow):
         self._tray_menu.addSeparator()
 
         # Acción: Configuración
-        settings_action = QAction("⚙️ Configuración", self)
+        settings_action = QAction(f"⚙️ {self.tr('tray_settings')}", self)
         settings_action.triggered.connect(self.open_settings)
         self._tray_menu.addAction(settings_action)
         self._tray_actions['settings'] = settings_action
@@ -301,7 +301,7 @@ class MainWindow(QMainWindow):
         self._tray_menu.addSeparator()
 
         # Acción: Salir
-        exit_action = QAction("❌ " + self.tr("tray_exit"), self)
+        exit_action = QAction(f"❌ {self.tr('tray_exit')}", self)
         exit_action.triggered.connect(self.quit_application)
         self._tray_menu.addAction(exit_action)
         self._tray_actions['exit'] = exit_action
@@ -322,7 +322,7 @@ class MainWindow(QMainWindow):
             from drive_detector import DriveDetector
             detected = DriveDetector.detect_mounted_drives()
             mounted_count = len(detected) if detected else 0
-            tooltip = f"VultrDrive Desktop\n{mounted_count} unidad(es) montada(s)"
+            tooltip = self.tr("tray_tooltip").format(mounted_count)
         except:
             tooltip = "VultrDrive Desktop"
         
@@ -362,9 +362,16 @@ class MainWindow(QMainWindow):
             self.background_button.setText(self.tr("send_to_background"))
             self.background_button.setToolTip(self.tr("send_to_background_tooltip"))
         if hasattr(self, '_tray_actions') and self._tray_actions:
-            self._tray_actions['open'].setText(self.tr("tray_open"))
-            self._tray_actions['unmount'].setText(self.tr("tray_unmount_all"))
-            self._tray_actions['exit'].setText(self.tr("tray_exit"))
+            if 'open' in self._tray_actions:
+                self._tray_actions['open'].setText(f"📂 {self.tr('tray_open')}")
+            if 'mount' in self._tray_actions:
+                self._tray_actions['mount'].setText(f"➕ {self.tr('tray_mount_new_bucket')}")
+            if 'unmount' in self._tray_actions:
+                self._tray_actions['unmount'].setText(f"🗑 {self.tr('tray_unmount_all')}")
+            if 'settings' in self._tray_actions:
+                self._tray_actions['settings'].setText(f"⚙️ {self.tr('tray_settings')}")
+            if 'exit' in self._tray_actions:
+                self._tray_actions['exit'].setText(f"❌ {self.tr('tray_exit')}")
         if self.tray_icon:
             self.tray_icon.setToolTip(self.windowTitle())
 
@@ -411,8 +418,8 @@ class MainWindow(QMainWindow):
         """Salir completamente de la aplicación"""
         reply = QMessageBox.question(
             self,
-            'Confirmar Salida',
-            '¿Estás seguro de que quieres salir?\nSe desmontarán todas las unidades.',
+            self.tr("confirm_exit_title"),
+            self.tr("confirm_exit_text"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -429,7 +436,7 @@ class MainWindow(QMainWindow):
             if self.notification_manager:
                 self.notification_manager.info(
                     "VultrDrive Desktop",
-                    "Cerrando aplicación..."
+                    self.tr("closing_application")
                 )
             
             # Marcar para salir realmente
