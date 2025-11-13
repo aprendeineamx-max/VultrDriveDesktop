@@ -242,9 +242,9 @@ class MainWindow(QMainWindow):
         self.update_background_button_text()
         
         # ===== MEJORA: Botón para cerrar sin desmontar unidades =====
-        self.close_without_unmount_button = QPushButton("🚪 Cerrar sin Desmontar Unidades")
+        self.close_without_unmount_button = QPushButton(self.tr("close_without_unmount"))
         self.close_without_unmount_button.setObjectName("closeWithoutUnmountButton")
-        self.close_without_unmount_button.setToolTip("Cierra el programa sin desmontar las unidades montadas")
+        self.close_without_unmount_button.setToolTip(self.tr("close_without_unmount_tooltip"))
         self.close_without_unmount_button.clicked.connect(self.close_without_unmounting)
         self.close_without_unmount_button.hide()  # Ocultar inicialmente
         
@@ -1109,8 +1109,8 @@ class MainWindow(QMainWindow):
 
             msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Icon.Warning)
-            msg.setWindowTitle("Error al Listar Buckets")
-            msg.setText("No se pudieron listar los buckets.")
+            msg.setWindowTitle(self.tr("error_list_buckets_title"))
+            msg.setText(self.tr("error_list_buckets_text"))
             msg.setDetailedText(error_message)
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
@@ -1281,7 +1281,7 @@ class MainWindow(QMainWindow):
         bucket_name = self.bucket_selector.currentText()
 
         # Mostrar mensaje inmediatamente en la barra de estado
-        self.statusBar().showMessage(f"🔄 Montando {bucket_name} en {drive_letter}:...")
+        self.statusBar().showMessage(self.tr("status_mounting").format(bucket_name, drive_letter))
         description = f"mount_drive[{drive_letter}:{bucket_name}]"
 
         def execute_mount():
@@ -1321,11 +1321,11 @@ class MainWindow(QMainWindow):
     def _on_mount_success(self, drive_letter, bucket_name, message):
         """Manejar éxito del montaje"""
         try:
-            self.mount_status_label.setText(f"Status: Montado en {drive_letter}:")
+            self.mount_status_label.setText(self.tr("status_mounted").format(drive_letter))
             self.mount_button.setEnabled(False)
             self.unmount_button.setEnabled(True)
             self.open_drive_button.setEnabled(True)
-            self.statusBar().showMessage(f"✅ Unidad {drive_letter}: montada exitosamente", 5000)
+            self.statusBar().showMessage(self.tr("status_mount_success").format(drive_letter), 5000)
             
             # ===== NOTIFICACIÓN DE ÉXITO =====
             if self.notification_manager:
@@ -1350,8 +1350,8 @@ class MainWindow(QMainWindow):
             
             msg_box = QMessageBox(self)
             msg_box.setIcon(QMessageBox.Icon.Critical)
-            msg_box.setWindowTitle("❌ Error de Montaje")
-            msg_box.setText("No se pudo montar la unidad")
+            msg_box.setWindowTitle(self.tr("mount_error_title"))
+            msg_box.setText(self.tr("mount_error_text"))
             msg_box.setInformativeText(error_msg)
             msg_box.setStandardButtons(QMessageBox.StandardButton.Ok)
             
@@ -1360,6 +1360,8 @@ class MainWindow(QMainWindow):
                 install_button = msg_box.addButton(self.tr("install_winfsp_button"), QMessageBox.ButtonRole.ActionRole)
 
             msg_box.exec()
+
+            self.statusBar().showMessage(self.tr("status_mount_error"), 5000)
 
             if install_button and msg_box.clickedButton() == install_button:
                 self.statusBar().showMessage(self.tr("status_installing_winfsp"))

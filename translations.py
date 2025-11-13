@@ -112,6 +112,8 @@ class Translations:
             'drive_open_failed': 'No se pudo abrir la unidad {}.\n{}',
             'send_to_background': '⬇️ Segundo Plano',
             'send_to_background_tooltip': 'Oculta la ventana y deja la aplicación activa en el área de notificaciones.',
+            'close_without_unmount': '🚪 Cerrar sin Desmontar Unidades',
+            'close_without_unmount_tooltip': 'Cierra el programa sin desmontar las unidades montadas',
             'background_running_title': 'Aplicación en segundo plano',
             'background_running_message': 'Vultr Drive Desktop seguirá ejecutándose en segundo plano. Usa el icono de la bandeja para restaurar o salir.',
             'background_keep_running': 'Seguir en segundo plano',
@@ -128,6 +130,14 @@ class Translations:
             'theme': '🎨 Tema',
             'dark_theme': 'Tema Oscuro',
             'light_theme': 'Tema Claro',
+            'status_mounting': '🔄 Montando {0} en {1}:...',
+            'status_mounted': 'Estado: Montado en {0}:',
+            'status_mount_success': '✅ Unidad {0}: montada exitosamente',
+            'status_mount_error': '❌ Error al montar la unidad',
+            'mount_error_title': '❌ Error de Montaje',
+            'mount_error_text': 'No se pudo montar la unidad',
+            'error_list_buckets_title': 'Error al Listar Buckets',
+            'error_list_buckets_text': 'No se pudieron listar los buckets.',
         }
     
     def _english(self):
@@ -212,6 +222,8 @@ class Translations:
             'drive_open_failed': 'Could not open drive {}.\n{}',
             'send_to_background': '⬇️ Background Mode',
             'send_to_background_tooltip': 'Hide the window and keep the app running in the notification area.',
+            'close_without_unmount': '🚪 Close Without Unmounting Drives',
+            'close_without_unmount_tooltip': 'Close the app without unmounting the currently mounted drives',
             'background_running_title': 'Running in background',
             'background_running_message': 'Vultr Drive Desktop will keep running in the background. Use the tray icon to restore or exit.',
             'background_keep_running': 'Keep in background',
@@ -228,6 +240,14 @@ class Translations:
             'theme': '🎨 Theme',
             'dark_theme': 'Dark Theme',
             'light_theme': 'Light Theme',
+            'status_mounting': '🔄 Mounting {0} on {1}:...',
+            'status_mounted': 'Status: Mounted on {0}:',
+            'status_mount_success': '✅ Drive {0}: mounted successfully',
+            'status_mount_error': '❌ Failed to mount the drive',
+            'mount_error_title': '❌ Mount Error',
+            'mount_error_text': 'The drive could not be mounted',
+            'error_list_buckets_title': 'Error Listing Buckets',
+            'error_list_buckets_text': 'Buckets could not be listed.',
         }
     
     def _french(self):
@@ -302,6 +322,8 @@ class Translations:
             'drive_open_failed': 'Impossible d’ouvrir le lecteur {}.\n{}',
             'send_to_background': '⬇️ Arrière-plan',
             'send_to_background_tooltip': 'Masque la fenêtre et garde l’application active dans la zone de notification.',
+            'close_without_unmount': '🚪 Fermer sans démonter les lecteurs',
+            'close_without_unmount_tooltip': 'Ferme l’application sans démonter les lecteurs actuellement montés',
             'background_running_title': 'Application en arrière-plan',
             'background_running_message': 'Vultr Drive Desktop continuera en arrière-plan. Utilisez l’icône de la barre pour restaurer ou quitter.',
             'background_keep_running': 'Rester en arrière-plan',
@@ -318,6 +340,14 @@ class Translations:
             'theme': '🎨 Thème',
             'dark_theme': 'Thème Sombre',
             'light_theme': 'Thème Clair',
+            'status_mounting': '🔄 Montage de {0} sur {1}:...',
+            'status_mounted': 'Statut : Monté sur {0}:',
+            'status_mount_success': '✅ Lecteur {0}: monté avec succès',
+            'status_mount_error': '❌ Échec du montage du lecteur',
+            'mount_error_title': '❌ Erreur de montage',
+            'mount_error_text': 'Le lecteur n’a pas pu être monté',
+            'error_list_buckets_title': 'Erreur lors du listing des buckets',
+            'error_list_buckets_text': 'Impossible d’énumérer les buckets.',
         }
     
     def _german(self):
@@ -408,6 +438,16 @@ class Translations:
             'theme': '🎨 Design',
             'dark_theme': 'Dunkles Design',
             'light_theme': 'Helles Design',
+            'close_without_unmount': '🚪 Schließen ohne Laufwerke zu unmounten',
+            'close_without_unmount_tooltip': 'Schließt die Anwendung, ohne die aktuell gemounteten Laufwerke zu lösen',
+            'status_mounting': '🔄 {0} wird auf {1}: gemountet...',
+            'status_mounted': 'Status: Gemountet auf {0}:',
+            'status_mount_success': '✅ Laufwerk {0}: erfolgreich gemountet',
+            'status_mount_error': '❌ Laufwerk konnte nicht gemountet werden',
+            'mount_error_title': '❌ Mount-Fehler',
+            'mount_error_text': 'Das Laufwerk konnte nicht gemountet werden',
+            'error_list_buckets_title': 'Fehler beim Auflisten der Buckets',
+            'error_list_buckets_text': 'Buckets konnten nicht aufgelistet werden.',
         }
     
     def _portuguese(self):
@@ -498,6 +538,16 @@ class Translations:
             'theme': '🎨 Tema',
             'dark_theme': 'Tema Escuro',
             'light_theme': 'Tema Claro',
+            'close_without_unmount': '🚪 Fechar sem Desmontar Unidades',
+            'close_without_unmount_tooltip': 'Fecha o aplicativo sem desmontar as unidades atualmente montadas',
+            'status_mounting': '🔄 Montando {0} em {1}:...',
+            'status_mounted': 'Status: Montado em {0}:',
+            'status_mount_success': '✅ Unidade {0}: montada com sucesso',
+            'status_mount_error': '❌ Falha ao montar a unidade',
+            'mount_error_title': '❌ Erro de Montagem',
+            'mount_error_text': 'A unidade não pôde ser montada',
+            'error_list_buckets_title': 'Erro ao listar buckets',
+            'error_list_buckets_text': 'Não foi possível listar os buckets.',
         }
     
     def set_language(self, language_code):
