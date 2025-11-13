@@ -9,7 +9,8 @@ class SettingsWindow(QWidget):
         super().__init__()
         self.config_manager = config_manager
         self.main_window = main_window
-        self.setWindowTitle("Configuración - VultrDrive Desktop")
+        self.translations = getattr(main_window, "translations", None)
+        self.setWindowTitle(self.tr("settings_window_title"))
         self.setGeometry(150, 150, 600, 500)
 
         # ===== PESTAÑAS =====
@@ -26,41 +27,41 @@ class SettingsWindow(QWidget):
 
         # Left side: List of profiles
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel("Perfiles Existentes:"))
+        left_layout.addWidget(QLabel(self.tr("settings_existing_profiles")))
         self.profile_list = QListWidget()
         self.profile_list.itemClicked.connect(self.load_profile_details)
         left_layout.addWidget(self.profile_list)
         
-        self.delete_button = QPushButton("Eliminar Perfil Seleccionado")
+        self.delete_button = QPushButton(self.tr("settings_delete_profile_button"))
         self.delete_button.clicked.connect(self.delete_profile)
         left_layout.addWidget(self.delete_button)
 
         # Right side: Form to add/edit
         right_layout = QVBoxLayout()
-        right_layout.addWidget(QLabel("Agregar o Editar Perfil:"))
+        right_layout.addWidget(QLabel(self.tr("settings_add_edit_profile")))
         
         self.form_layout = QFormLayout()
         self.profile_name_input = QLineEdit()
-        self.profile_name_input.setPlaceholderText("Ej: mi-cuenta-vultr")
+        self.profile_name_input.setPlaceholderText(self.tr("settings_profile_placeholder"))
         
         self.access_key_input = QLineEdit()
-        self.access_key_input.setPlaceholderText("Ej: VVQQYYLLLHH4OB6ZZAABBC")
+        self.access_key_input.setPlaceholderText(self.tr("settings_access_key_placeholder"))
         
         self.secret_key_input = QLineEdit()
-        self.secret_key_input.setPlaceholderText("Ej: g9UUiHHvKKaabbcc12334455VVxxYYzzAABBCC")
+        self.secret_key_input.setPlaceholderText(self.tr("settings_secret_key_placeholder"))
         self.secret_key_input.setEchoMode(QLineEdit.EchoMode.Password)  # Ocultar contraseña
         
         self.host_base_input = QLineEdit()
-        self.host_base_input.setPlaceholderText("Ej: ewr1.vultrobjects.com")
+        self.host_base_input.setPlaceholderText(self.tr("settings_host_placeholder"))
 
-        self.form_layout.addRow("Nombre del Perfil:", self.profile_name_input)
-        self.form_layout.addRow("Access Key:", self.access_key_input)
-        self.form_layout.addRow("Secret Key:", self.secret_key_input)
-        self.form_layout.addRow("Hostname:", self.host_base_input)
+        self.form_layout.addRow(self.tr("settings_profile_label"), self.profile_name_input)
+        self.form_layout.addRow(self.tr("settings_access_key_label"), self.access_key_input)
+        self.form_layout.addRow(self.tr("settings_secret_key_label"), self.secret_key_input)
+        self.form_layout.addRow(self.tr("settings_host_label"), self.host_base_input)
         
         right_layout.addLayout(self.form_layout)
 
-        self.save_button = QPushButton("Guardar Perfil")
+        self.save_button = QPushButton(self.tr("settings_save_button"))
         self.save_button.clicked.connect(self.save_profile)
         right_layout.addWidget(self.save_button)
         right_layout.addStretch()
@@ -68,7 +69,7 @@ class SettingsWindow(QWidget):
         profiles_layout.addLayout(left_layout, 1)
         profiles_layout.addLayout(right_layout, 2)
         
-        self.tabs.addTab(profiles_tab, "📋 Perfiles")
+        self.tabs.addTab(profiles_tab, self.tr("settings_profiles_tab"))
         
         # Pestaña 2: Configuración General
         general_tab = QWidget()
@@ -77,22 +78,22 @@ class SettingsWindow(QWidget):
         general_layout.setSpacing(15)
         
         # Grupo: Inicio Automático
-        startup_group = QGroupBox("🚀 Inicio Automático")
+        startup_group = QGroupBox(self.tr("settings_startup_group"))
         startup_layout = QVBoxLayout()
         
-        self.chk_startup = QCheckBox("Iniciar con Windows")
+        self.chk_startup = QCheckBox(self.tr("settings_startup_checkbox"))
         if self.main_window and hasattr(self.main_window, 'startup_manager'):
             self.chk_startup.setChecked(self.main_window.startup_manager.is_enabled())
         self.chk_startup.stateChanged.connect(self.on_startup_changed)
         startup_layout.addWidget(self.chk_startup)
         
-        self.chk_minimized = QCheckBox("Iniciar minimizado en bandeja")
+        self.chk_minimized = QCheckBox(self.tr("settings_startup_minimized"))
         if self.main_window and hasattr(self.main_window, 'startup_manager'):
             self.chk_minimized.setEnabled(self.chk_startup.isChecked())
         self.chk_minimized.stateChanged.connect(self.on_startup_minimized_changed)
         startup_layout.addWidget(self.chk_minimized)
         
-        startup_info = QLabel("Si está activado, VultrDrive Desktop se iniciará automáticamente cuando Windows arranque.")
+        startup_info = QLabel(self.tr("settings_startup_info"))
         startup_info.setWordWrap(True)
         startup_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
         startup_layout.addWidget(startup_info)
@@ -101,10 +102,10 @@ class SettingsWindow(QWidget):
         general_layout.addWidget(startup_group)
         
         # Grupo: Notificaciones
-        notifications_group = QGroupBox("🔔 Notificaciones")
+        notifications_group = QGroupBox(self.tr("settings_notifications_group"))
         notifications_layout = QVBoxLayout()
         
-        self.chk_notifications = QCheckBox("Mostrar notificaciones de escritorio")
+        self.chk_notifications = QCheckBox(self.tr("settings_notifications_checkbox"))
         if self.main_window and hasattr(self.main_window, 'notification_manager'):
             self.chk_notifications.setChecked(self.main_window.notification_manager.enabled)
         else:
@@ -112,7 +113,7 @@ class SettingsWindow(QWidget):
         self.chk_notifications.stateChanged.connect(self.on_notifications_changed)
         notifications_layout.addWidget(self.chk_notifications)
         
-        notifications_info = QLabel("Recibirás notificaciones cuando se monten/desmonten unidades, se completen sincronizaciones, etc.")
+        notifications_info = QLabel(self.tr("settings_notifications_info"))
         notifications_info.setWordWrap(True)
         notifications_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
         notifications_layout.addWidget(notifications_info)
@@ -122,7 +123,7 @@ class SettingsWindow(QWidget):
         
         general_layout.addStretch()
         
-        self.tabs.addTab(general_tab, "⚙️ General")
+        self.tabs.addTab(general_tab, self.tr("settings_general_tab"))
 
         self.refresh_profile_list()
 
@@ -151,17 +152,17 @@ class SettingsWindow(QWidget):
             self.refresh_profile_list()
             self.clear_form()
         else:
-            QMessageBox.warning(self, "Warning", "All fields are required to save a profile.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_all_fields"))
 
     def delete_profile(self):
         selected_items = self.profile_list.selectedItems()
         if not selected_items:
-            QMessageBox.warning(self, "Warning", "Please select a profile to delete.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_select_profile"))
             return
 
         profile_name = selected_items[0].text()
-        reply = QMessageBox.question(self, 'Confirm Delete', 
-                                     f"Are you sure you want to delete the profile '{profile_name}'?",
+        reply = QMessageBox.question(self, self.tr("settings_confirm_delete_title"), 
+                                     self.tr("settings_confirm_delete_text").format(profile_name),
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
                                      QMessageBox.StandardButton.No)
 
@@ -190,13 +191,13 @@ class SettingsWindow(QWidget):
         if success:
             if self.main_window.notification_manager:
                 self.main_window.notification_manager.success(
-                    "Configuración Guardada",
+                    self.tr("settings_notification_saved_title"),
                     message
                 )
         else:
             if self.main_window.notification_manager:
                 self.main_window.notification_manager.error(
-                    "Error",
+                    self.tr("settings_notification_error_title"),
                     message
                 )
         
@@ -215,7 +216,7 @@ class SettingsWindow(QWidget):
         
         if success and self.main_window.notification_manager:
             self.main_window.notification_manager.info(
-                "Configuración Actualizada",
+                self.tr("settings_notification_updated_title"),
                 message
             )
     
@@ -226,3 +227,8 @@ class SettingsWindow(QWidget):
         
         enabled = state == Qt.CheckState.Checked
         self.main_window.notification_manager.set_enabled(enabled)
+
+    def tr(self, key):
+        if self.translations:
+            return self.translations.get(key)
+        return key
