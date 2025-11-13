@@ -105,12 +105,13 @@ class DriveDetector:
                         
                         # Si cumple los criterios, la agregamos
                         if is_likely_rclone:
+                            letter_pids = DriveDetector.find_process_ids_for_letter(letter)
                             mounted_drives.append({
                                 'letter': letter,
                                 'path': f'{letter}:',
                                 'label': label,
-                                'process_ids': ','.join(rclone_processes) if rclone_processes else 'N/A',
-                                'has_process': len(rclone_processes) > 0
+                                'process_ids': ','.join(str(pid) for pid in letter_pids) if letter_pids else 'N/A',
+                                'has_process': len(letter_pids) > 0
                             })
                 except Exception:
                     continue
@@ -120,6 +121,37 @@ class DriveDetector:
         
         return mounted_drives
     
+    @staticmethod
+    def find_process_ids_for_letter(drive_letter: str) -> List[int]:
+        """Obtener lista de PIDs de rclone asociados a una letra."""
+        try:
+            ps_command = f"""
+            $letter = '{drive_letter.upper()}'
+            $processes = Get-WmiObject Win32_Process -Filter "name='rclone.exe'"
+            foreach ($p in $processes) {{
+                if ($p.CommandLine -like "* $letter:*") {{
+                    Write-Output $p.ProcessId
+                }}
+            }}
+            """
+            result = subprocess.run(
+                ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_command],
+                capture_output=True,
+                text=True,
+                encoding='utf-8',
+                errors='ignore',
+                creationflags=subprocess.CREATE_NO_WINDOW,
+                timeout=15
+            )
+            pids = []
+            for line in result.stdout.strip().split('\n'):
+                line = line.strip()
+                if line.isdigit():
+                    pids.append(int(line))
+            return pids
+        except Exception:
+            return []
+
     @staticmethod
     def unmount_drive(drive_letter: str, translator=None) -> Tuple[bool, str]:
         """
@@ -149,35 +181,7 @@ class DriveDetector:
             # PASO 1: Buscar el PID usando PowerShell
             print(f"[DEBUG] Buscando PID con PowerShell para {drive_letter}:")
             
-            ps_command = f"""
-            $processes = Get-WmiObject Win32_Process -Filter "name='rclone.exe'"
-            foreach ($p in $processes) {{
-                if ($p.CommandLine -like "* {drive_letter}:*") {{
-                    Write-Output $p.ProcessId
-                }}
-            }}
-            """
-            
-            result = subprocess.run(
-                ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_command],
-                capture_output=True,
-                text=True,
-                encoding='utf-8',
-                errors='ignore',
-                creationflags=subprocess.CREATE_NO_WINDOW,
-                timeout=15
-            )
-            
-            print(f"[DEBUG] PowerShell stdout: {result.stdout.strip()}")
-            print(f"[DEBUG] PowerShell stderr: {result.stderr.strip()}")
-            
-            # Extraer PIDs de la salida
-            pids_to_kill = []
-            for line in result.stdout.strip().split('\n'):
-                line = line.strip()
-                if line and line.isdigit():
-                    print(f"[DEBUG] Encontrado PID: {line}")
-                    pids_to_kill.append(line)
+            pids_to_kill = DriveDetector.find_process_ids_for_letter(drive_letter)
             
             if not pids_to_kill:
                 print(f"[DEBUG] No se encontro PID especifico para {drive_letter}:")

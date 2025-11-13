@@ -31,7 +31,8 @@ class RcloneManager:
         self.rclone_config_dir = os.path.join(os.path.expanduser("~"), ".config", "rclone")
         self.rclone_config_file = os.path.join(self.rclone_config_dir, "rclone.conf")
         os.makedirs(self.rclone_config_dir, exist_ok=True)
-        self.mount_process = None
+        # Track procesos por letra para soportar múltiples montajes simultáneos
+        self.mount_processes: dict[str, subprocess.Popen] = {}
     
     @staticmethod
     def detect_mounted_drives():
@@ -201,7 +202,7 @@ class RcloneManager:
         try:
             # Start the mount process in background for Windows
             # Use CREATE_NEW_PROCESS_GROUP to allow it to run independently
-            self.mount_process = subprocess.Popen(
+            mount_process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -215,17 +216,19 @@ class RcloneManager:
             time.sleep(5)
             
             # Check if the process is still running
-            if self.mount_process.poll() is None:
+            if mount_process.poll() is None:
                 # Check if the drive actually appeared
                 if os.path.exists(drive_path):
-                    return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                    self._register_mount_process(drive_letter, mount_process)
+                    return True, f"Montado exitosamente en {drive_letter}:", mount_process
                 else:
                     # Give it more time for slow connections
                     time.sleep(5)
                     if os.path.exists(drive_path):
-                        return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                        self._register_mount_process(drive_letter, mount_process)
+                        return True, f"Montado exitosamente en {drive_letter}:", mount_process
                     else:
-                        self.mount_process.terminate()
+                        mount_process.terminate()
                         return False, (
                             f"No se pudo montar la unidad {drive_letter}:\n\n"
                             f"El proceso de montaje inició pero la unidad no apareció.\n\n"
@@ -241,7 +244,7 @@ class RcloneManager:
                         ), None
             else:
                 # Process exited, check the error
-                stdout, stderr = self.mount_process.communicate()
+                stdout, stderr = mount_process.communicate()
                 error_msg = stderr.decode('utf-8', errors='ignore') if stderr else "Error desconocido"
                 
                 # Detectar si es error de WinFsp
@@ -279,12 +282,56 @@ class RcloneManager:
 
     def unmount_drive(self, drive_letter):
         """Unmount the drive usando net use (específico para esa letra)"""
+        return self.unmount_drive_by_letter(drive_letter)
+
+    def unmount_drive_by_process(self, process, drive_letter: str | None = None):
+        """Termina un proceso específico de rclone."""
+        letter = drive_letter.upper() if drive_letter else None
+        try:
+            pid = None
+            if isinstance(process, subprocess.Popen):
+                pid = process.pid
+                process.terminate()
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+            else:
+                pid = int(process)
+                subprocess.run(
+                    ['taskkill', '/PID', str(pid), '/F', '/T'],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW,
+                    timeout=5
+                )
+            if letter:
+                self.mount_processes.pop(letter, None)
+            return True, f"Proceso {pid or ''} terminado correctamente"
+        except Exception as exc:
+            return False, f"No se pudo terminar el proceso de montaje: {exc}"
+
+    def unmount_drive_by_letter(self, drive_letter: str):
+        """Desmonta una letra concreta, intentando matar procesos asociados."""
         try:
             import time
             drive_path = f"{drive_letter}:"
             
+            letter = drive_letter.upper()
+            stored_process = self.mount_processes.get(letter)
+            if stored_process:
+                success, message = self.unmount_drive_by_process(stored_process, letter)
+                if success:
+                    time.sleep(0.5)
+                    if not os.path.exists(drive_path):
+                        return True, f"Unidad {drive_letter}: desmontada exitosamente"
+                else:
+                    last_error = message
+            else:
+                last_error = None
+            
             # Primero intentar con net use para desmontar SOLO esa letra
-            result = subprocess.run(
+            subprocess.run(
                 ['net', 'use', drive_path, '/delete', '/yes'],
                 capture_output=True,
                 text=True,
@@ -302,20 +349,19 @@ class RcloneManager:
             )
             
             if vol_result.returncode != 0:
-                # Se desmontó exitosamente
-                if self.mount_process:
-                    self.mount_process = None
+                self.mount_processes.pop(letter, None)
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
             
-            # Si net use no funcionó, terminar el proceso rclone
-            if self.mount_process:
-                try:
-                    self.mount_process.terminate()
-                    self.mount_process.wait(timeout=2)
-                    self.mount_process = None
-                    time.sleep(0.5)
-                except:
-                    pass
+            # Si net use no funcionó, intentar localizar procesos rclone por letra
+            process_ids = self._find_process_ids_for_letter(letter)
+            for pid in process_ids:
+                subprocess.run(
+                    ['taskkill', '/PID', str(pid), '/F', '/T'],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                time.sleep(0.5)
             
             # Verificar nuevamente
             vol_result2 = subprocess.run(
@@ -326,16 +372,31 @@ class RcloneManager:
             )
             
             if vol_result2.returncode != 0:
+                self.mount_processes.pop(letter, None)
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
             else:
-                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                fallback = last_error or "Intenta cerrar todos los archivos abiertos desde esta unidad."
+                return False, f"No se pudo desmontar la unidad {drive_letter}.\n{fallback}"
                 
         except Exception as e:
             return False, f"Error al desmontar: {str(e)}"
 
     def is_mounted(self):
         """Check if a drive is currently mounted"""
-        return self.mount_process is not None and self.mount_process.poll() is None
+        return any(proc.poll() is None for proc in self.mount_processes.values())
+
+    def _register_mount_process(self, drive_letter: str, process: subprocess.Popen):
+        """Guardar referencia del proceso asociado a una letra."""
+        letter = drive_letter.upper()
+        self.mount_processes[letter] = process
+
+    def _find_process_ids_for_letter(self, drive_letter: str) -> list[int]:
+        """Usar DriveDetector para ubicar procesos de rclone asociados a una letra."""
+        try:
+            from drive_detector import DriveDetector
+            return DriveDetector.find_process_ids_for_letter(drive_letter)
+        except Exception:
+            return []
 
     def list_buckets_rclone(self, profile_name):
         """List all buckets using rclone"""

@@ -254,6 +254,7 @@ class MultipleMountManager:
             True si está conectada, False si no
         """
         import os
+        from drive_detector import DriveDetector
         
         if letter not in self.mounted_drives:
             return False
@@ -268,9 +269,19 @@ class MultipleMountManager:
         process_alive = False
         if mount_info.process:
             try:
-                process_alive = mount_info.process.poll() is None
+                if hasattr(mount_info.process, 'poll'):
+                    process_alive = mount_info.process.poll() is None
+                else:
+                    process_alive = self._is_pid_alive(int(mount_info.process))
             except:
                 pass
+        
+        if is_mounted and not process_alive:
+            # Intentar detectar procesos asociados a la letra
+            letter_pids = DriveDetector.find_process_ids_for_letter(letter)
+            if letter_pids:
+                mount_info.process = letter_pids[0]
+                process_alive = True
         
         # Actualizar estado
         if is_mounted and process_alive:
@@ -320,6 +331,19 @@ class MultipleMountManager:
             info = self.mounted_drives[letter]
             result.append(info)
         return result
+
+    def _is_pid_alive(self, pid: int) -> bool:
+        """Verificar si un PID sigue activo."""
+        try:
+            result = subprocess.run(
+                ['tasklist', '/FI', f'PID eq {pid}', '/FO', 'CSV', '/NH'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            return str(pid) in result.stdout
+        except Exception:
+            return False
     
     def open_drive_in_explorer(self, letter: str) -> Tuple[bool, str]:
         """
