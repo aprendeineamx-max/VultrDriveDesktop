@@ -24,6 +24,9 @@ Después de analizar todo el repositorio, he identificado **35 nuevas propuestas
 ## 🔒 1. SEGURIDAD Y PRIVACIDAD
 
 ### **Mejora #36: Encriptación de Credenciales**
+
+> **Nota (2025-11-13):** La encriptación se encuentra deshabilitada en la versión actual para mantener la portabilidad total. Esta sección describe el análisis original previo a dicha decisión.
+
 **Problema actual**: Las credenciales se guardan en texto plano en `config.json`
 
 **Mejora propuesta**:

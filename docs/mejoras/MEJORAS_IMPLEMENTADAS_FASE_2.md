@@ -63,6 +63,8 @@ logger.exception("Excepción con traceback")
 
 ## 🔒 Mejora #36: Encriptación de Credenciales
 
+> **Nota (2025-11-13):** La encriptación fue deshabilitada en la versión actual para garantizar portabilidad y compatibilidad entre máquinas. El contenido de esta sección se conserva como registro histórico del trabajo realizado.
+
 ### **Archivo Creado**: `encryption_manager.py`
 
 **Características Implementadas**:
