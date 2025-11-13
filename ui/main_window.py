@@ -13,7 +13,7 @@ from file_watcher import RealTimeSync
 from drive_detector import DriveDetector
 from startup_manager import StartupManager
 from notification_manager import NotificationManager, NotificationType
-from progress_dialog import ProgressDialog
+from core.task_runner import TaskRunner
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -87,15 +87,9 @@ class BackupThread(QThread):
 
 
 class MainWindow(QMainWindow):
-    # Señal para actualizar UI desde hilos
-    mount_finished = pyqtSignal(bool, str, str, str)  # success, message, drive_letter, bucket_name
-    
     def __init__(self, theme_manager=None, translations=None, save_preferences_callback=None):
         super().__init__()
-        
-        # Conectar señal de montaje
-        self.mount_finished.connect(self._handle_mount_result)
-        
+
         # Store references to theme manager and translations
         self.theme_manager = theme_manager
         self.translations = translations
@@ -120,6 +114,9 @@ class MainWindow(QMainWindow):
         self._force_quit = False
         self._tray_notified = False
         self._close_without_unmount = False  # Flag para cerrar sin desmontar
+        self.task_runner = TaskRunner(self)
+        self._refreshing_buckets = False
+        self._current_bucket_handler = None
         
         # ===== QUICK WINS: Inicializar gestores =====
         # Gestor de inicio automático
@@ -1059,17 +1056,57 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("select_profile_first"))
             return
 
+        if self._refreshing_buckets and self._current_bucket_handler is self.s3_handler:
+            if LOGGING_AVAILABLE:
+                logger.debug("Se ignoró refresh_buckets porque ya hay una operación en curso.")
+            return
+
+        self._refreshing_buckets = True
+        self._current_bucket_handler = self.s3_handler
         self.bucket_selector.clear()
-        
-        # ===== MEJORA #48: Manejo de errores mejorado =====
-        buckets, error_message = self.s3_handler.list_buckets()
-        
+        self.statusBar().showMessage(self.tr("loading_buckets"))
+
+        current_handler = self.s3_handler
+        description = f"list_buckets[{getattr(current_handler, 'host_base', 'unknown')}]"
+
+        def fetch():
+            return current_handler.list_buckets()
+
+        def on_success(result):
+            if current_handler is not self.s3_handler:
+                if LOGGING_AVAILABLE:
+                    logger.debug("Resultado de buckets descartado: handler cambió durante la operación.")
+                return
+            buckets, error_message = result
+            self._handle_bucket_response(buckets, error_message)
+
+        def on_error(exc):
+            if current_handler is not self.s3_handler:
+                return
+            error_msg = f"Error inesperado al listar buckets: {exc}"
+            if LOGGING_AVAILABLE:
+                logger.error("Error listando buckets (%s): %s", description, str(exc), exc_info=True)
+            self._handle_bucket_response([], error_msg)
+
+        def on_finished():
+            self._refreshing_buckets = False
+            self._current_bucket_handler = None
+
+        self.task_runner.run(
+            fetch,
+            on_success=on_success,
+            on_error=on_error,
+            on_finished=on_finished,
+            description=description,
+        )
+
+    def _handle_bucket_response(self, buckets, error_message):
+        self.bucket_selector.clear()
+
         if error_message:
-            # Mostrar error detallado al usuario
-            self.statusBar().showMessage(f"❌ Error: {error_message[:100]}...")
-            
-            # Mostrar diálogo con error completo
-            from PyQt6.QtWidgets import QMessageBox
+            short_error = error_message if len(error_message) <= 120 else f"{error_message[:117]}..."
+            self.statusBar().showMessage(f"❌ {short_error}")
+
             msg = QMessageBox(self)
             msg.setIcon(QMessageBox.Icon.Warning)
             msg.setWindowTitle("Error al Listar Buckets")
@@ -1077,8 +1114,7 @@ class MainWindow(QMainWindow):
             msg.setDetailedText(error_message)
             msg.setStandardButtons(QMessageBox.StandardButton.Ok)
             msg.exec()
-            
-            # Logging
+
             if LOGGING_AVAILABLE:
                 logger.error(f"Error al refrescar buckets: {error_message}")
         elif buckets:
@@ -1087,7 +1123,6 @@ class MainWindow(QMainWindow):
             if LOGGING_AVAILABLE:
                 logger.info(f"Buckets cargados exitosamente: {len(buckets)}")
         else:
-            # No hay buckets pero tampoco hay error (puede ser que realmente no haya buckets)
             self.statusBar().showMessage(self.tr("no_buckets_found"))
             if LOGGING_AVAILABLE:
                 logger.info("No se encontraron buckets (puede ser normal si no hay buckets creados)")
@@ -1247,27 +1282,34 @@ class MainWindow(QMainWindow):
 
         # Mostrar mensaje inmediatamente en la barra de estado
         self.statusBar().showMessage(f"🔄 Montando {bucket_name} en {drive_letter}:...")
-        
-        # Ejecutar montaje en hilo separado de forma segura
-        def mount_in_thread():
-            try:
-                success, message = self.rclone_manager.mount_drive(
-                    profile_name, 
-                    drive_letter, 
-                    bucket_name
-                )
-                # Emitir señal para actualizar UI desde el hilo principal
-                self.mount_finished.emit(success, message, drive_letter, bucket_name)
-            except Exception as e:
-                error_msg = f"Error inesperado: {str(e)}"
-                if LOGGING_AVAILABLE:
-                    logger.error(f"Error al montar unidad: {error_msg}", exc_info=True)
-                self.mount_finished.emit(False, error_msg, drive_letter, bucket_name)
-        
-        # Ejecutar en hilo separado usando threading (más seguro que QThread anidado)
-        from threading import Thread
-        mount_thread = Thread(target=mount_in_thread, daemon=True)
-        mount_thread.start()
+        description = f"mount_drive[{drive_letter}:{bucket_name}]"
+
+        def execute_mount():
+            success, message = self.rclone_manager.mount_drive(
+                profile_name,
+                drive_letter,
+                bucket_name,
+            )
+            return success, message, drive_letter, bucket_name
+
+        def on_success(result):
+            success, message, _letter, _bucket = result
+            if LOGGING_AVAILABLE:
+                logger.info("Montaje completado (%s): %s", description, message)
+            self._handle_mount_result(success, message, _letter, _bucket)
+
+        def on_error(exc):
+            error_msg = f"Error inesperado: {exc}"
+            if LOGGING_AVAILABLE:
+                logger.error("Error en tarea de montaje (%s): %s", description, str(exc), exc_info=True)
+            self._handle_mount_result(False, error_msg, drive_letter, bucket_name)
+
+        self.task_runner.run(
+            execute_mount,
+            on_success=on_success,
+            on_error=on_error,
+            description=description,
+        )
     
     def _handle_mount_result(self, success, message, drive_letter, bucket_name):
         """Manejar resultado del montaje desde señal (thread-safe)"""
