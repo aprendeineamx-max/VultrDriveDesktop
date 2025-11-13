@@ -511,8 +511,8 @@ class MainWindow(QMainWindow):
         if self.real_time_sync and self.real_time_sync.is_running():
             reply = QMessageBox.question(
                 self,
-                'Sync Still Running',
-                'Real-time sync is still active. Do you want to stop it before closing?',
+                self.tr("sync_running_title"),
+                self.tr("sync_running_text"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
@@ -523,8 +523,8 @@ class MainWindow(QMainWindow):
         if self.rclone_manager.is_mounted():
             reply = QMessageBox.question(
                 self,
-                'Drive Still Mounted',
-                'A drive is still mounted. Do you want to unmount it before closing?',
+                self.tr("drive_still_mounted_title"),
+                self.tr("drive_still_mounted_text"),
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 QMessageBox.StandardButton.Yes
             )
@@ -571,8 +571,10 @@ class MainWindow(QMainWindow):
             # Show restart message
             QMessageBox.information(
                 self, 
-                "Language Changed", 
-                f"Language changed to {self.translations.get_available_languages()[language_code]}.\n\nPlease restart the application to see all changes."
+                self.tr("language_changed_title"), 
+                self.tr("language_changed_message").format(
+                    self.translations.get_available_languages()[language_code]
+                )
             )
             
             # Update button text
