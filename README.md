@@ -117,6 +117,15 @@ VultrDriveDesktop/
 
 ---
 
+## ?? Internacionalizaci?n (UTF-8)
+
+- Todas las cadenas viven ahora en archivos UTF-8 dentro de `i18n/*.json` (uno por idioma).
+- `translations.py` carga los archivos de forma perezosa, tanto en desarrollo como en ejecutables PyInstaller.
+- Para agregar o actualizar un idioma, basta con editar el JSON correspondiente sin tocar c?digo.
+- Los textos del README y de la interfaz se mantienen en UTF-8 real para evitar artefactos en consolas antiguas.
+
+---
+
 ## 🛠️ Requisitos
 
 ### Sistema Operativo
