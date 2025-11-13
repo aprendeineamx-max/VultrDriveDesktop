@@ -27,6 +27,7 @@ class DashboardWidget(QWidget):
     
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.translations = getattr(parent, "translations", None)
         self.setup_ui()
         self.stats = {
             'space_used': 0,
@@ -49,7 +50,7 @@ class DashboardWidget(QWidget):
         layout.setContentsMargins(20, 20, 20, 20)
         
         # Título
-        title = QLabel("📊 Dashboard")
+        title = QLabel(self.tr("dashboard_tab_title"))
         title_font = QFont()
         title_font.setPointSize(16)
         title_font.setBold(True)
@@ -85,7 +86,7 @@ class DashboardWidget(QWidget):
     
     def create_space_widget(self) -> QGroupBox:
         """Crear widget de espacio usado/disponible"""
-        group = QGroupBox("💾 Espacio en Bucket")
+        group = QGroupBox(self.tr("dashboard_space_group"))
         layout = QVBoxLayout()
         
         # Barra de progreso circular (simulada con barra horizontal)
@@ -111,13 +112,13 @@ class DashboardWidget(QWidget):
         layout.addWidget(self.space_progress)
         
         # Información de espacio
-        self.space_label = QLabel("0 MB / 0 MB")
+        self.space_label = QLabel(self.tr("dashboard_space_initial"))
         self.space_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.space_label.setStyleSheet("font-size: 11pt; color: #95a5a6;")
         layout.addWidget(self.space_label)
         
         # Porcentaje
-        self.space_percent = QLabel("0% usado")
+        self.space_percent = QLabel(self.tr("dashboard_space_percent").format(0))
         self.space_percent.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.space_percent.setStyleSheet("font-size: 10pt; color: #7f8c8d;")
         layout.addWidget(self.space_percent)
@@ -127,7 +128,7 @@ class DashboardWidget(QWidget):
     
     def create_files_widget(self) -> QGroupBox:
         """Crear widget de archivos sincronizados"""
-        group = QGroupBox("📁 Archivos Hoy")
+        group = QGroupBox(self.tr("dashboard_files_group"))
         layout = QVBoxLayout()
         
         # Contador grande
@@ -141,7 +142,7 @@ class DashboardWidget(QWidget):
         layout.addWidget(self.files_count)
         
         # Etiqueta
-        files_label = QLabel("archivos sincronizados")
+        files_label = QLabel(self.tr("dashboard_files_subtext"))
         files_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         files_label.setStyleSheet("font-size: 10pt; color: #95a5a6;")
         layout.addWidget(files_label)
@@ -151,11 +152,11 @@ class DashboardWidget(QWidget):
     
     def create_speed_widget(self) -> QGroupBox:
         """Crear widget de velocidad de transferencia"""
-        group = QGroupBox("⚡ Velocidad")
+        group = QGroupBox(self.tr("dashboard_speed_group"))
         layout = QVBoxLayout()
         
         # Velocidad actual
-        self.speed_label = QLabel("0.0 MB/s")
+        self.speed_label = QLabel(self.tr("dashboard_speed_zero"))
         self.speed_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         speed_font = QFont()
         speed_font.setPointSize(18)
@@ -165,7 +166,7 @@ class DashboardWidget(QWidget):
         layout.addWidget(self.speed_label)
         
         # Estado
-        self.speed_status = QLabel("Sin transferencias")
+        self.speed_status = QLabel(self.tr("dashboard_speed_idle"))
         self.speed_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.speed_status.setStyleSheet("font-size: 9pt; color: #7f8c8d;")
         layout.addWidget(self.speed_status)
@@ -175,11 +176,11 @@ class DashboardWidget(QWidget):
     
     def create_sync_widget(self) -> QGroupBox:
         """Crear widget de última sincronización"""
-        group = QGroupBox("🔄 Sincronización")
+        group = QGroupBox(self.tr("dashboard_sync_group"))
         layout = QVBoxLayout()
         
         # Última sincronización
-        self.last_sync_label = QLabel("Nunca")
+        self.last_sync_label = QLabel(self.tr("dashboard_sync_never"))
         self.last_sync_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         sync_font = QFont()
         sync_font.setPointSize(12)
@@ -188,7 +189,7 @@ class DashboardWidget(QWidget):
         layout.addWidget(self.last_sync_label)
         
         # Estado
-        self.sync_status = QLabel("⏸ Detenida")
+        self.sync_status = QLabel(self.tr("dashboard_sync_stopped"))
         self.sync_status.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.sync_status.setStyleSheet("font-size: 10pt; color: #e74c3c;")
         layout.addWidget(self.sync_status)
@@ -198,17 +199,17 @@ class DashboardWidget(QWidget):
     
     def create_drives_widget(self) -> QGroupBox:
         """Crear widget de unidades montadas"""
-        group = QGroupBox("💿 Unidades Montadas")
+        group = QGroupBox(self.tr("dashboard_drives_group"))
         layout = QVBoxLayout()
         
         # Lista de unidades
-        self.drives_label = QLabel("Ninguna")
+        self.drives_label = QLabel(self.tr("dashboard_drives_none"))
         self.drives_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drives_label.setStyleSheet("font-size: 11pt; color: #95a5a6;")
         layout.addWidget(self.drives_label)
         
         # Contador
-        self.drives_count = QLabel("0 unidades")
+        self.drives_count = QLabel(self.tr("dashboard_drives_count").format(0))
         self.drives_count.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.drives_count.setStyleSheet("font-size: 9pt; color: #7f8c8d;")
         layout.addWidget(self.drives_count)
@@ -256,8 +257,8 @@ class DashboardWidget(QWidget):
             self.space_percent.setText(f"{percent}% usado")
         else:
             self.space_progress.setValue(0)
-            self.space_label.setText("No disponible")
-            self.space_percent.setText("0% usado")
+            self.space_label.setText(self.tr("dashboard_space_unavailable"))
+            self.space_percent.setText(self.tr("dashboard_space_percent").format(0))
         
         # Archivos
         files_count = self.stats.get('files_synced_today', 0)
@@ -267,11 +268,11 @@ class DashboardWidget(QWidget):
         speed = self.stats.get('transfer_speed', 0.0)
         if speed > 0:
             self.speed_label.setText(f"{speed:.2f} MB/s")
-            self.speed_status.setText("🔄 Transfiriendo")
+            self.speed_status.setText(self.tr("dashboard_speed_active"))
             self.speed_status.setStyleSheet("font-size: 9pt; color: #2ecc71;")
         else:
-            self.speed_label.setText("0.0 MB/s")
-            self.speed_status.setText("Sin transferencias")
+            self.speed_label.setText(self.tr("dashboard_speed_zero"))
+            self.speed_status.setText(self.tr("dashboard_speed_idle"))
             self.speed_status.setStyleSheet("font-size: 9pt; color: #7f8c8d;")
         
         # Última sincronización
@@ -283,11 +284,11 @@ class DashboardWidget(QWidget):
                 self.last_sync_label.setText(f"{time_str}\n{date_str}")
             else:
                 self.last_sync_label.setText(str(last_sync))
-            self.sync_status.setText("✅ Activa")
+            self.sync_status.setText(self.tr("dashboard_sync_active"))
             self.sync_status.setStyleSheet("font-size: 10pt; color: #2ecc71;")
         else:
-            self.last_sync_label.setText("Nunca")
-            self.sync_status.setText("⏸ Detenida")
+            self.last_sync_label.setText(self.tr("dashboard_sync_never"))
+            self.sync_status.setText(self.tr("dashboard_sync_stopped"))
             self.sync_status.setStyleSheet("font-size: 10pt; color: #e74c3c;")
         
         # Unidades montadas
@@ -295,8 +296,13 @@ class DashboardWidget(QWidget):
         if drives:
             drives_str = ", ".join([f"{d}:" for d in drives])
             self.drives_label.setText(drives_str)
-            self.drives_count.setText(f"{len(drives)} unidad(es)")
+            self.drives_count.setText(self.tr("dashboard_drives_count").format(len(drives)))
         else:
-            self.drives_label.setText("Ninguna")
-            self.drives_count.setText("0 unidades")
+            self.drives_label.setText(self.tr("dashboard_drives_none"))
+            self.drives_count.setText(self.tr("dashboard_drives_count").format(0))
+
+    def tr(self, key):
+        if self.translations:
+            return self.translations.get(key)
+        return key
 
