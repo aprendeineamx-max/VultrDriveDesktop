@@ -952,7 +952,7 @@ class MainWindow(QMainWindow):
 
     def select_sync_folder(self):
         """Select folder for real-time synchronization"""
-        folder = QFileDialog.getExistingDirectory(self, "Select Folder to Monitor")
+        folder = QFileDialog.getExistingDirectory(self, self.tr("dialog_select_monitor_folder"))
         if folder:
             self.sync_folder_label.setText(folder)
             self.sync_folder_label.setProperty('folder_path', folder)
@@ -964,12 +964,12 @@ class MainWindow(QMainWindow):
             return
 
         if self.bucket_selector.count() == 0:
-            QMessageBox.warning(self, self.tr("warning"), "Por favor selecciona un bucket primero.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_bucket_first"))
             return
 
         folder = self.sync_folder_label.property('folder_path')
         if not folder:
-            QMessageBox.warning(self, self.tr("warning"), "Por favor selecciona una carpeta para monitorear.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_folder_to_monitor"))
             return
 
         bucket_name = self.bucket_selector.currentText()
@@ -984,7 +984,7 @@ class MainWindow(QMainWindow):
         success, message = self.real_time_sync.start()
 
         if success:
-            self.sync_status_label.setText(f"{self.tr('status')}: Monitoreando {folder}")
+            self.sync_status_label.setText(self.tr("status_monitoring_folder").format(folder))
             self.start_sync_btn.setEnabled(False)
             self.stop_sync_btn.setEnabled(True)
             self.sync_log_message(f"✓ {message}")
@@ -999,7 +999,7 @@ class MainWindow(QMainWindow):
             success, message = self.real_time_sync.stop()
             
             if success:
-                self.sync_status_label.setText(f"{self.tr('status')}: {self.tr('status_stopped')}")
+                self.sync_status_label.setText(self.tr('status_stopped'))
                 self.start_sync_btn.setEnabled(True)
                 self.stop_sync_btn.setEnabled(False)
                 self.sync_log_message(f"✓ {message}")

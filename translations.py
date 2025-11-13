@@ -150,6 +150,9 @@ class Translations:
             'mount_error_text': 'No se pudo montar la unidad',
             'error_list_buckets_title': 'Error al Listar Buckets',
             'error_list_buckets_text': 'No se pudieron listar los buckets.',
+            'dialog_select_monitor_folder': 'Selecciona la carpeta a monitorear',
+            'select_folder_to_monitor': 'Por favor selecciona una carpeta para monitorear.',
+            'status_monitoring_folder': 'Estado: Monitoreando {}',
         }
     
     def _english(self):
@@ -272,6 +275,9 @@ class Translations:
             'mount_error_text': 'The drive could not be mounted',
             'error_list_buckets_title': 'Error Listing Buckets',
             'error_list_buckets_text': 'Buckets could not be listed.',
+            'dialog_select_monitor_folder': 'Select the folder to monitor',
+            'select_folder_to_monitor': 'Please select a folder to monitor.',
+            'status_monitoring_folder': 'Status: Monitoring {}',
         }
     
     def _french(self):
@@ -384,6 +390,9 @@ class Translations:
             'mount_error_text': 'Le lecteur n’a pas pu être monté',
             'error_list_buckets_title': 'Erreur lors du listing des buckets',
             'error_list_buckets_text': 'Impossible d’énumérer les buckets.',
+            'dialog_select_monitor_folder': 'Sélectionnez le dossier à surveiller',
+            'select_folder_to_monitor': 'Veuillez sélectionner un dossier à surveiller.',
+            'status_monitoring_folder': 'État : Surveillance de {}',
         }
     
     def _german(self):
@@ -496,6 +505,9 @@ class Translations:
             'mount_error_text': 'Das Laufwerk konnte nicht gemountet werden',
             'error_list_buckets_title': 'Fehler beim Auflisten der Buckets',
             'error_list_buckets_text': 'Buckets konnten nicht aufgelistet werden.',
+            'dialog_select_monitor_folder': 'Ordner zum Überwachen auswählen',
+            'select_folder_to_monitor': 'Bitte wähle einen Ordner zum Überwachen aus.',
+            'status_monitoring_folder': 'Status: Überwacht {}',
         }
     
     def _portuguese(self):
@@ -608,6 +620,9 @@ class Translations:
             'mount_error_text': 'A unidade não pôde ser montada',
             'error_list_buckets_title': 'Erro ao listar buckets',
             'error_list_buckets_text': 'Não foi possível listar os buckets.',
+            'dialog_select_monitor_folder': 'Selecione a pasta para monitorar',
+            'select_folder_to_monitor': 'Selecione uma pasta para monitorar, por favor.',
+            'status_monitoring_folder': 'Status: Monitorando {}',
         }
     
     def set_language(self, language_code):
