@@ -26,9 +26,10 @@ class NotificationManager(QObject):
     # Señal emitida cuando se hace clic en una notificación
     notification_clicked = pyqtSignal(str)  # notification_id
     
-    def __init__(self, tray_icon: QSystemTrayIcon = None):
+    def __init__(self, tray_icon: QSystemTrayIcon = None, translations=None):
         super().__init__()
         self.tray_icon = tray_icon
+        self.translations = translations
         self.enabled = True
         self.duration = 5000  # Duración en ms (5 segundos por defecto)
         self.notification_history = []
@@ -176,98 +177,106 @@ class NotificationManager(QObject):
     def notify_mount_success(self, drive_letter: str, bucket_name: str) -> bool:
         """Notificación de montaje exitoso"""
         return self.success(
-            "Unidad Montada",
-            f"Bucket '{bucket_name}' montado exitosamente en {drive_letter}:"
+            self.tr("notify_mount_success_title"),
+            self.tr("notify_mount_success_message").format(bucket_name, drive_letter)
         )
     
     def notify_mount_failed(self, drive_letter: str, error: str) -> bool:
         """Notificación de montaje fallido"""
         return self.error(
-            "Error de Montaje",
-            f"No se pudo montar en {drive_letter}: {error}"
+            self.tr("notify_mount_failed_title"),
+            self.tr("notify_mount_failed_message").format(drive_letter, error)
         )
     
     def notify_unmount_success(self, drive_letter: str) -> bool:
         """Notificación de desmontaje exitoso"""
         return self.success(
-            "Unidad Desmontada",
-            f"La unidad {drive_letter}: se desmontó correctamente"
+            self.tr("notify_unmount_success_title"),
+            self.tr("notify_unmount_success_message").format(drive_letter)
         )
     
     def notify_sync_complete(self, file_count: int) -> bool:
         """Notificación de sincronización completada"""
         return self.success(
-            "Sincronización Completada",
-            f"Se sincronizaron {file_count} archivo(s)"
+            self.tr("notify_sync_complete_title"),
+            self.tr("notify_sync_complete_message").format(file_count)
         )
     
     def notify_connection_lost(self) -> bool:
         """Notificación de pérdida de conexión"""
         return self.warning(
-            "Conexión Perdida",
-            "Se perdió la conexión con el servidor. Reintentando..."
+            self.tr("notify_connection_lost_title"),
+            self.tr("notify_connection_lost_message")
         )
     
     def notify_connection_restored(self) -> bool:
         """Notificación de conexión restaurada"""
         return self.success(
-            "Conexión Restaurada",
-            "La conexión con el servidor se restableció"
+            self.tr("notify_connection_restored_title"),
+            self.tr("notify_connection_restored_message")
         )
     
     def notify_low_space(self, bucket_name: str, space_left: str) -> bool:
         """Notificación de espacio bajo"""
         return self.warning(
-            "Espacio Bajo",
-            f"Bucket '{bucket_name}' tiene poco espacio: {space_left} restante"
+            self.tr("notify_low_space_title"),
+            self.tr("notify_low_space_message").format(bucket_name, space_left)
         )
     
     def notify_upload_complete(self, filename: str) -> bool:
         """Notificación de carga completada"""
         return self.info(
-            "Carga Completada",
-            f"Archivo '{filename}' subido exitosamente"
+            self.tr("notify_upload_complete_title"),
+            self.tr("notify_upload_complete_message").format(filename)
         )
     
     def notify_download_complete(self, filename: str) -> bool:
         """Notificación de descarga completada"""
         return self.info(
-            "Descarga Completada",
-            f"Archivo '{filename}' descargado exitosamente"
+            self.tr("notify_download_complete_title"),
+            self.tr("notify_download_complete_message").format(filename)
         )
     
     def notify_app_started(self) -> bool:
         """Notificación de aplicación iniciada"""
         return self.info(
-            "VultrDrive Desktop",
-            "Aplicación iniciada y lista para usar"
+            self.tr("app_name"),
+            self.tr("notify_app_started_message")
         )
     
     def notify_winfsp_installed(self) -> bool:
         """Notificación de WinFsp instalado"""
         return self.success(
-            "WinFsp Instalado",
-            "WinFsp se instaló correctamente. Ya puedes montar unidades."
+            self.tr("notify_winfsp_installed_title"),
+            self.tr("notify_winfsp_installed_message")
         )
     
     def notify_winfsp_install_failed(self) -> bool:
         """Notificación de instalación de WinFsp fallida"""
         return self.error(
-            "Error de Instalación",
-            "No se pudo instalar WinFsp. Instálalo manualmente."
+            self.tr("notify_winfsp_failed_title"),
+            self.tr("notify_winfsp_failed_message")
         )
+
+    def tr(self, key):
+        if self.translations:
+            return self.translations.get(key)
+        return key
 
 
 # Singleton global (opcional)
 _notification_manager_instance = None
 
-def get_notification_manager(tray_icon: QSystemTrayIcon = None) -> NotificationManager:
+def get_notification_manager(tray_icon: QSystemTrayIcon = None, translations=None) -> NotificationManager:
     """Obtener instancia global del gestor de notificaciones"""
     global _notification_manager_instance
     if _notification_manager_instance is None:
-        _notification_manager_instance = NotificationManager(tray_icon)
-    elif tray_icon is not None:
-        _notification_manager_instance.set_tray_icon(tray_icon)
+        _notification_manager_instance = NotificationManager(tray_icon, translations)
+    else:
+        if tray_icon is not None:
+            _notification_manager_instance.set_tray_icon(tray_icon)
+        if translations is not None:
+            _notification_manager_instance.translations = translations
     return _notification_manager_instance
 
 

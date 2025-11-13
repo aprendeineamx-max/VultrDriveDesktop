@@ -319,7 +319,7 @@ class MainWindow(QMainWindow):
         self.tray_icon.show()
         
         # ===== INICIALIZAR GESTOR DE NOTIFICACIONES =====
-        self.notification_manager = NotificationManager(self.tray_icon)
+        self.notification_manager = NotificationManager(self.tray_icon, self.translations)
         
         # Notificar inicio de aplicación
         QTimer.singleShot(1000, lambda: self.notification_manager.notify_app_started())
