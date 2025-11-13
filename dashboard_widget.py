@@ -292,6 +292,9 @@ class DashboardWidget(QWidget):
             self.sync_status.setStyleSheet("font-size: 10pt; color: #e74c3c;")
         
         # Unidades montadas
+        self._update_drive_section()
+
+    def _update_drive_section(self):
         drives = self.stats.get('mounted_drives', [])
         if drives:
             drives_str = ", ".join([f"{d}:" for d in drives])
@@ -300,6 +303,11 @@ class DashboardWidget(QWidget):
         else:
             self.drives_label.setText(self.tr("dashboard_drives_none"))
             self.drives_count.setText(self.tr("dashboard_drives_count").format(0))
+
+    def update_mounted_drives(self, drives):
+        """Actualizar solo la sección de unidades montadas."""
+        self.stats['mounted_drives'] = drives
+        self._update_drive_section()
 
     def tr(self, key):
         if self.translations:

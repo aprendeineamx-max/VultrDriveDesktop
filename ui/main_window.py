@@ -151,6 +151,7 @@ class MainWindow(QMainWindow):
         self.task_runner = TaskRunner(self)
         self._refreshing_buckets = False
         self._current_bucket_handler = None
+        self._initial_drive_scan_done = False
         
         # ===== QUICK WINS: Inicializar gestores =====
         # Gestor de inicio automático
@@ -258,6 +259,9 @@ class MainWindow(QMainWindow):
             pass
 
         self._bind_multiple_mount_manager()
+
+        # Escanear unidades montadas automáticamente unos segundos después de iniciar
+        QTimer.singleShot(2500, self._run_initial_drive_detection)
         
         # ===== Task5: Marcar ventana principal como lista =====
         if self.state_monitor:
@@ -295,6 +299,17 @@ class MainWindow(QMainWindow):
                 QTimer.singleShot(0, widget.refresh_table)
             else:
                 widget.refresh_table()
+    
+    def _run_initial_drive_detection(self):
+        """Ejecutar el detector de unidades una vez tras iniciar la aplicación."""
+        if self._initial_drive_scan_done:
+            return
+        if not self.isVisible():
+            # Reintentar cuando la ventana esté visible
+            QTimer.singleShot(500, self._run_initial_drive_detection)
+            return
+        self._initial_drive_scan_done = True
+        self.detect_mounted_drives()
 
     def _auto_load_profile(self):
         """Cargar perfil automáticamente al iniciar"""
@@ -343,6 +358,22 @@ class MainWindow(QMainWindow):
         self.close_without_unmount_button.setObjectName("closeWithoutUnmountButton")
         self.close_without_unmount_button.setToolTip(self.tr("close_without_unmount_tooltip"))
         self.close_without_unmount_button.clicked.connect(self.close_without_unmounting)
+        self.close_without_unmount_button.setStyleSheet("""
+            QPushButton#closeWithoutUnmountButton {
+                background-color: #5dade2;
+                color: #0b1c33;
+                font-weight: bold;
+                border-radius: 6px;
+                padding: 8px 14px;
+            }
+            QPushButton#closeWithoutUnmountButton:hover {
+                background-color: #4aa3d8;
+            }
+            QPushButton#closeWithoutUnmountButton:pressed {
+                background-color: #2e86c1;
+                color: white;
+            }
+        """)
         self.close_without_unmount_button.hide()  # Ocultar inicialmente
         
         top_layout.addWidget(language_label)
@@ -1801,6 +1832,9 @@ class MainWindow(QMainWindow):
                 f"No se pudieron detectar las unidades montadas:\n\n{str(e)}"
             )
         finally:
+            if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'update_mounted_drives'):
+                letters = [d['letter'] for d in detected_drives] if detected_drives else []
+                self.dashboard_tab.update_mounted_drives(letters)
             self.update_unmount_button_state(detected_drives=detected_drives)
             self._refresh_multi_mounts_widget()
     
@@ -1884,8 +1918,7 @@ class MainWindow(QMainWindow):
                 if success:
                     self.statusBar().showMessage(self.tr("status_unmount_drive_success").format(message), 3000)
                     
-                    # Actualizar visibilidad del botón después de desmontar
-                    QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
+                    self.update_close_without_unmount_button_visibility()
                     
                     # ===== AUDITORÍA =====
                     if self.audit_logger:
@@ -1917,22 +1950,19 @@ class MainWindow(QMainWindow):
                     
                     # Función para actualizar la UI completamente
                     def refresh_ui_complete():
-                        # 1. Refrescar la detección de unidades montadas
                         self.detect_mounted_drives()
-                        
-                        # 2. Rehabilitar el botón "Montar como Unidad"
+                        if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'update_mounted_drives'):
+                            try:
+                                detected = DriveDetector.detect_mounted_drives()
+                                letters = [d['letter'] for d in detected] if detected else []
+                                self.dashboard_tab.update_mounted_drives(letters)
+                            except Exception:
+                                pass
                         self.mount_button.setEnabled(True)
-                        
-                        # 3. Deshabilitar el botón "Desmontar Unidad"
                         self.unmount_button.setEnabled(False)
-
-                        # 3b. Deshabilitar botón de abrir hasta que vuelva a montarse
                         self.open_drive_button.setEnabled(False)
-                        
-                        # 4. Actualizar el estado del montaje
                         self.mount_status_label.setText(self.tr("status_not_mounted"))
                     
-                    # Esperar 2 segundos para asegurar que la unidad se libere completamente
                     QTimer.singleShot(2000, refresh_ui_complete)
                     self._refresh_multi_mounts_widget()
                 else:
@@ -1980,30 +2010,34 @@ class MainWindow(QMainWindow):
                     success, message = DriveDetector.unmount_all_drives(self.translations)
                 
                 if success:
-                    # Actualizar visibilidad del botón después de desmontar todas
-                    QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
-                    
+                    self.update_close_without_unmount_button_visibility()
                     self.drives_list.setPlainText(self.tr("unmount_all_success_details").format(message))
                     self.unmount_all_btn.setEnabled(False)
-                    
-                    # También actualizar el estado del botón de unmount principal
                     self.unmount_button.setEnabled(False)
                     self.open_drive_button.setEnabled(False)
                     self.mount_button.setEnabled(True)
                     self.mount_status_label.setText(self.tr("status_not_mounted"))
-                    
-                    # Ocultar el contenedor de botones individuales
                     if hasattr(self, 'individual_buttons_container'):
                         self.individual_buttons_container.hide()
-                    
                     QMessageBox.information(
                         self,
                         self.tr("success"),
                         message
                     )
-                    
                     self.statusBar().showMessage(self.tr("status_unmount_all_success").format(message), 5000)
                     self._refresh_multi_mounts_widget()
+
+                    def refresh_after_unmount_all():
+                        self.detect_mounted_drives()
+                        if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'update_mounted_drives'):
+                            try:
+                                detected = DriveDetector.detect_mounted_drives()
+                                letters = [d['letter'] for d in detected] if detected else []
+                                self.dashboard_tab.update_mounted_drives(letters)
+                            except Exception:
+                                pass
+
+                    QTimer.singleShot(2000, refresh_after_unmount_all)
                 else:
                     self.drives_list.setPlainText(self.tr("unmount_all_error_details").format(message))
                     QMessageBox.critical(
