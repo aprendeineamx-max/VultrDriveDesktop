@@ -232,7 +232,31 @@ def start_component_check(window, manual=False, force_install=False):
 
 def main():
     app = QApplication(sys.argv)
-    
+
+    preferences = load_user_preferences()
+
+    translations = None
+    try:
+        from translations import Translations
+        translations = Translations()
+        translations.set_language(preferences.get("language", "es"))
+    except Exception as exc:
+        translations = None
+        message = f"unable to load translations: {exc}"
+        if LOGGING_AVAILABLE and logger:
+            logger.warning("No fue posible cargar traducciones al iniciar: %s", exc)
+        else:
+            print(f"[app] Warning: {message}")
+
+    def app_tr(key, fallback):
+        if translations:
+            try:
+                return translations.get(key)
+            except Exception:
+                if LOGGING_AVAILABLE and logger:
+                    logger.debug("Fallo al obtener traducción '%s', usando fallback.", key)
+        return fallback
+
     # ===== OPTIMIZACIÓN 3: Mostrar splash mientras carga el resto =====
     splash = None
     try:
@@ -242,9 +266,13 @@ def main():
         app.processEvents()  # Forzar renderizado del splash
     except:
         pass  # Si falla el splash, continuar sin él
-    if splash:
-        splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-        app.processEvents()
+
+    def show_splash_message(key, fallback):
+        if splash:
+            splash.showMessage(app_tr(key, fallback), Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
+            app.processEvents()
+
+    show_splash_message("splash_initializing", "Iniciando...")
     
     # ===== VERIFICAR E INSTALAR WINFSP AUTOMÁTICAMENTE =====
     winfsp_installed_during_startup = False
@@ -254,9 +282,7 @@ def main():
         else:
             print("[VultrDrive] WinFsp no está instalado. Intentando instalación automática...")
         
-        if splash:
-            splash.showMessage("Instalando componentes requeridos (WinFsp)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-            app.processEvents()
+        show_splash_message("splash_installing_winfsp", "Instalando componentes requeridos (WinFsp)...")
         
         # Intentar instalar WinFsp automáticamente
         success = install_winfsp_silent()
@@ -267,17 +293,13 @@ def main():
             else:
                 print("[VultrDrive] WinFsp instalado exitosamente")
             winfsp_installed_during_startup = True
-            if splash:
-                splash.showMessage("WinFsp instalado correctamente", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-                app.processEvents()
+            show_splash_message("splash_winfsp_installed", "WinFsp instalado correctamente")
         else:
             if LOGGING_AVAILABLE:
                 logger.warning("No se pudo instalar WinFsp automáticamente")
             else:
                 print("[VultrDrive] No se pudo instalar WinFsp automáticamente")
-            if splash:
-                splash.showMessage("Continuando sin WinFsp (instalación pendiente)...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-                app.processEvents()
+            show_splash_message("splash_continue_without_winfsp", "Continuando sin WinFsp (instalación pendiente)...")
     else:
         if LOGGING_AVAILABLE:
             logger.debug("WinFsp ya está instalado")
@@ -285,41 +307,29 @@ def main():
             print("[VultrDrive] WinFsp ya está instalado")
     
     # ===== OPTIMIZACIÓN 4: Cargar módulos pesados con feedback =====
-    if splash:
-        splash.showMessage("Cargando interfaz...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-        app.processEvents()
+    show_splash_message("splash_loading_interface", "Cargando interfaz...")
     
     from ui.main_window import MainWindow
     from theme_manager import ThemeManager
-    from translations import Translations
-    
-    # Load user preferences
-    preferences = load_user_preferences()
     
     # Initialize theme manager and translations
-    if splash:
-        splash.showMessage("Configurando tema...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-        app.processEvents()
+    show_splash_message("splash_configuring_theme", "Configurando tema...")
     
     theme_manager = ThemeManager()
-    translations = Translations()
     
     # Set user preferences
     theme_manager.set_theme(preferences.get("theme", "dark"))
-    translations.set_language(preferences.get("language", "es"))
+    if translations:
+        translations.set_language(preferences.get("language", "es"))
     
     # Apply theme
     app.setStyleSheet(theme_manager.get_current_stylesheet())
 
     # Create main window with theme manager and translations
-    if splash:
-        splash.showMessage("Iniciando...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-        app.processEvents()
+    show_splash_message("splash_initializing", "Iniciando...")
     
     # Cerrar splash ANTES de crear MainWindow para evitar bloqueos
-    if splash:
-        splash.showMessage("Cargando aplicación...", Qt.AlignmentFlag.AlignCenter, Qt.GlobalColor.white)
-        app.processEvents()
+    show_splash_message("splash_loading_application", "Cargando aplicación...")
     
     try:
         window = MainWindow(theme_manager, translations, save_user_preferences)
@@ -362,8 +372,8 @@ def main():
         from PyQt6.QtWidgets import QMessageBox
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Icon.Critical)
-        msg.setWindowTitle("Error al Iniciar")
-        msg.setText("Error al inicializar la aplicación.")
+        msg.setWindowTitle(app_tr("error_start_title", "Error al Iniciar"))
+        msg.setText(app_tr("error_start_message", "Error al inicializar la aplicación."))
         msg.setDetailedText(str(e))
         msg.exec()
         sys.exit(1)
