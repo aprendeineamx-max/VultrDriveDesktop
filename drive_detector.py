@@ -121,16 +121,22 @@ class DriveDetector:
         return mounted_drives
     
     @staticmethod
-    def unmount_drive(drive_letter: str) -> Tuple[bool, str]:
+    def unmount_drive(drive_letter: str, translator=None) -> Tuple[bool, str]:
         """
         Desmonta SOLO una unidad específica
         
         Args:
             drive_letter: Letra de la unidad (ej: 'V')
+            translator: Objeto de traducciones opcional (con método get())
             
         Returns:
             Tuple (success: bool, message: str)
         """
+        def tr(key, fallback):
+            if translator and hasattr(translator, 'get'):
+                return translator.get(key, fallback)
+            return fallback
+        
         try:
             import time
             drive_path = f"{drive_letter}:"
@@ -189,11 +195,13 @@ class DriveDetector:
                 if vol_result.returncode != 0:
                     # La unidad no existe, ya está desmontada
                     print(f"[DEBUG] La unidad {drive_letter}: no esta montada")
-                    return True, f"La unidad {drive_letter}: no esta montada o ya fue desmontada"
+                    msg = tr('drive_unmount_not_mounted', f"La unidad {drive_letter}: no está montada o ya fue desmontada")
+                    return True, msg.format(drive_letter) if '{}' in msg else msg
                 
                 # La unidad existe pero no encontramos el proceso
                 print(f"[DEBUG] La unidad existe pero no hay proceso rclone asociado")
-                return False, f"No se pudo desmontar la unidad {drive_letter}:\nNo se encontro el proceso rclone asociado.\nIntenta usar 'Desmontar Todas' o reiniciar la aplicacion."
+                msg = tr('drive_unmount_no_process', f"No se pudo desmontar la unidad {drive_letter}:\nNo se encontró el proceso rclone asociado.\nIntenta usar 'Desmontar Todas' o reiniciar la aplicación.")
+                return False, msg.format(drive_letter) if '{}' in msg else msg
             
             # PASO 2: Matar los PIDs específicos
             print(f"[DEBUG] Matando {len(pids_to_kill)} proceso(s): {', '.join(pids_to_kill)}")
@@ -227,25 +235,36 @@ class DriveDetector:
             
             if vol_result.returncode != 0:
                 print(f"[DEBUG] Unidad {drive_letter}: desmontada exitosamente")
-                return True, f"Unidad {drive_letter}: desmontada exitosamente"
+                msg = tr('drive_unmount_success', f"Unidad {drive_letter}: desmontada exitosamente")
+                return True, msg.format(drive_letter) if '{}' in msg else msg
             else:
                 print(f"[DEBUG] La unidad todavia existe despues de matar el proceso")
-                return False, f"No se pudo desmontar completamente la unidad {drive_letter}:\nEl proceso fue terminado pero la unidad aun responde.\nIntenta cerrar archivos abiertos y usa 'Desmontar Todas'."
+                msg = tr('drive_unmount_incomplete', f"No se pudo desmontar completamente la unidad {drive_letter}:\nEl proceso fue terminado pero la unidad aún responde.\nIntenta cerrar archivos abiertos y usa 'Desmontar Todas'.")
+                return False, msg.format(drive_letter) if '{}' in msg else msg
                 
         except Exception as e:
             print(f"[DEBUG] Excepcion: {str(e)}")
             import traceback
             traceback.print_exc()
-            return False, f"Error al desmontar: {str(e)}"
+            msg = tr('drive_unmount_error', f"Error al desmontar: {str(e)}")
+            return False, msg.format(str(e)) if '{}' in msg else msg
     
     @staticmethod
-    def unmount_all_drives() -> Tuple[bool, str]:
+    def unmount_all_drives(translator=None) -> Tuple[bool, str]:
         """
         Desmonta todas las unidades montadas por rclone
+        
+        Args:
+            translator: Objeto de traducciones opcional (con método get())
         
         Returns:
             Tuple (success: bool, message: str)
         """
+        def tr(key, fallback):
+            if translator and hasattr(translator, 'get'):
+                return translator.get(key, fallback)
+            return fallback
+        
         try:
             result = subprocess.run(
                 ['taskkill', '/F', '/IM', 'rclone.exe'],
@@ -255,13 +274,14 @@ class DriveDetector:
             )
             
             if result.returncode == 0:
-                return True, "Todas las unidades desmontadas exitosamente"
+                return True, tr('drive_unmount_all_success', "Todas las unidades desmontadas exitosamente")
             else:
                 # No hay procesos de rclone
-                return True, "No hay unidades montadas"
+                return True, tr('drive_unmount_all_none', "No hay unidades montadas")
                 
         except Exception as e:
-            return False, f"Error al desmontar unidades: {str(e)}"
+            msg = tr('drive_unmount_all_error', f"Error al desmontar unidades: {str(e)}")
+            return False, msg.format(str(e)) if '{}' in msg else msg
     
     @staticmethod
     def get_drive_info(drive_letter: str) -> Dict[str, str]:

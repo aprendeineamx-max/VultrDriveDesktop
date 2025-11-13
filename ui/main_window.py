@@ -472,7 +472,7 @@ class MainWindow(QMainWindow):
             # Desmontar todas las unidades
             try:
                 from drive_detector import DriveDetector
-                DriveDetector.unmount_all_drives()
+                DriveDetector.unmount_all_drives(self.translations)
             except:
                 pass
             
@@ -1800,9 +1800,9 @@ class MainWindow(QMainWindow):
                     success, message = self.multiple_mount_manager.unmount_drive(drive_letter)
                     if not success:
                         # Fallback a detección manual
-                        success, message = DriveDetector.unmount_drive(drive_letter)
+                        success, message = DriveDetector.unmount_drive(drive_letter, self.translations)
                 else:
-                    success, message = DriveDetector.unmount_drive(drive_letter)
+                    success, message = DriveDetector.unmount_drive(drive_letter, self.translations)
                 
                 if success:
                     self.statusBar().showMessage(self.tr("status_unmount_drive_success").format(message), 3000)
@@ -1874,12 +1874,12 @@ class MainWindow(QMainWindow):
                     success, message = self.multiple_mount_manager.unmount_all()
                     if not success:
                         # Intentar fallback para cualquier unidad residual
-                        success_fallback, message_fallback = DriveDetector.unmount_all_drives()
+                        success_fallback, message_fallback = DriveDetector.unmount_all_drives(self.translations)
                         if success_fallback:
                             success = True
                             message = message_fallback
                 else:
-                    success, message = DriveDetector.unmount_all_drives()
+                    success, message = DriveDetector.unmount_all_drives(self.translations)
                 
                 if success:
                     # Actualizar visibilidad del botón después de desmontar todas

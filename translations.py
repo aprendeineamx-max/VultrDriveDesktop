@@ -297,6 +297,14 @@ class Translations:
             'multi_mount_open_tooltip': 'Abrir en Explorador',
             'multi_mount_unmount_tooltip': 'Desmontar unidad',
             'multi_mount_summary': 'Montajes activos: {}/{} (actualizado a las {})',
+            'drive_unmount_not_mounted': 'La unidad {}: no está montada o ya fue desmontada',
+            'drive_unmount_no_process': 'No se pudo desmontar la unidad {}:\nNo se encontró el proceso rclone asociado.\nIntenta usar \'Desmontar Todas\' o reiniciar la aplicación.',
+            'drive_unmount_success': 'Unidad {}: desmontada exitosamente',
+            'drive_unmount_incomplete': 'No se pudo desmontar completamente la unidad {}:\nEl proceso fue terminado pero la unidad aún responde.\nIntenta cerrar archivos abiertos y usa \'Desmontar Todas\'.',
+            'drive_unmount_error': 'Error al desmontar: {}',
+            'drive_unmount_all_success': 'Todas las unidades desmontadas exitosamente',
+            'drive_unmount_all_none': 'No hay unidades montadas',
+            'drive_unmount_all_error': 'Error al desmontar unidades: {}',
         }
     
     def _english(self):
@@ -566,6 +574,14 @@ class Translations:
             'multi_mount_open_tooltip': 'Open in Explorer',
             'multi_mount_unmount_tooltip': 'Unmount drive',
             'multi_mount_summary': 'Active mounts: {}/{} (updated at {})',
+            'drive_unmount_not_mounted': 'Drive {}: is not mounted or already unmounted',
+            'drive_unmount_no_process': 'Could not unmount drive {}:\nNo associated rclone process found.\nTry using \'Unmount All\' or restart the application.',
+            'drive_unmount_success': 'Drive {}: unmounted successfully',
+            'drive_unmount_incomplete': 'Could not completely unmount drive {}:\nThe process was terminated but the drive still responds.\nTry closing open files and use \'Unmount All\'.',
+            'drive_unmount_error': 'Error unmounting: {}',
+            'drive_unmount_all_success': 'All drives unmounted successfully',
+            'drive_unmount_all_none': 'No drives mounted',
+            'drive_unmount_all_error': 'Error unmounting drives: {}',
         }
     
     def _french(self):
@@ -814,6 +830,14 @@ class Translations:
             'multi_mount_open_tooltip': "Ouvrir dans l'Explorateur",
             'multi_mount_unmount_tooltip': 'Démonter le lecteur',
             'multi_mount_summary': 'Montages actifs : {}/{} (mis à jour à {})',
+            'drive_unmount_not_mounted': 'Le lecteur {}: n\'est pas monté ou déjà démonté',
+            'drive_unmount_no_process': 'Impossible de démonter le lecteur {}:\nAucun processus rclone associé trouvé.\nEssayez d\'utiliser \'Tout démonter\' ou redémarrez l\'application.',
+            'drive_unmount_success': 'Lecteur {}: démonté avec succès',
+            'drive_unmount_incomplete': 'Impossible de démonter complètement le lecteur {}:\nLe processus a été terminé mais le lecteur répond encore.\nEssayez de fermer les fichiers ouverts et utilisez \'Tout démonter\'.',
+            'drive_unmount_error': 'Erreur lors du démontage : {}',
+            'drive_unmount_all_success': 'Tous les lecteurs démontés avec succès',
+            'drive_unmount_all_none': 'Aucun lecteur monté',
+            'drive_unmount_all_error': 'Erreur lors du démontage des lecteurs : {}',
         }
     
     def _german(self):
@@ -1062,6 +1086,14 @@ class Translations:
             'multi_mount_open_tooltip': 'Im Explorer öffnen',
             'multi_mount_unmount_tooltip': 'Laufwerk unmounten',
             'multi_mount_summary': 'Aktive Mounts: {}/{} (aktualisiert um {})',
+            'drive_unmount_not_mounted': 'Laufwerk {}: ist nicht gemountet oder bereits unmountet',
+            'drive_unmount_no_process': 'Laufwerk {} konnte nicht unmountet werden:\nKein zugehöriger rclone-Prozess gefunden.\nVersuche \'Alle unmounten\' zu verwenden oder starte die Anwendung neu.',
+            'drive_unmount_success': 'Laufwerk {}: erfolgreich unmountet',
+            'drive_unmount_incomplete': 'Laufwerk {} konnte nicht vollständig unmountet werden:\nDer Prozess wurde beendet, aber das Laufwerk antwortet noch.\nVersuche geöffnete Dateien zu schließen und verwende \'Alle unmounten\'.',
+            'drive_unmount_error': 'Fehler beim Unmounten: {}',
+            'drive_unmount_all_success': 'Alle Laufwerke erfolgreich unmountet',
+            'drive_unmount_all_none': 'Keine Laufwerke gemountet',
+            'drive_unmount_all_error': 'Fehler beim Unmounten der Laufwerke: {}',
         }
     
     def _portuguese(self):
@@ -1303,13 +1335,21 @@ class Translations:
             'multi_mount_letter_header': 'Letra',
             'multi_mount_bucket_header': 'Bucket',
             'multi_mount_profile_header': 'Perfil',
-            'multi_mount_actions_header': 'Acciones',
+            'multi_mount_actions_header': 'Ações',
             'multi_mount_new_button': '➕ Montar Novo',
             'multi_mount_refresh_button': '🔄 Atualizar',
             'multi_mount_unmount_all_button': '🗑 Desmontar Todos',
-            'multi_mount_open_tooltip': 'Abrir en Explorador',
-            'multi_mount_unmount_tooltip': 'Desmontar unidad',
-            'multi_mount_summary': 'Montajes activos: {}/{} (actualizado a las {})',
+            'multi_mount_open_tooltip': 'Abrir no Explorer',
+            'multi_mount_unmount_tooltip': 'Desmontar unidade',
+            'multi_mount_summary': 'Montagens ativas: {}/{} (atualizado às {})',
+            'drive_unmount_not_mounted': 'A unidade {}: não está montada ou já foi desmontada',
+            'drive_unmount_no_process': 'Não foi possível desmontar a unidade {}:\nNenhum processo rclone associado encontrado.\nTente usar \'Desmontar Todos\' ou reiniciar o aplicativo.',
+            'drive_unmount_success': 'Unidade {}: desmontada com sucesso',
+            'drive_unmount_incomplete': 'Não foi possível desmontar completamente a unidade {}:\nO processo foi encerrado mas a unidade ainda responde.\nTente fechar arquivos abertos e use \'Desmontar Todos\'.',
+            'drive_unmount_error': 'Erro ao desmontar: {}',
+            'drive_unmount_all_success': 'Todas as unidades desmontadas com sucesso',
+            'drive_unmount_all_none': 'Nenhuma unidade montada',
+            'drive_unmount_all_error': 'Erro ao desmontar unidades: {}',
         }
     
     def set_language(self, language_code):
