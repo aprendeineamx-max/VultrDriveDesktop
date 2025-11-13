@@ -5,6 +5,7 @@ Tests para TaskScheduler
 import unittest
 import sys
 import os
+import tempfile
 from datetime import datetime, timedelta
 
 # Agregar el directorio raíz al path
@@ -111,6 +112,37 @@ class TestTaskScheduler(unittest.TestCase):
         # Puede ser None si la hora ya pasó hoy
         # Pero la estructura debe estar correcta
         self.assertIsInstance(task.schedule_type, str)
+
+    def test_weekly_schedule(self):
+        """Test: Programación semanal"""
+        task = ScheduledTask("test", lambda: None, "weekly", "monday 09:00")
+        self.assertIsNotNone(task.next_run)
+        self.assertIn(task.next_run.weekday(), [0])
+
+    def test_persistence_roundtrip(self):
+        """Test: Persistencia de tareas"""
+        tmp = tempfile.NamedTemporaryFile(delete=False)
+        tmp.close()
+        try:
+            scheduler = TaskScheduler(check_interval_seconds=1, storage_path=tmp.name)
+            scheduler.register_callback('dummy', lambda: None)
+            scheduler.add_task(
+                "task1",
+                lambda: None,
+                "interval",
+                "5m",
+                persist=True,
+                callback_id='dummy',
+            )
+            scheduler.stop()
+
+            scheduler2 = TaskScheduler(check_interval_seconds=1, storage_path=tmp.name)
+            scheduler2.register_callback('dummy', lambda: None)
+            scheduler2.restore_persisted_tasks()
+            self.assertIn("task1", scheduler2.tasks)
+            scheduler2.stop()
+        finally:
+            os.unlink(tmp.name)
 
 
 if __name__ == '__main__':

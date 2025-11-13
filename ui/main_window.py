@@ -1,7 +1,8 @@
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
-                             QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
+                             QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, QGridLayout,
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
                              QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
+                             QListWidget, QListWidgetItem,
                              QStyle)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
@@ -34,11 +35,12 @@ except ImportError:
     ComponentStatus = None
 
 try:
-    from core.task_scheduler import TaskScheduler
+    from core.task_scheduler import TaskScheduler, ScheduledTask
     SCHEDULER_AVAILABLE = True
 except ImportError:
     SCHEDULER_AVAILABLE = False
     TaskScheduler = None
+    ScheduledTask = None
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -57,6 +59,9 @@ except ImportError:
     logger = None
 
 import os
+import re
+import uuid
+from datetime import datetime
 
 class UploadThread(QThread):
     finished = pyqtSignal(bool, dict)
@@ -151,6 +156,12 @@ class MainWindow(QMainWindow):
         self.task_runner = TaskRunner(self)
         self._refreshing_buckets = False
         self._current_bucket_handler = None
+        self._scheduler_actions = {}
+        self.scheduler_action_combo = None
+        self.scheduler_type_combo = None
+        self.scheduler_value_input = None
+        self.scheduler_tasks_list = None
+        self.scheduler_status_label = None
         
         # ===== QUICK WINS: Inicializar gestores =====
         # Gestor de inicio automático
@@ -180,6 +191,7 @@ class MainWindow(QMainWindow):
             self.task_scheduler.task_executed.connect(self._on_scheduled_task_executed)
             self.task_scheduler.task_error.connect(self._on_scheduled_task_error)
             self.task_scheduler.start()
+            self._setup_scheduler_actions()
         else:
             self.task_scheduler = None
 
@@ -1158,6 +1170,57 @@ class MainWindow(QMainWindow):
         format_group.setLayout(format_layout)
         layout.addWidget(format_group)
 
+        if self.task_scheduler and self._scheduler_actions:
+            scheduler_group = QGroupBox(self.tr('scheduler_group_title'))
+            scheduler_layout = QVBoxLayout()
+
+            form_layout = QGridLayout()
+            action_label = QLabel(self.tr('scheduler_action_label'))
+            self.scheduler_action_combo = QComboBox()
+            for action_id, data in self._scheduler_actions.items():
+                self.scheduler_action_combo.addItem(data['label'], action_id)
+
+            schedule_type_label = QLabel(self.tr('scheduler_schedule_label'))
+            self.scheduler_type_combo = QComboBox()
+            self.scheduler_type_combo.addItem(self.tr('scheduler_schedule_type_interval'), userData='interval')
+            self.scheduler_type_combo.addItem(self.tr('scheduler_schedule_type_daily'), userData='daily')
+            self.scheduler_type_combo.addItem(self.tr('scheduler_schedule_type_weekly'), userData='weekly')
+            self.scheduler_type_combo.currentIndexChanged.connect(self._on_scheduler_type_changed)
+
+            self.scheduler_value_input = QLineEdit()
+            self.scheduler_value_input.setPlaceholderText(self.tr('scheduler_value_placeholder_interval'))
+
+            form_layout.addWidget(action_label, 0, 0)
+            form_layout.addWidget(self.scheduler_action_combo, 0, 1)
+            form_layout.addWidget(schedule_type_label, 1, 0)
+            form_layout.addWidget(self.scheduler_type_combo, 1, 1)
+            form_layout.addWidget(self.scheduler_value_input, 2, 0, 1, 2)
+
+            self.scheduler_add_button = QPushButton(self.tr('scheduler_add_button'))
+            self.scheduler_add_button.clicked.connect(self._on_add_scheduler_task)
+
+            form_layout.addWidget(self.scheduler_add_button, 3, 0, 1, 2)
+
+            scheduler_layout.addLayout(form_layout)
+
+            list_label = QLabel(self.tr('scheduler_task_list_title'))
+            scheduler_layout.addWidget(list_label)
+
+            self.scheduler_tasks_list = QListWidget()
+            scheduler_layout.addWidget(self.scheduler_tasks_list)
+
+            self.scheduler_remove_button = QPushButton(self.tr('scheduler_remove_button'))
+            self.scheduler_remove_button.clicked.connect(self._on_remove_scheduler_task)
+            scheduler_layout.addWidget(self.scheduler_remove_button)
+
+            self.scheduler_status_label = QLabel(self.tr('scheduler_status_empty'))
+            scheduler_layout.addWidget(self.scheduler_status_label)
+
+            scheduler_group.setLayout(scheduler_layout)
+            layout.addWidget(scheduler_group)
+            self._on_scheduler_type_changed()
+            self._refresh_scheduler_task_list()
+
         layout.addStretch()
         
         # Configurar el scroll area
@@ -2088,6 +2151,146 @@ class MainWindow(QMainWindow):
                 success=False,
                 error_message=error_message
             )
+
+    def _setup_scheduler_actions(self):
+        """Registrar acciones disponibles para el programador."""
+        if not self.task_scheduler:
+            return
+        self._scheduler_actions = {
+            'refresh_buckets': {
+                'label': self.tr('scheduler_action_refresh_buckets'),
+                'callback': lambda: self.refresh_buckets(force_remote=True),
+            },
+            'refresh_mounts': {
+                'label': self.tr('scheduler_action_refresh_mounts'),
+                'callback': lambda: self._refresh_multi_mounts_widget(),
+            },
+        }
+        for action_id, data in self._scheduler_actions.items():
+            self.task_scheduler.register_callback(action_id, data['callback'])
+        self.task_scheduler.restore_persisted_tasks()
+
+    def _on_scheduler_type_changed(self, *_):
+        if not self.scheduler_value_input or not self.scheduler_type_combo:
+            return
+        schedule_type = self.scheduler_type_combo.currentData()
+        placeholder_map = {
+            'interval': 'scheduler_value_placeholder_interval',
+            'daily': 'scheduler_value_placeholder_daily',
+            'weekly': 'scheduler_value_placeholder_weekly',
+        }
+        key = placeholder_map.get(schedule_type)
+        if key:
+            self.scheduler_value_input.setPlaceholderText(self.tr(key))
+
+    def _on_add_scheduler_task(self):
+        if not self.task_scheduler or not self._scheduler_actions:
+            return
+        action_id = self.scheduler_action_combo.currentData()
+        schedule_type = self.scheduler_type_combo.currentData()
+        value = (self.scheduler_value_input.text() or '').strip()
+        if not action_id or not schedule_type or not value:
+            self._set_scheduler_status(self.tr('scheduler_invalid_value'))
+            return
+        if not self._validate_scheduler_value(schedule_type, value):
+            self._set_scheduler_status(self.tr('scheduler_invalid_value'))
+            return
+        action = self._scheduler_actions.get(action_id)
+        if not action:
+            self._set_scheduler_status(self.tr('scheduler_invalid_value'))
+            return
+        task_id = f"{action_id}_{uuid.uuid4().hex[:6]}"
+        metadata = {
+            'action_label': action['label'],
+            'schedule_label': self._format_scheduler_description(schedule_type, value),
+        }
+        try:
+            self.task_scheduler.add_task(
+                task_id,
+                action['callback'],
+                schedule_type,
+                value,
+                enabled=True,
+                persist=True,
+                callback_id=action_id,
+                metadata=metadata,
+            )
+            self.scheduler_value_input.clear()
+            self._set_scheduler_status(self.tr('scheduler_saved'))
+            self._refresh_scheduler_task_list()
+        except Exception as exc:
+            self._set_scheduler_status(str(exc))
+
+    def _refresh_scheduler_task_list(self):
+        if not self.scheduler_tasks_list:
+            return
+        self.scheduler_tasks_list.clear()
+        if not self.task_scheduler:
+            return
+        tasks = [task for task in self.task_scheduler.list_tasks()]
+        if not tasks:
+            self._set_scheduler_status(self.tr('scheduler_status_empty'))
+            return
+        for task in tasks:
+            label = self._format_scheduler_description(task['schedule_type'], task['schedule_value'])
+            action_label = task.get('metadata', {}).get('action_label') or task['callback_id'] or task['task_id']
+            next_run = task.get('next_run')
+            next_info = f" • {self.tr('next_run_label')}: {next_run}" if next_run else ""
+            text = f"{action_label} — {label}{next_info}"
+            item = QListWidgetItem(text)
+            item.setData(Qt.ItemDataRole.UserRole, task['task_id'])
+            self.scheduler_tasks_list.addItem(item)
+
+    def _on_remove_scheduler_task(self):
+        if not self.task_scheduler or not self.scheduler_tasks_list:
+            return
+        item = self.scheduler_tasks_list.currentItem()
+        if not item:
+            return
+        task_id = item.data(Qt.ItemDataRole.UserRole)
+        if task_id and self.task_scheduler.remove_task(task_id):
+            self._set_scheduler_status(self.tr('scheduler_task_removed'))
+            self._refresh_scheduler_task_list()
+
+    def _validate_scheduler_value(self, schedule_type: str, value: str) -> bool:
+        value = value.strip()
+        if schedule_type == 'interval':
+            return bool(re.fullmatch(r'\d+[smhd]', value.lower()))
+        if schedule_type == 'daily':
+            try:
+                datetime.strptime(value, "%H:%M")
+                return True
+            except ValueError:
+                return False
+        if schedule_type == 'weekly':
+            parts = value.split()
+            if len(parts) < 2:
+                return False
+            day_tokens = [token.strip().lower() for token in parts[0].split(',') if token.strip()]
+            if not day_tokens:
+                return False
+            valid_days = ScheduledTask._WEEKDAY_MAP if ScheduledTask else {}
+            if not all(day in valid_days for day in day_tokens):
+                return False
+            try:
+                datetime.strptime(parts[1], "%H:%M")
+                return True
+            except ValueError:
+                return False
+        return False
+
+    def _format_scheduler_description(self, schedule_type: str, schedule_value: str) -> str:
+        if schedule_type == 'interval':
+            return f"{self.tr('scheduler_schedule_type_interval')} · {schedule_value}"
+        if schedule_type == 'daily':
+            return f"{self.tr('scheduler_schedule_type_daily')} · {schedule_value}"
+        if schedule_type == 'weekly':
+            return f"{self.tr('scheduler_schedule_type_weekly')} · {schedule_value}"
+        return schedule_value
+
+    def _set_scheduler_status(self, message: str):
+        if self.scheduler_status_label:
+            self.scheduler_status_label.setText(message)
     
     def update_dashboard_stats(self, force_remote=False):
         """Actualizar estadísticas del dashboard (Mejora #52)"""
