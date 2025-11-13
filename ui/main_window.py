@@ -143,7 +143,7 @@ class MainWindow(QMainWindow):
             from dashboard_widget import DashboardWidget
             self.dashboard_tab = DashboardWidget(self)
             self.dashboard_tab.update_requested.connect(self.update_dashboard_stats)
-            self.tabs.addTab(self.dashboard_tab, "📊 Dashboard")
+            self.tabs.addTab(self.dashboard_tab, self.tr("dashboard_tab_title"))
         except ImportError:
             # Si no está disponible, continuar sin dashboard
             pass
@@ -324,7 +324,7 @@ class MainWindow(QMainWindow):
             mounted_count = len(detected) if detected else 0
             tooltip = self.tr("tray_tooltip").format(mounted_count)
         except:
-            tooltip = "VultrDrive Desktop"
+            tooltip = self.tr("app_name")
         
         if self.tray_icon:
             self.tray_icon.setToolTip(tooltip)
@@ -435,7 +435,7 @@ class MainWindow(QMainWindow):
             # Notificar
             if self.notification_manager:
                 self.notification_manager.info(
-                    "VultrDrive Desktop",
+                    self.tr("app_name"),
                     self.tr("closing_application")
                 )
             
@@ -467,8 +467,8 @@ class MainWindow(QMainWindow):
         # Notificar
         if self.notification_manager:
             self.notification_manager.info(
-                "VultrDrive Desktop",
-                "Aplicación cerrada. Las unidades montadas siguen activas."
+                self.tr("app_name"),
+                self.tr("close_without_unmount_message")
             )
         
         # Marcar para salir sin desmontar (evita el diálogo de "Drive Still Mounted")
@@ -1215,19 +1215,19 @@ class MainWindow(QMainWindow):
 
     def upload_file(self):
         if not self.s3_handler:
-            QMessageBox.warning(self, "Warning", "Please select a profile first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
 
         if self.bucket_selector.count() == 0:
-            QMessageBox.warning(self, "Warning", "No buckets available. Please create a bucket first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("no_buckets_available"))
             return
         
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select File to Upload")
+        file_path, _ = QFileDialog.getOpenFileName(self, self.tr("dialog_select_upload_file"))
         if file_path:
             bucket_name = self.bucket_selector.currentText()
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            self.statusBar().showMessage(f"Uploading {os.path.basename(file_path)}...")
+            self.statusBar().showMessage(self.tr("status_uploading_file").format(os.path.basename(file_path)))
             
             self.upload_thread = UploadThread(self.s3_handler, bucket_name, file_path)
             self.upload_thread.finished.connect(self.upload_finished)
@@ -1236,27 +1236,27 @@ class MainWindow(QMainWindow):
     def upload_finished(self, success, message):
         self.progress_bar.setVisible(False)
         if success:
-            QMessageBox.information(self, "Success", message)
-            self.statusBar().showMessage("Upload completed.", 5000)
+            QMessageBox.information(self, self.tr("success"), message)
+            self.statusBar().showMessage(self.tr("status_upload_completed"), 5000)
         else:
-            QMessageBox.critical(self, "Error", message)
-            self.statusBar().showMessage("Upload failed.", 5000)
+            QMessageBox.critical(self, self.tr("error"), message)
+            self.statusBar().showMessage(self.tr("status_upload_failed"), 5000)
 
     def full_backup(self):
         if not self.s3_handler:
-            QMessageBox.warning(self, "Warning", "Please select a profile first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
 
         if self.bucket_selector.count() == 0:
-            QMessageBox.warning(self, "Warning", "No buckets available. Please create a bucket first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("no_buckets_available"))
             return
         
-        dir_path = QFileDialog.getExistingDirectory(self, "Select Directory to Backup")
+        dir_path = QFileDialog.getExistingDirectory(self, self.tr("dialog_select_backup_directory"))
         if dir_path:
             bucket_name = self.bucket_selector.currentText()
             self.progress_bar.setVisible(True)
             self.progress_bar.setValue(0)
-            self.statusBar().showMessage(f"Starting backup of {dir_path}...")
+            self.statusBar().showMessage(self.tr("status_backup_starting").format(dir_path))
             
             self.backup_thread = BackupThread(self.s3_handler, bucket_name, dir_path)
             self.backup_thread.progress.connect(self.backup_progress)
@@ -1270,19 +1270,19 @@ class MainWindow(QMainWindow):
     def backup_finished(self, success, message):
         self.progress_bar.setVisible(False)
         if success:
-            QMessageBox.information(self, "Success", message)
-            self.statusBar().showMessage("Backup completed.", 5000)
+            QMessageBox.information(self, self.tr("success"), message)
+            self.statusBar().showMessage(self.tr("status_backup_completed"), 5000)
         else:
-            QMessageBox.critical(self, "Error", message)
-            self.statusBar().showMessage("Backup failed.", 5000)
+            QMessageBox.critical(self, self.tr("error"), message)
+            self.statusBar().showMessage(self.tr("status_backup_failed"), 5000)
 
     def mount_drive(self):
         if not self.profile_selector.currentText():
-            QMessageBox.warning(self, "Warning", "Please select a profile first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
 
         if self.bucket_selector.count() == 0:
-            QMessageBox.warning(self, "Warning", "Please select a bucket to mount.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_bucket_to_mount"))
             return
 
         drive_letter = self.drive_letter_input.currentText()
@@ -1408,8 +1408,8 @@ class MainWindow(QMainWindow):
         if not drive_letter:
             QMessageBox.warning(
                 self,
-                "⚠️ Selecciona una letra",
-                "Debes elegir una letra de unidad antes de intentar desmontar."
+                self.tr("select_drive_letter_title"),
+                self.tr("select_drive_letter_text")
             )
             return
 
@@ -1445,33 +1445,30 @@ class MainWindow(QMainWindow):
             self.open_drive_button.setEnabled(True)
             self.mount_button.setEnabled(False)
             self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
-            self.mount_status_label.setText(f"✅ Unidad {selected_letter}: está montada")
+            self.mount_status_label.setText(self.tr("drive_letter_mounted_status").format(selected_letter))
         else:
             self.unmount_button.setEnabled(False)
             self.unmount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(True)
             self.mount_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
-            self.mount_status_label.setText(f"⭕ Unidad {selected_letter}: no está montada")
+            self.mount_status_label.setText(self.tr("drive_letter_not_mounted_status").format(selected_letter))
 
     def format_bucket(self):
         if not self.s3_handler:
-            QMessageBox.warning(self, "Warning", "Please select a profile first.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
 
         if self.bucket_selector.count() == 0:
-            QMessageBox.warning(self, "Warning", "No buckets available.")
+            QMessageBox.warning(self, self.tr("warning"), self.tr("no_buckets_available"))
             return
 
         bucket_name = self.bucket_selector.currentText()
 
         reply = QMessageBox.question(
             self, 
-            'CONFIRM BUCKET FORMAT', 
-            f"⚠️ WARNING ⚠️\n\n"
-            f"You are about to DELETE ALL FILES in the bucket:\n'{bucket_name}'\n\n"
-            f"This action is PERMANENT and CANNOT be undone!\n\n"
-            f"Are you absolutely sure you want to continue?",
+            self.tr("format_bucket_confirm_title"), 
+            self.tr("format_bucket_confirm_text").format(bucket_name),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
@@ -1480,22 +1477,22 @@ class MainWindow(QMainWindow):
             # Double confirmation
             confirm_text, ok = QMessageBox.getText(
                 self,
-                "Final Confirmation",
-                f"Type the bucket name '{bucket_name}' to confirm deletion:"
+                self.tr("format_bucket_final_confirm_title"),
+                self.tr("format_bucket_final_confirm_text").format(bucket_name)
             )
 
             if ok and confirm_text == bucket_name:
-                self.statusBar().showMessage(f"Formatting bucket {bucket_name}...")
+                self.statusBar().showMessage(self.tr("formatting_bucket_status").format(bucket_name))
                 success = self.s3_handler.delete_all_objects(bucket_name)
                 
                 if success:
-                    QMessageBox.information(self, "Success", f"Bucket '{bucket_name}' has been formatted.")
-                    self.statusBar().showMessage("Bucket formatted.", 5000)
+                    QMessageBox.information(self, self.tr("success"), self.tr("bucket_formatted_message").format(bucket_name))
+                    self.statusBar().showMessage(self.tr("bucket_formatted"), 5000)
                 else:
-                    QMessageBox.critical(self, "Error", "Failed to format bucket.")
-                    self.statusBar().showMessage("Format failed.", 5000)
+                    QMessageBox.critical(self, self.tr("error"), self.tr("format_failed"))
+                    self.statusBar().showMessage(self.tr("format_failed"), 5000)
             else:
-                self.statusBar().showMessage("Format cancelled.", 3000)
+                self.statusBar().showMessage(self.tr("format_cancelled"), 3000)
 
     def open_settings(self):
         self.settings_window = SettingsWindow(self.config_manager, self)
@@ -1681,13 +1678,13 @@ class MainWindow(QMainWindow):
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.statusBar().showMessage(f"🔄 Desmontando unidad {drive_letter}:...")
+            self.statusBar().showMessage(self.tr("status_unmounting_drive").format(drive_letter))
             
             try:
                 success, message = DriveDetector.unmount_drive(drive_letter)
                 
                 if success:
-                    self.statusBar().showMessage(f"✅ {message}", 3000)
+                    self.statusBar().showMessage(self.tr("status_unmount_drive_success").format(message), 3000)
                     
                     # Actualizar visibilidad del botón después de desmontar
                     QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
@@ -1721,33 +1718,30 @@ class MainWindow(QMainWindow):
                 else:
                     QMessageBox.critical(
                         self,
-                        "❌ Error",
-                        message
+                        self.tr("error"),
+                        self.tr("error_unmount_drive").format(drive_letter, message)
                     )
-                    self.statusBar().showMessage(f"❌ Error al desmontar {drive_letter}:", 5000)
+                    self.statusBar().showMessage(self.tr("status_unmount_drive_error").format(drive_letter), 5000)
                     
             except Exception as e:
                 QMessageBox.critical(
                     self,
-                    "❌ Error Crítico",
-                    f"Error inesperado al desmontar unidad {drive_letter}:\n\n{str(e)}"
+                    self.tr("error"),
+                    self.tr("error_unexpected_unmount_drive").format(drive_letter, str(e))
                 )
     
     def unmount_all_detected_drives(self):
         """Desmonta todas las unidades detectadas"""
         reply = QMessageBox.question(
             self,
-            "⚠️ Confirmar Desmontaje",
-            "¿Estás seguro de que deseas desmontar TODAS las unidades montadas?\n\n"
-            "Esto cerrará todos los procesos de rclone y desmontará\n"
-            "todas las unidades V:, W:, X:, Y:, Z: que estén activas.\n\n"
-            "Los archivos abiertos desde estas unidades se cerrarán.",
+            self.tr("confirm_unmount_all_title"),
+            self.tr("confirm_unmount_all_text"),
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No
         )
         
         if reply == QMessageBox.StandardButton.Yes:
-            self.statusBar().showMessage("🔄 Desmontando todas las unidades...")
+            self.statusBar().showMessage(self.tr("status_unmounting_all"))
             
             try:
                 success, message = DriveDetector.unmount_all_drives()
@@ -1756,11 +1750,7 @@ class MainWindow(QMainWindow):
                     # Actualizar visibilidad del botón después de desmontar todas
                     QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
                     
-                    self.drives_list.setPlainText(
-                        f"✅ {message}\n\n"
-                        "Todas las unidades han sido desmontadas correctamente.\n"
-                        "Puedes volver a detectar unidades para verificar."
-                    )
+                    self.drives_list.setPlainText(self.tr("unmount_all_success_details").format(message))
                     self.unmount_all_btn.setEnabled(False)
                     
                     # También actualizar el estado del botón de unmount principal
@@ -1775,27 +1765,26 @@ class MainWindow(QMainWindow):
                     
                     QMessageBox.information(
                         self,
-                        "✅ Éxito",
+                        self.tr("success"),
                         message
                     )
                     
-                    self.statusBar().showMessage("✅ " + message, 5000)
+                    self.statusBar().showMessage(self.tr("status_unmount_all_success").format(message), 5000)
                 else:
-                    self.drives_list.setPlainText(f"❌ Error:\n\n{message}")
+                    self.drives_list.setPlainText(self.tr("unmount_all_error_details").format(message))
                     QMessageBox.critical(
                         self,
-                        "❌ Error",
-                        f"No se pudieron desmontar las unidades:\n\n{message}"
+                        self.tr("error"),
+                        self.tr("error_unmount_all").format(message)
                     )
-                    self.statusBar().showMessage("❌ Error al desmontar", 5000)
+                    self.statusBar().showMessage(self.tr("status_unmount_all_error"), 5000)
                     
             except Exception as e:
-                error_msg = f"❌ Error inesperado:\n\n{str(e)}"
-                self.drives_list.setPlainText(error_msg)
+                self.drives_list.setPlainText(self.tr("unmount_all_unexpected_error_details").format(str(e)))
                 QMessageBox.critical(
                     self,
-                    "❌ Error Crítico",
-                    f"Error inesperado al desmontar unidades:\n\n{str(e)}"
+                    self.tr("error"),
+                    self.tr("error_unexpected_unmount_all").format(str(e))
                 )
 
     def closeEvent(self, event):
@@ -1813,8 +1802,8 @@ class MainWindow(QMainWindow):
             # Notificar la primera vez
             if not self._tray_notified and self.notification_manager:
                 self.notification_manager.info(
-                    "VultrDrive Desktop",
-                    "La aplicación sigue ejecutándose en la bandeja del sistema"
+                    self.tr("app_name"),
+                    self.tr("tray_running_notification")
                 )
                 self._tray_notified = True
             return
