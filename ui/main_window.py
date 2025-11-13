@@ -645,7 +645,7 @@ class MainWindow(QMainWindow):
         self.bucket_label = QLabel(self.tr("select_bucket"))
         self.bucket_selector = QComboBox()
         self.refresh_buckets_btn = QPushButton(self.tr("refresh"))
-        self.refresh_buckets_btn.clicked.connect(self.refresh_buckets)
+        self.refresh_buckets_btn.clicked.connect(lambda: self.refresh_buckets(force_remote=True))
         bucket_layout.addWidget(self.bucket_label)
         bucket_layout.addWidget(self.bucket_selector, 1)
         bucket_layout.addWidget(self.refresh_buckets_btn)
@@ -1068,12 +1068,15 @@ class MainWindow(QMainWindow):
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
 
-    def refresh_buckets(self):
+    def refresh_buckets(self, force_remote=False):
         if not self.s3_handler:
             self.statusBar().showMessage(self.tr("select_profile_first"))
             return
 
-        if self._refreshing_buckets and self._current_bucket_handler is self.s3_handler:
+        if force_remote and self.s3_handler:
+            self.s3_handler.clear_cache('list_buckets')
+
+        if self._refreshing_buckets and self._current_bucket_handler is self.s3_handler and not force_remote:
             if LOGGING_AVAILABLE:
                 logger.debug("Se ignoró refresh_buckets porque ya hay una operación en curso.")
             return
@@ -1087,7 +1090,7 @@ class MainWindow(QMainWindow):
         description = f"list_buckets[{getattr(current_handler, 'host_base', 'unknown')}]"
 
         def fetch():
-            return current_handler.list_buckets()
+            return current_handler.list_buckets(use_cache=not force_remote)
 
         def on_success(result):
             if current_handler is not self.s3_handler:
@@ -1095,7 +1098,7 @@ class MainWindow(QMainWindow):
                     logger.debug("Resultado de buckets descartado: handler cambió durante la operación.")
                 return
             buckets, error_message = result
-            self._handle_bucket_response(buckets, error_message)
+            self._handle_bucket_response(buckets, error_message, force_remote=force_remote)
 
         def on_error(exc):
             if current_handler is not self.s3_handler:
@@ -1103,7 +1106,7 @@ class MainWindow(QMainWindow):
             error_msg = f"Error inesperado al listar buckets: {exc}"
             if LOGGING_AVAILABLE:
                 logger.error("Error listando buckets (%s): %s", description, str(exc), exc_info=True)
-            self._handle_bucket_response([], error_msg)
+            self._handle_bucket_response([], error_msg, force_remote=force_remote)
 
         def on_finished():
             self._refreshing_buckets = False
@@ -1117,7 +1120,7 @@ class MainWindow(QMainWindow):
             description=description,
         )
 
-    def _handle_bucket_response(self, buckets, error_message):
+    def _handle_bucket_response(self, buckets, error_message, force_remote=False):
         self.bucket_selector.clear()
 
         if error_message:
@@ -1143,6 +1146,14 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("no_buckets_found"))
             if LOGGING_AVAILABLE:
                 logger.info("No se encontraron buckets (puede ser normal si no hay buckets creados)")
+
+        if isinstance(force_remote, bool) and force_remote:
+            # Invalidar caché de tamaños para obtener datos frescos del bucket activo
+            if self.s3_handler:
+                self.s3_handler.clear_cache('get_bucket_size')
+
+        # Actualizar dashboard con métricas posiblemente nuevas
+        self.update_dashboard_stats(force_remote=force_remote)
 
     def load_profile(self, profile_name):
         if not profile_name:
@@ -1879,22 +1890,22 @@ class MainWindow(QMainWindow):
         else:
             event.ignore()
     
-    def update_dashboard_stats(self):
+    def update_dashboard_stats(self, force_remote=False):
         """Actualizar estadísticas del dashboard (Mejora #52)"""
         if not hasattr(self, 'dashboard_tab'):
             return
-        
+
         try:
             from datetime import datetime
             stats = {}
-            
+
             # Obtener espacio usado del bucket
             if self.s3_handler and self.bucket_selector.count() > 0:
                 try:
                     bucket_name = self.bucket_selector.currentText()
                     # Obtener tamaño real del bucket
-                    space_used, error_msg = self.s3_handler.get_bucket_size(bucket_name)
-                    
+                    space_used, error_msg = self.s3_handler.get_bucket_size(bucket_name, use_cache=not force_remote)
+
                     if error_msg:
                         if LOGGING_AVAILABLE:
                             logger.warning(f"Error al obtener tamaño del bucket: {error_msg}")

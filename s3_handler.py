@@ -2,6 +2,7 @@ import boto3
 from botocore.client import Config
 from botocore.exceptions import ClientError, NoCredentialsError, EndpointConnectionError
 import os
+from time import monotonic
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -20,12 +21,22 @@ except ImportError:
     logger = None
 
 class S3Handler:
-    def __init__(self, access_key, secret_key, host_base):
+    def __init__(self, access_key, secret_key, host_base, *, cache_enabled=True, cache_ttl=None):
         self.access_key = access_key
         self.secret_key = secret_key
         self.host_base = host_base
         self.last_error = None
-        
+
+        self.cache_enabled = cache_enabled
+        default_cache_ttl = {
+            'list_buckets': 60,
+            'get_bucket_size': 300,
+        }
+        if cache_ttl:
+            default_cache_ttl.update(cache_ttl)
+        self.cache_ttl = default_cache_ttl
+        self._cache = {}
+
         # Validar credenciales antes de crear el cliente
         if not access_key or not secret_key:
             error_msg = "Credenciales vacías. Verifica tu perfil."
@@ -33,14 +44,14 @@ class S3Handler:
             if LOGGING_AVAILABLE:
                 logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         if not host_base:
             error_msg = "Host base no especificado. Verifica tu perfil."
             self.last_error = error_msg
             if LOGGING_AVAILABLE:
                 logger.error(error_msg)
             raise ValueError(error_msg)
-        
+
         try:
             self.session = boto3.session.Session()
             self.client = self.session.client(
@@ -59,33 +70,39 @@ class S3Handler:
                 logger.error(error_msg)
             raise
 
-    def list_buckets(self):
+    def list_buckets(self, *, use_cache=True):
         """
         Listar buckets disponibles
-        
-        Returns:
-            tuple: (buckets_list, error_message)
-                   buckets_list: Lista de nombres de buckets
-                   error_message: Mensaje de error si hubo problema, None si fue exitoso
+
+        Args:
+            use_cache: Si es True, usar resultados en caché cuando estén disponibles.
         """
         self.last_error = None
-        
+
+        cache_key = self._build_cache_key()
+        if use_cache:
+            cached = self._get_from_cache('list_buckets', cache_key)
+            if cached is not None:
+                return cached
+
         try:
             if LOGGING_AVAILABLE:
                 logger.debug(f"Intentando listar buckets desde {self.host_base}")
-            
+
             response = self.client.list_buckets()
             buckets = [bucket['Name'] for bucket in response['Buckets']]
-            
+
             if LOGGING_AVAILABLE:
                 logger.info(f"Encontrados {len(buckets)} buckets: {buckets}")
-            
-            return buckets, None
-            
+
+            result = (buckets, None)
+            self._set_cache('list_buckets', cache_key, result)
+            return result
+
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_msg = e.response.get('Error', {}).get('Message', str(e))
-            
+
             # Errores comunes de autenticación
             if error_code in ['InvalidAccessKeyId', 'SignatureDoesNotMatch']:
                 message = f"Credenciales inválidas. Verifica tu Access Key y Secret Key.\n\nError: {error_msg}"
@@ -96,7 +113,7 @@ class S3Handler:
                     error = handle_error(AuthenticationError(message), context="list_buckets")
                     return [], error.message
                 return [], message
-            
+
             # Error de conexión
             elif error_code in ['EndpointConnectionError', 'ConnectionError']:
                 message = f"No se pudo conectar al servidor {self.host_base}.\n\nVerifica:\n- Tu conexión a Internet\n- Que el host base sea correcto\n\nError: {error_msg}"
@@ -107,7 +124,7 @@ class S3Handler:
                     error = handle_error(CustomConnectionError(message), context="list_buckets")
                     return [], error.message
                 return [], message
-            
+
             # Otros errores
             else:
                 message = f"Error al listar buckets: {error_msg}\n\nCódigo de error: {error_code}"
@@ -115,14 +132,14 @@ class S3Handler:
                 if LOGGING_AVAILABLE:
                     logger.error(f"Error al listar buckets: {error_code} - {error_msg}")
                 return [], message
-                
+
         except NoCredentialsError as e:
             message = "No se encontraron credenciales. Verifica tu perfil."
             self.last_error = message
             if LOGGING_AVAILABLE:
                 logger.error(f"Error de credenciales: {str(e)}")
             return [], message
-            
+
         except EndpointConnectionError as e:
             message = f"No se pudo conectar al endpoint {self.host_base}.\n\nVerifica:\n- Tu conexión a Internet\n- Que el host base sea correcto (ej: ewr1.vultrobjects.com)"
             self.last_error = message
@@ -132,7 +149,7 @@ class S3Handler:
                 error = handle_error(CustomConnectionError(message), context="list_buckets")
                 return [], error.message
             return [], message
-            
+
         except Exception as e:
             message = f"Error inesperado al listar buckets: {str(e)}"
             self.last_error = message
@@ -150,6 +167,8 @@ class S3Handler:
         try:
             self.client.upload_file(file_path, bucket_name, object_name)
             print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
+            if self.cache_enabled:
+                self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
             return True
         except Exception as e:
             print(f"Error uploading file: {e}")
@@ -164,49 +183,58 @@ class S3Handler:
         except Exception as e:
             print(f"Error listing objects: {e}")
             return []
-    
-    def get_bucket_size(self, bucket_name):
+
+    def get_bucket_size(self, bucket_name, *, use_cache=True):
         """
         Obtener el tamaño total usado en un bucket
-        
+
         Args:
             bucket_name: Nombre del bucket
-            
+            use_cache: Si es True, utilizar resultados en caché cuando estén disponibles.
+
         Returns:
             tuple: (size_bytes, error_message)
                    size_bytes: Tamaño total en bytes, None si hay error
                    error_message: Mensaje de error si hubo problema, None si fue exitoso
         """
+        cache_key = self._build_cache_key(bucket_name)
+        if use_cache:
+            cached = self._get_from_cache('get_bucket_size', cache_key)
+            if cached is not None:
+                return cached
+
         try:
             if LOGGING_AVAILABLE:
                 logger.debug(f"Calculando tamaño del bucket '{bucket_name}'")
-            
+
             total_size = 0
             paginator = self.client.get_paginator('list_objects_v2')
-            
+
             for page in paginator.paginate(Bucket=bucket_name):
                 if 'Contents' in page:
                     for obj in page['Contents']:
                         total_size += obj.get('Size', 0)
-            
+
             if LOGGING_AVAILABLE:
                 logger.info(f"Tamaño del bucket '{bucket_name}': {total_size} bytes ({total_size / (1024*1024):.2f} MB)")
-            
-            return total_size, None
-            
+
+            result = (total_size, None)
+            self._set_cache('get_bucket_size', cache_key, result)
+            return result
+
         except ClientError as e:
             error_code = e.response.get('Error', {}).get('Code', 'Unknown')
             error_msg = e.response.get('Error', {}).get('Message', str(e))
             message = f"Error al obtener tamaño del bucket: {error_msg}"
-            
+
             if LOGGING_AVAILABLE:
                 logger.error(f"Error al obtener tamaño del bucket: {error_code} - {error_msg}")
-            
+
             if ERROR_HANDLING_AVAILABLE:
                 error = handle_error(e, context="get_bucket_size")
                 return None, error.message
             return None, message
-            
+
         except Exception as e:
             message = f"Error inesperado al obtener tamaño del bucket: {str(e)}"
             if LOGGING_AVAILABLE:
@@ -220,6 +248,8 @@ class S3Handler:
         try:
             self.client.delete_object(Bucket=bucket_name, Key=object_name)
             print(f"Deleted {object_name} from {bucket_name}")
+            if self.cache_enabled:
+                self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
             return True
         except Exception as e:
             print(f"Error deleting object: {e}")
@@ -245,7 +275,9 @@ class S3Handler:
                         Delete={'Objects': batch}
                     )
                 print(f"Deleted {len(delete_us)} objects from {bucket_name}")
-            
+                if self.cache_enabled:
+                    self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
+
             return True
         except Exception as e:
             print(f"Error deleting all objects: {e}")
@@ -259,3 +291,56 @@ class S3Handler:
         except Exception as e:
             print(f"Error downloading file: {e}")
             return False
+
+    def _build_cache_key(self, *args, **kwargs):
+        if not args and not kwargs:
+            return ()
+        if kwargs:
+            # Ordenar kwargs para consistencia
+            kw_items = tuple(sorted(kwargs.items()))
+        else:
+            kw_items = ()
+        return (args, kw_items)
+
+    def _get_from_cache(self, namespace, key):
+        if not self.cache_enabled:
+            return None
+        namespace_cache = self._cache.get(namespace)
+        if not namespace_cache:
+            return None
+        entry = namespace_cache.get(key)
+        if not entry:
+            return None
+        expires_at, value = entry
+        if monotonic() > expires_at:
+            # Expirado
+            namespace_cache.pop(key, None)
+            if not namespace_cache:
+                self._cache.pop(namespace, None)
+            return None
+        return value
+
+    def _set_cache(self, namespace, key, value):
+        if not self.cache_enabled:
+            return
+        ttl = self.cache_ttl.get(namespace)
+        if not ttl:
+            return
+        namespace_cache = self._cache.setdefault(namespace, {})
+        namespace_cache[key] = (monotonic() + ttl, value)
+
+    def clear_cache(self, namespace=None, key=None):
+        if not self.cache_enabled:
+            return
+        if namespace is None:
+            self._cache.clear()
+            return
+        namespace_cache = self._cache.get(namespace)
+        if not namespace_cache:
+            return
+        if key is None:
+            namespace_cache.clear()
+        else:
+            namespace_cache.pop(key, None)
+        if not namespace_cache:
+            self._cache.pop(namespace, None)
