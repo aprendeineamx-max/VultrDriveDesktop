@@ -18,6 +18,28 @@ from multiple_mount_manager import MultipleMountManager
 from ui.multi_mounts_widget import MultiMountsWidget
 from functools import partial
 
+# ===== MEJORA Task5: Auditoría y Monitor =====
+try:
+    from core.audit_logger import get_audit_logger, AuditEventType
+    AUDIT_AVAILABLE = True
+except ImportError:
+    AUDIT_AVAILABLE = False
+    AuditEventType = None
+
+try:
+    from core.state_monitor import get_state_monitor, ComponentStatus
+    STATE_MONITOR_AVAILABLE = True
+except ImportError:
+    STATE_MONITOR_AVAILABLE = False
+    ComponentStatus = None
+
+try:
+    from core.task_scheduler import TaskScheduler
+    SCHEDULER_AVAILABLE = True
+except ImportError:
+    SCHEDULER_AVAILABLE = False
+    TaskScheduler = None
+
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
     from error_handler import handle_error, get_error_handler
@@ -136,6 +158,30 @@ class MainWindow(QMainWindow):
         
         # Gestor de notificaciones (se inicializará después del tray_icon)
         self.notification_manager = None
+        
+        # ===== Task5: Inicializar Auditoría, Monitor y Scheduler =====
+        if AUDIT_AVAILABLE:
+            self.audit_logger = get_audit_logger()
+        else:
+            self.audit_logger = None
+        
+        if STATE_MONITOR_AVAILABLE:
+            self.state_monitor = get_state_monitor()
+            # Registrar componentes principales
+            self.state_monitor.register_component('main_window', ComponentStatus.INITIALIZING)
+            self.state_monitor.register_component('s3_handler', ComponentStatus.UNKNOWN)
+            self.state_monitor.register_component('rclone_manager', ComponentStatus.UNKNOWN)
+            self.state_monitor.register_component('sync', ComponentStatus.STOPPED)
+        else:
+            self.state_monitor = None
+        
+        if SCHEDULER_AVAILABLE:
+            self.task_scheduler = TaskScheduler(check_interval_seconds=60)
+            self.task_scheduler.task_executed.connect(self._on_scheduled_task_executed)
+            self.task_scheduler.task_error.connect(self._on_scheduled_task_error)
+            self.task_scheduler.start()
+        else:
+            self.task_scheduler = None
 
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
@@ -212,6 +258,13 @@ class MainWindow(QMainWindow):
             pass
 
         self._bind_multiple_mount_manager()
+        
+        # ===== Task5: Marcar ventana principal como lista =====
+        if self.state_monitor:
+            QTimer.singleShot(1000, lambda: self.state_monitor.update_component_status(
+                'main_window',
+                ComponentStatus.READY
+            ))
 
     def _bind_multiple_mount_manager(self):
         """Preparar conexiones con MultipleMountManager"""
@@ -1240,6 +1293,14 @@ class MainWindow(QMainWindow):
                 self.s3_handler = S3Handler(access_key, secret_key, host_base)
                 self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
                 
+                # ===== ACTUALIZAR MONITOR =====
+                if self.state_monitor:
+                    self.state_monitor.update_component_status(
+                        's3_handler',
+                        ComponentStatus.READY,
+                        {'profile_name': profile_name}
+                    )
+                
                 if LOGGING_AVAILABLE:
                     logger.info(f"Perfil '{profile_name}' cargado exitosamente")
                 
@@ -1449,6 +1510,22 @@ class MainWindow(QMainWindow):
             self.unmount_button.setEnabled(True)
             self.open_drive_button.setEnabled(True)
             self.statusBar().showMessage(self.tr("status_mount_success").format(drive_letter), 5000)
+            
+            # ===== AUDITORÍA =====
+            if self.audit_logger:
+                self.audit_logger.log(
+                    AuditEventType.DRIVE_MOUNTED,
+                    {'drive_letter': drive_letter, 'bucket_name': bucket_name},
+                    success=True
+                )
+            
+            # ===== ACTUALIZAR MONITOR =====
+            if self.state_monitor:
+                self.state_monitor.update_component_status(
+                    'rclone_manager',
+                    ComponentStatus.RUNNING,
+                    {'mounted_drives': [drive_letter]}
+                )
             
             # ===== NOTIFICACIÓN DE ÉXITO =====
             if self.notification_manager:
@@ -1810,6 +1887,27 @@ class MainWindow(QMainWindow):
                     # Actualizar visibilidad del botón después de desmontar
                     QTimer.singleShot(1000, self.update_close_without_unmount_button_visibility)
                     
+                    # ===== AUDITORÍA =====
+                    if self.audit_logger:
+                        self.audit_logger.log(
+                            AuditEventType.DRIVE_UNMOUNTED,
+                            {'drive_letter': drive_letter},
+                            success=True
+                        )
+                    
+                    # ===== ACTUALIZAR MONITOR =====
+                    if self.state_monitor:
+                        # Obtener lista actualizada de unidades montadas
+                        from drive_detector import DriveDetector
+                        mounted = DriveDetector.detect_mounted_drives()
+                        mounted_letters = [d['letter'] for d in mounted] if mounted else []
+                        if not mounted_letters:
+                            self.state_monitor.update_component_status(
+                                'rclone_manager',
+                                ComponentStatus.READY,
+                                {'mounted_drives': []}
+                            )
+                    
                     # ===== NOTIFICACIÓN DE DESMONTAJE =====
                     if self.notification_manager:
                         self.notification_manager.notify_unmount_success(drive_letter)
@@ -1967,6 +2065,29 @@ class MainWindow(QMainWindow):
             event.accept()
         else:
             event.ignore()
+    
+    def _on_scheduled_task_executed(self, task_id: str, success: bool, message: str):
+        """Manejar ejecución de tarea programada"""
+        if LOGGING_AVAILABLE:
+            logger.info(f"Tarea programada ejecutada: {task_id} - {message}")
+        if self.audit_logger:
+            self.audit_logger.log(
+                AuditEventType.SYNC_STARTED if 'sync' in task_id.lower() else AuditEventType.BACKUP_STARTED,
+                {'task_id': task_id, 'message': message},
+                success=success
+            )
+    
+    def _on_scheduled_task_error(self, task_id: str, error_message: str):
+        """Manejar error en tarea programada"""
+        if LOGGING_AVAILABLE:
+            logger.error(f"Error en tarea programada {task_id}: {error_message}")
+        if self.audit_logger:
+            self.audit_logger.log(
+                AuditEventType.ERROR_OCCURRED,
+                {'task_id': task_id},
+                success=False,
+                error_message=error_message
+            )
     
     def update_dashboard_stats(self, force_remote=False):
         """Actualizar estadísticas del dashboard (Mejora #52)"""

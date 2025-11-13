@@ -548,3 +548,6 @@ Error: None
 2025-11-12 23:49:40 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
 2025-11-12 23:50:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
 2025-11-12 23:50:10 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 03:51:48 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 03:51:57 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 03:52:00 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
