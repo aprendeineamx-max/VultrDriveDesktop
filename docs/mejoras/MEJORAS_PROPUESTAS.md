@@ -10,6 +10,55 @@
 
 ---
 
+## Auditoria tecnica 2025-11-13
+
+### 1. Fortalecer custodia de credenciales
+- **Evidencia**: `config.json:2` versiona claves reales; `config_manager.py:27` fuerza `self.encryption_enabled = False` y `config_manager.py:108` siempre persiste texto plano.
+- **Impacto**: expone acceso completo al bucket y obliga a distribuir builds con secretos incrustados.
+- **Acciones**: convertir `config.json` en solo plantilla ignored, reactivar `encryption_manager`, soportar vault/Windows Credential Manager y validar que las migraciones no escriban el secreto en claro en disco temporal.
+
+### 2. Reconciliar API de desmontaje para multi-montajes
+- **Evidencia**: `multiple_mount_manager.py:171` llama a `unmount_drive_by_process` y `multiple_mount_manager.py:176` a `unmount_drive_by_letter`, pero `rclone_manager.py:280` solo expone `unmount_drive(self, drive_letter)`.
+- **Impacto**: cualquier desmontaje disparado desde la UI o desde `record_unmount` lanzara `AttributeError`, dejando unidades zombie.
+- **Acciones**: implementar ambos metodos en `RcloneManager` (terminando procesos por PID o letra) o ajustar el manager para reutilizar `DriveDetector.unmount_drive` segun disponibilidad.
+
+### 3. Hacer que RcloneManager sea realmente multi-instancia
+- **Evidencia**: `rclone_manager.py:34` mantiene un unico `self.mount_process` que se sobreescribe en cada `mount_drive` (ver `rclone_manager.py:201`).
+- **Impacto**: al montar mas de una letra, el handle del proceso anterior se pierde y `MultipleMountManager.record_mount_success` no puede almacenar un proceso valido, impidiendo desmontajes limpios y telemetria por letra.
+- **Acciones**: llevar un dict `{drive_letter: subprocess.Popen}` y exponer operaciones basadas en letra/PID, mas una persistencia ligera de montajes para recuperar procesos tras reinicios.
+
+### 4. Detectar y liberar todas las letras configurables
+- **Evidencia**: `drive_detector.py:52` recorre solo `VWXYZ`, mientras `multiple_mount_manager.py:99` abre letras adicionales (`EFGHIJKLMNOPQRSTU`) cuando las preferidas no estan libres.
+- **Impacto**: montajes en letras permitidas fuera de V-Z no se detectan ni desmontan automaticamente, dejando residuos en Explorer y confundiendo al usuario.
+- **Acciones**: iterar `ABCDEFGHIJKLMNOPQRSTUVWXYZ`, cruzar contra `MultipleMountManager` y almacenar metadata (PID, profile) para permitir opciones avanzadas como reintentos o auto-repair.
+
+### 5. Aislar la cache de S3 por perfil y endpoint
+- **Evidencia**: `s3_handler.py:82` usa `_build_cache_key()` sin argumentos, y `_build_cache_key` (`s3_handler.py:295`) devuelve siempre `()` cuando no recibe params; la entrada de `get_bucket_size` solo usa el nombre (`s3_handler.py:200`).
+- **Impacto**: los resultados de `list_buckets` o `get_bucket_size` se comparten entre perfiles distintos si el usuario cambia de cuenta durante una sesion, mostrando buckets ajenos o tamanos incorrectos.
+- **Acciones**: incluir `self.host_base`, identificador del perfil y el bucket completo en la clave de cache, y limpiar la cache cuando cambie el perfil activo o al fallar la autenticacion.
+
+### 6. Normalizar encoding en UI y docs
+- **Evidencia**: `README.md:1` y `translations.py:1` muestran mojibake (`dYs?`, `dY"O`, etc.) por guardarse en CP1252 pero declararse UTF-8.
+- **Impacto**: los textos se ven corruptos en GitHub, PyInstaller y ventanas Qt, ademas de romper las pruebas automatizadas que validan strings.
+- **Acciones**: convertir archivos fuente a UTF-8 real, mover los diccionarios de traduccion a JSON/YAML por idioma y cargar segun `current_language` para reducir el archivo de 100k lineas.
+
+### 7. Completar y persistir el scheduler
+- **Evidencia**: `core/task_scheduler.py:64` deja el modo semanal como TODO y no existe ningun punto que serialice `self.tasks` entre ejecuciones.
+- **Impacto**: las tareas semanales nunca se ejecutan y todas las programaciones se pierden al cerrar la app, por lo que la UI ofrece una promesa que no se cumple.
+- **Acciones**: implementar el parser semanal (weekday + hora, multiples dias), agregar almacenamiento (JSON en `%APPDATA%` o SQLite) y exponer APIs para editar/pausar tareas desde la UI.
+
+### 8. Ampliar cobertura automatizada
+- **Evidencia**: solo existen `tests/test_audit_logger.py:1`, `tests/test_state_monitor.py:1` y `tests/test_task_scheduler.py:1`; no hay pruebas para `config_manager`, `rclone_manager`, `drive_detector`, `notification_manager` ni `s3_handler`.
+- **Impacto**: funcionalidades criticas (montajes, cifrado, instalacion WinFsp, notificaciones) carecen de regresion automatica; cualquier refactor rompe sin aviso.
+- **Acciones**: introducir pruebas unitarias con mocks para S3/rclone, un harness headless de PyQt para `MainWindow` y pruebas E2E livianas que simulen montajes usando `subprocess.list2cmdline`.
+
+### 9. Modularizar `MainWindow`
+- **Evidencia**: `ui/main_window.py:122` define una clase de 2 167 lineas que mezcla UI, scheduler, rclone, drag&drop y sincronizacion.
+- **Impacto**: dificulta el mantenimiento, bloquea la reutilizacion de widgets y hace imposible probar la UI sin levantar toda la ventana.
+- **Acciones**: dividir en widgets (dashboard, montajes, sincronizacion), mover la logica de tareas a controladores dedicados y exponer senales/slots claros para la interaccion con servicios (`TaskRunner`, `StateMonitor`, `NotificationManager`).
+
+---
+
 ## 🔥 Alta Prioridad (Implementar Ya)
 
 ### 1. **Múltiples Buckets Simultáneos**
