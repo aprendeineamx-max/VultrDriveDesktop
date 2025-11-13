@@ -520,3 +520,31 @@ Error: None
 2025-11-11 19:07:06 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
 2025-11-11 19:07:35 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
 2025-11-11 19:07:36 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-12 23:47:38 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-12 23:47:40 | DEBUG    | VultrDrive | main:283 | WinFsp ya está instalado
+2025-11-12 23:47:41 | DEBUG    | VultrDrive.s3_handler | __init__:54 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-12 23:47:41 | INFO     | VultrDrive.ui.main_window | load_profile:1186 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-12 23:47:41 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-12 23:47:42 | DEBUG    | VultrDrive.s3_handler | list_buckets:75 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-12 23:47:42 | INFO     | VultrDrive | main:372 | Aplicación iniciada correctamente
+2025-11-12 23:47:42 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1078 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-12 23:47:42 | INFO     | VultrDrive.s3_handler | list_buckets:81 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-12 23:47:42 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1141 | Buckets cargados exitosamente: 2
+2025-11-12 23:48:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-12 23:48:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-12 23:48:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-12 23:48:40 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-12 23:48:56 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-12 23:48:56 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-12 23:49:01 | INFO     | VultrDrive.ui.main_window | on_success:1356 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Error al montar: 2025/11/12 23:48:56 CRITICAL: Fatal error: failed to mount FUSE fs: mountpoint path already exists: V:
+
+2025-11-12 23:49:01 | INFO     | VultrDrive.ui.main_window | on_success:1356 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Error al montar: 2025/11/12 23:48:56 CRITICAL: Fatal error: failed to mount FUSE fs: mountpoint path already exists: V:
+
+2025-11-12 23:49:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-12 23:49:10 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-12 23:49:28 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-12 23:49:34 | INFO     | VultrDrive.ui.main_window | on_success:1356 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-12 23:49:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-12 23:49:40 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-12 23:50:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:182 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-12 23:50:10 | INFO     | VultrDrive.s3_handler | get_bucket_size:193 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)

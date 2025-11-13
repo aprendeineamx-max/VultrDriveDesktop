@@ -14,6 +14,9 @@ from drive_detector import DriveDetector
 from startup_manager import StartupManager
 from notification_manager import NotificationManager, NotificationType
 from core.task_runner import TaskRunner
+from multiple_mount_manager import MultipleMountManager
+from ui.multi_mounts_widget import MultiMountsWidget
+from functools import partial
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -111,6 +114,7 @@ class MainWindow(QMainWindow):
         self.config_manager = ConfigManager()
         self.s3_handler = None
         self.rclone_manager = RcloneManager(self.config_manager)
+        self.multiple_mount_manager = None
         self.real_time_sync = None
         self.upload_thread = None
         self.backup_thread = None
@@ -206,6 +210,38 @@ class MainWindow(QMainWindow):
             self.keyboard_shortcuts = KeyboardShortcuts(self)
         except ImportError:
             pass
+
+        self._bind_multiple_mount_manager()
+
+    def _bind_multiple_mount_manager(self):
+        """Preparar conexiones con MultipleMountManager"""
+        try:
+            self.multiple_mount_manager = MultipleMountManager(self.rclone_manager)
+            self.multi_mounts_widget = MultiMountsWidget(self.multiple_mount_manager, self.translations)
+            self.multi_mounts_widget.request_new_mount.connect(self.show_mount_tab)
+            if hasattr(self, "mounts_content_layout") and self.multi_mounts_widget.parent() is None:
+                insert_index = max(0, self.mounts_content_layout.count() - 1)
+                self.mounts_content_layout.insertWidget(insert_index, self.multi_mounts_widget)
+        except Exception as exc:
+            if LOGGING_AVAILABLE:
+                logger.error("No se pudo inicializar MultipleMountManager: %s", exc, exc_info=True)
+            self.multiple_mount_manager = None
+            self.multi_mounts_widget = None
+            return
+
+        self.multiple_mount_manager.refresh_all_status()
+        self._refresh_multi_mounts_widget(refresh_manager=False, defer=True)
+
+    def _refresh_multi_mounts_widget(self, refresh_manager=True, defer=False):
+        manager = getattr(self, "multiple_mount_manager", None)
+        widget = getattr(self, "multi_mounts_widget", None)
+        if refresh_manager and manager:
+            manager.refresh_all_status()
+        if widget:
+            if defer:
+                QTimer.singleShot(0, widget.refresh_table)
+            else:
+                widget.refresh_table()
 
     def _auto_load_profile(self):
         """Cargar perfil automáticamente al iniciar"""
@@ -588,6 +624,8 @@ class MainWindow(QMainWindow):
             # Update button text
             self.update_language_button_text()
             self.update_background_button_text()
+            if getattr(self, "multi_mounts_widget", None):
+                self.multi_mounts_widget.update_translations()
 
     def toggle_theme(self):
         """Toggle between dark and light theme"""
@@ -626,6 +664,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(container)
         layout.setSpacing(15)
         layout.setContentsMargins(10, 10, 10, 10)
+        self.mounts_content_layout = layout
 
         # Profile selection group
         profile_group = QGroupBox(self.tr("profile_selection"))
@@ -867,6 +906,14 @@ class MainWindow(QMainWindow):
         tab_layout = QVBoxLayout(self.mount_tab)
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
+
+        mount_layout_container = QVBoxLayout(self.mount_tab)
+        mount_layout_container.setContentsMargins(0, 0, 0, 0)
+        mount_layout_container.addLayout(detector_layout)
+        mount_layout_container.addWidget(mount_group)
+
+        if hasattr(self, 'multi_mounts_widget') and self.multi_mounts_widget:
+            mount_layout_container.addWidget(self.multi_mounts_widget)
 
     def setup_sync_tab(self):
         # Crear un scroll area para toda la pestaña
@@ -1354,24 +1401,30 @@ class MainWindow(QMainWindow):
         description = f"mount_drive[{drive_letter}:{bucket_name}]"
 
         def execute_mount():
-            success, message = self.rclone_manager.mount_drive(
+            success, message, process = self.rclone_manager.mount_drive(
                 profile_name,
                 drive_letter,
                 bucket_name,
             )
-            return success, message, drive_letter, bucket_name
+            return success, message, drive_letter, bucket_name, process
 
         def on_success(result):
-            success, message, _letter, _bucket = result
+            success, message, _letter, _bucket, process = result
+            if success and self.multiple_mount_manager:
+                try:
+                    self.multiple_mount_manager.record_mount_success(_letter, profile_name, _bucket, process)
+                except Exception as exc:
+                    if LOGGING_AVAILABLE:
+                        logger.warning("No se pudo registrar montaje múltiple: %s", exc, exc_info=True)
             if LOGGING_AVAILABLE:
                 logger.info("Montaje completado (%s): %s", description, message)
-            self._handle_mount_result(success, message, _letter, _bucket)
+            self._handle_mount_result(success, message, _letter, _bucket, process)
 
         def on_error(exc):
             error_msg = f"Error inesperado: {exc}"
             if LOGGING_AVAILABLE:
                 logger.error("Error en tarea de montaje (%s): %s", description, str(exc), exc_info=True)
-            self._handle_mount_result(False, error_msg, drive_letter, bucket_name)
+            self._handle_mount_result(False, error_msg, drive_letter, bucket_name, None)
 
         self.task_runner.run(
             execute_mount,
@@ -1380,14 +1433,15 @@ class MainWindow(QMainWindow):
             description=description,
         )
     
-    def _handle_mount_result(self, success, message, drive_letter, bucket_name):
+    def _handle_mount_result(self, success, message, drive_letter, bucket_name, process=None):
         """Manejar resultado del montaje desde señal (thread-safe)"""
         if success:
-            self._on_mount_success(drive_letter, bucket_name, message)
+            self._on_mount_success(drive_letter, bucket_name, message, process)
         else:
             self._on_mount_error(message)
+        self._refresh_multi_mounts_widget()
     
-    def _on_mount_success(self, drive_letter, bucket_name, message):
+    def _on_mount_success(self, drive_letter, bucket_name, message, process=None):
         """Manejar éxito del montaje"""
         try:
             self.mount_status_label.setText(self.tr("status_mounted").format(drive_letter))
@@ -1671,6 +1725,7 @@ class MainWindow(QMainWindow):
             )
         finally:
             self.update_unmount_button_state(detected_drives=detected_drives)
+            self._refresh_multi_mounts_widget()
     
     def create_individual_unmount_buttons(self, detected_drives):
         """Crea botones individuales para desmontar cada unidad"""
@@ -1741,7 +1796,13 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("status_unmounting_drive").format(drive_letter))
             
             try:
-                success, message = DriveDetector.unmount_drive(drive_letter)
+                if self.multiple_mount_manager:
+                    success, message = self.multiple_mount_manager.unmount_drive(drive_letter)
+                    if not success:
+                        # Fallback a detección manual
+                        success, message = DriveDetector.unmount_drive(drive_letter)
+                else:
+                    success, message = DriveDetector.unmount_drive(drive_letter)
                 
                 if success:
                     self.statusBar().showMessage(self.tr("status_unmount_drive_success").format(message), 3000)
@@ -1775,6 +1836,7 @@ class MainWindow(QMainWindow):
                     
                     # Esperar 2 segundos para asegurar que la unidad se libere completamente
                     QTimer.singleShot(2000, refresh_ui_complete)
+                    self._refresh_multi_mounts_widget()
                 else:
                     QMessageBox.critical(
                         self,
@@ -1782,6 +1844,7 @@ class MainWindow(QMainWindow):
                         self.tr("error_unmount_drive").format(drive_letter, message)
                     )
                     self.statusBar().showMessage(self.tr("status_unmount_drive_error").format(drive_letter), 5000)
+                    self._refresh_multi_mounts_widget()
                     
             except Exception as e:
                 QMessageBox.critical(
@@ -1789,6 +1852,7 @@ class MainWindow(QMainWindow):
                     self.tr("error"),
                     self.tr("error_unexpected_unmount_drive").format(drive_letter, str(e))
                 )
+                self._refresh_multi_mounts_widget()
     
     def unmount_all_detected_drives(self):
         """Desmonta todas las unidades detectadas"""
@@ -1804,7 +1868,18 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("status_unmounting_all"))
             
             try:
-                success, message = DriveDetector.unmount_all_drives()
+                success = False
+                message = ""
+                if self.multiple_mount_manager:
+                    success, message = self.multiple_mount_manager.unmount_all()
+                    if not success:
+                        # Intentar fallback para cualquier unidad residual
+                        success_fallback, message_fallback = DriveDetector.unmount_all_drives()
+                        if success_fallback:
+                            success = True
+                            message = message_fallback
+                else:
+                    success, message = DriveDetector.unmount_all_drives()
                 
                 if success:
                     # Actualizar visibilidad del botón después de desmontar todas
@@ -1830,6 +1905,7 @@ class MainWindow(QMainWindow):
                     )
                     
                     self.statusBar().showMessage(self.tr("status_unmount_all_success").format(message), 5000)
+                    self._refresh_multi_mounts_widget()
                 else:
                     self.drives_list.setPlainText(self.tr("unmount_all_error_details").format(message))
                     QMessageBox.critical(
@@ -1838,6 +1914,7 @@ class MainWindow(QMainWindow):
                         self.tr("error_unmount_all").format(message)
                     )
                     self.statusBar().showMessage(self.tr("status_unmount_all_error"), 5000)
+                    self._refresh_multi_mounts_widget()
                     
             except Exception as e:
                 self.drives_list.setPlainText(self.tr("unmount_all_unexpected_error_details").format(str(e)))
@@ -1846,6 +1923,7 @@ class MainWindow(QMainWindow):
                     self.tr("error"),
                     self.tr("error_unexpected_unmount_all").format(str(e))
                 )
+                self._refresh_multi_mounts_widget()
 
     def closeEvent(self, event):
         """Gestionar el cierre de la aplicación con opción de segundo plano"""

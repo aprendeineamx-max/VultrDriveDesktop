@@ -274,6 +274,18 @@ class Translations:
             'notify_winfsp_installed_message': 'WinFsp se instaló correctamente. Ya puedes montar unidades.',
             'notify_winfsp_failed_title': 'Error de Instalación',
             'notify_winfsp_failed_message': 'No se pudo instalar WinFsp. Instálalo manualmente.',
+            'multi_mounts_title': '📊 Gestor de Unidades Montadas',
+            'multi_mount_status_header': 'Estado',
+            'multi_mount_letter_header': 'Letra',
+            'multi_mount_bucket_header': 'Bucket',
+            'multi_mount_profile_header': 'Perfil',
+            'multi_mount_actions_header': 'Acciones',
+            'multi_mount_new_button': '➕ Montar Nuevo',
+            'multi_mount_refresh_button': '🔄 Actualizar',
+            'multi_mount_unmount_all_button': '🗑 Desmontar Todos',
+            'multi_mount_open_tooltip': 'Abrir en Explorador',
+            'multi_mount_unmount_tooltip': 'Desmontar unidad',
+            'multi_mount_summary': 'Montajes activos: {}/{} (actualizado a las {})',
         }
     
     def _english(self):
@@ -520,6 +532,18 @@ class Translations:
             'notify_winfsp_installed_message': 'WinFsp installed successfully. You can mount drives now.',
             'notify_winfsp_failed_title': 'Installation Error',
             'notify_winfsp_failed_message': 'WinFsp could not be installed. Please install it manually.',
+            'multi_mounts_title': '📊 Mounted Drives Manager',
+            'multi_mount_status_header': 'Status',
+            'multi_mount_letter_header': 'Letter',
+            'multi_mount_bucket_header': 'Bucket',
+            'multi_mount_profile_header': 'Profile',
+            'multi_mount_actions_header': 'Actions',
+            'multi_mount_new_button': '➕ Mount New',
+            'multi_mount_refresh_button': '🔄 Refresh',
+            'multi_mount_unmount_all_button': '🗑 Unmount All',
+            'multi_mount_open_tooltip': 'Open in Explorer',
+            'multi_mount_unmount_tooltip': 'Unmount drive',
+            'multi_mount_summary': 'Active mounts: {}/{} (updated at {})',
         }
     
     def _french(self):
@@ -756,6 +780,18 @@ class Translations:
             'notify_winfsp_installed_message': 'WinFsp a été installé avec succès. Vous pouvez maintenant monter des lecteurs.',
             'notify_winfsp_failed_title': "Erreur d'installation",
             'notify_winfsp_failed_message': "Impossible d'installer WinFsp. Veuillez l'installer manuellement.",
+            'multi_mounts_title': '📊 Gestionnaire de lecteurs montés',
+            'multi_mount_status_header': 'État',
+            'multi_mount_letter_header': 'Lettre',
+            'multi_mount_bucket_header': 'Bucket',
+            'multi_mount_profile_header': 'Profil',
+            'multi_mount_actions_header': 'Actions',
+            'multi_mount_new_button': '➕ Monter un nouveau',
+            'multi_mount_refresh_button': '🔄 Actualiser',
+            'multi_mount_unmount_all_button': '🗑 Tout démonter',
+            'multi_mount_open_tooltip': "Ouvrir dans l'Explorateur",
+            'multi_mount_unmount_tooltip': 'Démonter le lecteur',
+            'multi_mount_summary': 'Montages actifs : {}/{} (mis à jour à {})',
         }
     
     def _german(self):
@@ -992,6 +1028,18 @@ class Translations:
             'notify_winfsp_installed_message': 'WinFsp wurde erfolgreich installiert. Du kannst jetzt Laufwerke mounten.',
             'notify_winfsp_failed_title': 'Installationsfehler',
             'notify_winfsp_failed_message': 'WinFsp konnte nicht installiert werden. Bitte manuell installieren.',
+            'multi_mounts_title': '📊 Manager für gemountete Laufwerke',
+            'multi_mount_status_header': 'Status',
+            'multi_mount_letter_header': 'Buchstabe',
+            'multi_mount_bucket_header': 'Bucket',
+            'multi_mount_profile_header': 'Profil',
+            'multi_mount_actions_header': 'Aktionen',
+            'multi_mount_new_button': '➕ Neu mounten',
+            'multi_mount_refresh_button': '🔄 Aktualisieren',
+            'multi_mount_unmount_all_button': '🗑 Alle unmounten',
+            'multi_mount_open_tooltip': 'Im Explorer öffnen',
+            'multi_mount_unmount_tooltip': 'Laufwerk unmounten',
+            'multi_mount_summary': 'Aktive Mounts: {}/{} (aktualisiert um {})',
         }
     
     def _portuguese(self):
@@ -1228,6 +1276,18 @@ class Translations:
             'notify_winfsp_installed_message': 'WinFsp foi instalado com sucesso. Você já pode montar unidades.',
             'notify_winfsp_failed_title': 'Erro na instalação',
             'notify_winfsp_failed_message': 'Não foi possível instalar o WinFsp. Instale manualmente.',
+            'multi_mounts_title': '📊 Gestor de Unidades Montadas',
+            'multi_mount_status_header': 'Estado',
+            'multi_mount_letter_header': 'Letra',
+            'multi_mount_bucket_header': 'Bucket',
+            'multi_mount_profile_header': 'Perfil',
+            'multi_mount_actions_header': 'Acciones',
+            'multi_mount_new_button': '➕ Montar Novo',
+            'multi_mount_refresh_button': '🔄 Atualizar',
+            'multi_mount_unmount_all_button': '🗑 Desmontar Todos',
+            'multi_mount_open_tooltip': 'Abrir en Explorador',
+            'multi_mount_unmount_tooltip': 'Desmontar unidad',
+            'multi_mount_summary': 'Montajes activos: {}/{} (actualizado a las {})',
         }
     
     def set_language(self, language_code):

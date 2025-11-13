@@ -125,12 +125,12 @@ class RcloneManager:
         """Mount the storage as a network drive"""
         section_name = self.create_rclone_config(profile_name)
         if not section_name:
-            return False, "Profile not found"
+            return False, "Profile not found", None
 
         # Check if drive letter is available
         drive_path = f"{drive_letter}:\\"
         if os.path.exists(drive_path):
-            return False, f"Drive letter {drive_letter}: is already in use"
+            return False, f"Drive letter {drive_letter}: is already in use", None
 
         # Build mount path
         if bucket_name:
@@ -171,7 +171,10 @@ class RcloneManager:
                     pass
         
         if not rclone_path:
-            return False, f"Rclone executable not found. Please ensure rclone.exe is in the same folder as the application. Searched paths: {base_path}"
+            return False, (
+                "Rclone executable not found. Please ensure rclone.exe is in the same folder as the application. "
+                f"Searched paths: {base_path}"
+            ), None
 
         # Mount command optimized for Windows and multi-machine support
         cmd = [
@@ -215,12 +218,12 @@ class RcloneManager:
             if self.mount_process.poll() is None:
                 # Check if the drive actually appeared
                 if os.path.exists(drive_path):
-                    return True, f"Montado exitosamente en {drive_letter}:"
+                    return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
                 else:
                     # Give it more time for slow connections
                     time.sleep(5)
                     if os.path.exists(drive_path):
-                        return True, f"Montado exitosamente en {drive_letter}:"
+                        return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
                     else:
                         self.mount_process.terminate()
                         return False, (
@@ -235,7 +238,7 @@ class RcloneManager:
                             f"- Sube al menos 1 archivo al bucket desde la pestaña Principal\n"
                             f"- Verifica tu conexión a internet\n"
                             f"- Reinicia Windows y vuelve a intentar"
-                        )
+                        ), None
             else:
                 # Process exited, check the error
                 stdout, stderr = self.mount_process.communicate()
@@ -255,9 +258,9 @@ class RcloneManager:
                         "Archivo: winfsp-2.0.23075.msi\n\n"
                         "WinFsp es REQUERIDO para montar unidades en Windows.\n"
                         "Es gratuito y de código abierto."
-                    )
+                    ), None
                 
-                return False, f"Error al montar: {error_msg}"
+                return False, f"Error al montar: {error_msg}", None
                 
         except FileNotFoundError as e:
             if ERROR_HANDLING_AVAILABLE:
@@ -266,13 +269,13 @@ class RcloneManager:
                     suggestion="Verifica que rclone.exe esté en la carpeta del programa",
                     original_error=e
                 )
-                return False, error.get_user_message()
-            return False, f"Ejecutable de Rclone no encontrado en: {rclone_path}"
+                return False, error.get_user_message(), None
+            return False, f"Ejecutable de Rclone no encontrado en: {rclone_path}", None
         except Exception as e:
             if ERROR_HANDLING_AVAILABLE:
                 error = handle_error(e, context=f"mount_drive({profile_name}, {drive_letter}, {bucket_name})")
-                return False, error.get_user_message()
-            return False, f"Error al montar: {str(e)}"
+                return False, error.get_user_message(), None
+            return False, f"Error al montar: {str(e)}", None
 
     def unmount_drive(self, drive_letter):
         """Unmount the drive usando net use (específico para esa letra)"""

@@ -233,3 +233,22 @@ class ConfigManager:
 
     def list_profiles(self):
         return list(self.configs.keys())
+
+    # ===== Persistencia de montajes múltiples =====
+
+    def save_mounts(self, mounts_data):
+        """Guardar lista de montajes múltiples."""
+        try:
+            if not isinstance(self.configs, dict):
+                self.configs = {}
+            self.configs['_saved_mounts'] = mounts_data
+            with open(self.config_file, 'w', encoding='utf-8') as f:
+                json.dump(self.configs, f, indent=4, ensure_ascii=False)
+        except Exception as e:
+            print(f"[ConfigManager] Error al guardar montajes: {e}")
+
+    def get_saved_mounts(self):
+        """Obtener montajes guardados de la configuración."""
+        if not isinstance(self.configs, dict):
+            return []
+        return self.configs.get('_saved_mounts', [])

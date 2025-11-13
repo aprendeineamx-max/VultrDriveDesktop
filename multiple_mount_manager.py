@@ -84,7 +84,10 @@ class MultipleMountManager:
         used_letters = set()
         
         # Letras ya montadas por este manager
-        used_letters.update(self.mounted_drives.keys())
+        used_letters.update(
+            letter for letter, info in self.mounted_drives.items()
+            if info.status == 'connected'
+        )
         
         # Letras de unidades existentes en el sistema
         for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
@@ -128,20 +131,18 @@ class MultipleMountManager:
         try:
             # Usar el rclone_manager existente para montar
             success, message, process = self.rclone_manager.mount_drive(
-                profile, 
-                bucket, 
-                letter
+                profile,
+                letter,
+                bucket
             )
             
             if success:
-                mount_info.process = process
-                mount_info.status = 'connected'
-                mount_info.mounted_at = datetime.now()
-                self._save_mounts()
-                return True, f"Bucket montado exitosamente en {letter}:"
+                self.record_mount_success(letter, profile, bucket, process)
+                return True, message or f"Bucket montado exitosamente en {letter}:"
             else:
                 mount_info.status = 'error'
                 mount_info.error_message = message
+                self._save_mounts()
                 return False, message
                 
         except Exception as e:
@@ -175,10 +176,7 @@ class MultipleMountManager:
                 success, message = self.rclone_manager.unmount_drive_by_letter(letter)
             
             if success:
-                mount_info.status = 'disconnected'
-                mount_info.process = None
-                # Mantener en la lista pero marcado como desconectado
-                self._save_mounts()
+                self.record_unmount(letter)
                 return True, f"Unidad {letter}: desmontada correctamente"
             else:
                 return False, message
@@ -289,6 +287,39 @@ class MultipleMountManager:
         """Actualizar estado de todas las unidades"""
         for letter in self.mounted_drives.keys():
             self.refresh_status(letter)
+
+    def record_mount_success(self, letter: str, profile: str, bucket: str, process=None):
+        mount_info = self.mounted_drives.get(letter)
+        if mount_info is None:
+            mount_info = MountInfo(letter, profile, bucket, process)
+        else:
+            mount_info.profile = profile
+            mount_info.bucket = bucket
+            mount_info.process = process
+        mount_info.status = 'connected'
+        mount_info.mounted_at = datetime.now()
+        mount_info.error_message = None
+        self.mounted_drives[letter] = mount_info
+        self._save_mounts()
+
+    def record_unmount(self, letter: str):
+        mount_info = self.mounted_drives.get(letter)
+        if mount_info:
+            mount_info.status = 'disconnected'
+            mount_info.process = None
+            mount_info.error_message = None
+            self._save_mounts()
+
+    def get_mounts_list(self) -> List[MountInfo]:
+        return [self.mounted_drives[letter] for letter in sorted(self.mounted_drives.keys())]
+
+    def get_mounts_as_rows(self):
+        """Obtener lista de montajes ordenados para UI"""
+        result = []
+        for letter in sorted(self.mounted_drives.keys()):
+            info = self.mounted_drives[letter]
+            result.append(info)
+        return result
     
     def open_drive_in_explorer(self, letter: str) -> Tuple[bool, str]:
         """
