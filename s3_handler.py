@@ -3,6 +3,7 @@ from botocore.client import Config
 from botocore.exceptions import ClientError, NoCredentialsError, EndpointConnectionError
 import os
 from time import monotonic
+import hashlib
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -79,7 +80,7 @@ class S3Handler:
         """
         self.last_error = None
 
-        cache_key = self._build_cache_key()
+        cache_key = self._namespaced_cache_key('list_buckets')
         if use_cache:
             cached = self._get_from_cache('list_buckets', cache_key)
             if cached is not None:
@@ -109,6 +110,7 @@ class S3Handler:
                 self.last_error = message
                 if LOGGING_AVAILABLE:
                     logger.error(f"Error de autenticación: {error_code} - {error_msg}")
+                self.clear_cache('list_buckets')
                 if ERROR_HANDLING_AVAILABLE:
                     error = handle_error(AuthenticationError(message), context="list_buckets")
                     return [], error.message
@@ -131,13 +133,15 @@ class S3Handler:
                 self.last_error = message
                 if LOGGING_AVAILABLE:
                     logger.error(f"Error al listar buckets: {error_code} - {error_msg}")
-                return [], message
+            self.clear_cache('list_buckets')
+            return [], message
 
         except NoCredentialsError as e:
             message = "No se encontraron credenciales. Verifica tu perfil."
             self.last_error = message
             if LOGGING_AVAILABLE:
                 logger.error(f"Error de credenciales: {str(e)}")
+            self.clear_cache('list_buckets')
             return [], message
 
         except EndpointConnectionError as e:
@@ -148,6 +152,7 @@ class S3Handler:
             if ERROR_HANDLING_AVAILABLE:
                 error = handle_error(CustomConnectionError(message), context="list_buckets")
                 return [], error.message
+            self.clear_cache('list_buckets')
             return [], message
 
         except Exception as e:
@@ -158,6 +163,7 @@ class S3Handler:
             if ERROR_HANDLING_AVAILABLE:
                 error = handle_error(e, context="list_buckets")
                 return [], error.message
+            self.clear_cache('list_buckets')
             return [], message
 
     def upload_file(self, bucket_name, file_path, object_name=None):
@@ -168,7 +174,7 @@ class S3Handler:
             self.client.upload_file(file_path, bucket_name, object_name)
             print(f"File {file_path} uploaded to {bucket_name}/{object_name}")
             if self.cache_enabled:
-                self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
+                self.clear_cache('get_bucket_size', self._namespaced_cache_key(bucket_name))
             return True
         except Exception as e:
             print(f"Error uploading file: {e}")
@@ -197,7 +203,7 @@ class S3Handler:
                    size_bytes: Tamaño total en bytes, None si hay error
                    error_message: Mensaje de error si hubo problema, None si fue exitoso
         """
-        cache_key = self._build_cache_key(bucket_name)
+        cache_key = self._namespaced_cache_key(bucket_name)
         if use_cache:
             cached = self._get_from_cache('get_bucket_size', cache_key)
             if cached is not None:
@@ -249,7 +255,7 @@ class S3Handler:
             self.client.delete_object(Bucket=bucket_name, Key=object_name)
             print(f"Deleted {object_name} from {bucket_name}")
             if self.cache_enabled:
-                self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
+                self.clear_cache('get_bucket_size', self._namespaced_cache_key(bucket_name))
             return True
         except Exception as e:
             print(f"Error deleting object: {e}")
@@ -276,7 +282,7 @@ class S3Handler:
                     )
                 print(f"Deleted {len(delete_us)} objects from {bucket_name}")
                 if self.cache_enabled:
-                    self.clear_cache('get_bucket_size', self._build_cache_key(bucket_name))
+                    self.clear_cache('get_bucket_size', self._namespaced_cache_key(bucket_name))
 
             return True
         except Exception as e:
@@ -301,6 +307,18 @@ class S3Handler:
         else:
             kw_items = ()
         return (args, kw_items)
+
+    def _namespaced_cache_key(self, *parts):
+        """Generar llaves únicas por perfil/end-point para la caché."""
+        return self._build_cache_key(*self._cache_identity(), *parts)
+
+    def _cache_identity(self):
+        """Fingerprint estable de las credenciales activas (sin almacenar secretos completos)."""
+        if not hasattr(self, '_cache_id'):
+            data = f"{self.access_key}:{self.host_base}".encode('utf-8')
+            digest = hashlib.blake2s(data, digest_size=8).hexdigest()
+            self._cache_id = (self.host_base, digest)
+        return self._cache_id
 
     def _get_from_cache(self, namespace, key):
         if not self.cache_enabled:
