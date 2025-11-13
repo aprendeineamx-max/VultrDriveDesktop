@@ -34,8 +34,7 @@ except ImportError:
 import os
 
 class UploadThread(QThread):
-    progress = pyqtSignal(int, str)
-    finished = pyqtSignal(bool, str)
+    finished = pyqtSignal(bool, dict)
 
     def __init__(self, s3_handler, bucket_name, file_path):
         super().__init__()
@@ -46,17 +45,19 @@ class UploadThread(QThread):
     def run(self):
         try:
             success = self.s3_handler.upload_file(self.bucket_name, self.file_path)
+            file_name = os.path.basename(self.file_path)
             if success:
-                self.finished.emit(True, "Upload completed successfully")
+                self.finished.emit(True, {"file": file_name})
             else:
-                self.finished.emit(False, "Upload failed")
+                error_message = getattr(self.s3_handler, "last_error", "") or ""
+                self.finished.emit(False, {"file": file_name, "error": error_message})
         except Exception as e:
-            self.finished.emit(False, f"Error: {str(e)}")
+            self.finished.emit(False, {"file": os.path.basename(self.file_path), "error": str(e)})
 
 
 class BackupThread(QThread):
-    progress = pyqtSignal(int, str)
-    finished = pyqtSignal(bool, str)
+    progress = pyqtSignal(int, dict)
+    finished = pyqtSignal(bool, dict)
 
     def __init__(self, s3_handler, bucket_name, folder_path):
         super().__init__()
@@ -73,17 +74,24 @@ class BackupThread(QThread):
             
             total = len(files)
             if total == 0:
-                self.finished.emit(False, "No files found in folder")
+                self.finished.emit(False, {"reason": "no_files"})
                 return
 
-            for i, file_path in enumerate(files):
+            for index, file_path in enumerate(files, start=1):
                 relative_path = os.path.relpath(file_path, self.folder_path)
-                self.progress.emit(int((i / total) * 100), f"Uploading {relative_path}")
+                self.progress.emit(
+                    int(((index - 1) * 100) / total),
+                    {
+                        "current": index,
+                        "total": total,
+                        "file": relative_path,
+                    },
+                )
                 self.s3_handler.upload_file(self.bucket_name, file_path, relative_path)
             
-            self.finished.emit(True, f"Successfully backed up {total} files")
+            self.finished.emit(True, {"total": total})
         except Exception as e:
-            self.finished.emit(False, f"Error: {str(e)}")
+            self.finished.emit(False, {"reason": "exception", "detail": str(e)})
 
 
 class MainWindow(QMainWindow):
@@ -1151,23 +1159,23 @@ class MainWindow(QMainWindow):
                 host_base = config.get('host_base', '').strip()
                 
                 if not access_key or not secret_key:
-                    error_msg = "Las credenciales del perfil están vacías. Por favor, edita el perfil y verifica tus credenciales."
+                    error_msg = self.tr("profile_credentials_empty")
                     self.statusBar().showMessage(f"❌ {error_msg}")
                     if LOGGING_AVAILABLE:
                         logger.error(f"Perfil '{profile_name}' tiene credenciales vacías")
                     
                     from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Error de Credenciales", error_msg)
+                    QMessageBox.warning(self, self.tr("warning"), error_msg)
                     return
                 
                 if not host_base:
-                    error_msg = "El host base del perfil está vacío. Por favor, edita el perfil y verifica la configuración."
+                    error_msg = self.tr("profile_host_empty")
                     self.statusBar().showMessage(f"❌ {error_msg}")
                     if LOGGING_AVAILABLE:
                         logger.error(f"Perfil '{profile_name}' tiene host_base vacío")
                     
                     from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Error de Configuración", error_msg)
+                    QMessageBox.warning(self, self.tr("warning"), error_msg)
                     return
                 
                 # Intentar crear el handler
@@ -1188,12 +1196,12 @@ class MainWindow(QMainWindow):
                     logger.error(f"Error al cargar perfil '{profile_name}': {error_msg}")
                 
                 from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.warning(self, "Error al Cargar Perfil", error_msg)
+                QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
                 self.s3_handler = None
                 
             except Exception as e:
                 # Otros errores
-                error_msg = f"Error inesperado al cargar el perfil: {str(e)}"
+                error_msg = self.tr("profile_load_unexpected_error").format(str(e))
                 self.statusBar().showMessage(f"❌ {error_msg}")
                 if LOGGING_AVAILABLE:
                     logger.error(f"Error inesperado al cargar perfil '{profile_name}': {str(e)}", exc_info=True)
@@ -1201,13 +1209,13 @@ class MainWindow(QMainWindow):
                 if ERROR_HANDLING_AVAILABLE:
                     error = handle_error(e, context="load_profile")
                     from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Error al Cargar Perfil", error.message)
+                    QMessageBox.warning(self, self.tr("profile_load_error_title"), error.message)
                 else:
                     from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, "Error al Cargar Perfil", error_msg)
+                    QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
                 self.s3_handler = None
         else:
-            error_msg = f"No se encontró la configuración del perfil '{profile_name}'"
+            error_msg = self.tr("profile_not_found").format(profile_name)
             self.statusBar().showMessage(f"❌ {error_msg}")
             if LOGGING_AVAILABLE:
                 logger.error(error_msg)
@@ -1233,12 +1241,30 @@ class MainWindow(QMainWindow):
             self.upload_thread.finished.connect(self.upload_finished)
             self.upload_thread.start()
 
-    def upload_finished(self, success, message):
+    def upload_finished(self, success, payload):
         self.progress_bar.setVisible(False)
+        payload = payload or {}
+        file_name = payload.get("file")
+        error_detail = payload.get("error")
+
         if success:
-            QMessageBox.information(self, self.tr("success"), message)
+            if file_name:
+                QMessageBox.information(
+                    self,
+                    self.tr("success"),
+                    self.tr("upload_success_dialog").format(file_name),
+                )
+            else:
+                QMessageBox.information(self, self.tr("success"), self.tr("status_upload_completed"))
             self.statusBar().showMessage(self.tr("status_upload_completed"), 5000)
         else:
+            if file_name:
+                message = self.tr("upload_error_dialog").format(
+                    file_name,
+                    error_detail or "",
+                )
+            else:
+                message = error_detail or self.tr("status_upload_failed")
             QMessageBox.critical(self, self.tr("error"), message)
             self.statusBar().showMessage(self.tr("status_upload_failed"), 5000)
 
@@ -1263,16 +1289,39 @@ class MainWindow(QMainWindow):
             self.backup_thread.finished.connect(self.backup_finished)
             self.backup_thread.start()
 
-    def backup_progress(self, value, message):
+    def backup_progress(self, value, payload):
         self.progress_bar.setValue(value)
-        self.statusBar().showMessage(message)
+        payload = payload or {}
+        current = payload.get("current")
+        total = payload.get("total")
+        file_path = payload.get("file")
+        if current and total and file_path:
+            self.statusBar().showMessage(
+                self.tr("status_backup_progress").format(current, total, file_path)
+            )
+        elif file_path:
+            self.statusBar().showMessage(self.tr("status_backup_progress_simple").format(file_path))
 
-    def backup_finished(self, success, message):
+    def backup_finished(self, success, payload):
         self.progress_bar.setVisible(False)
+        payload = payload or {}
         if success:
-            QMessageBox.information(self, self.tr("success"), message)
+            total = payload.get("total", 0)
+            QMessageBox.information(
+                self,
+                self.tr("success"),
+                self.tr("backup_success_dialog").format(total),
+            )
             self.statusBar().showMessage(self.tr("status_backup_completed"), 5000)
         else:
+            reason = payload.get("reason")
+            if reason == "no_files":
+                message = self.tr("backup_no_files")
+            elif reason == "exception":
+                detail = payload.get("detail", "")
+                message = self.tr("backup_error_dialog").format(detail)
+            else:
+                message = self.tr("status_backup_failed")
             QMessageBox.critical(self, self.tr("error"), message)
             self.statusBar().showMessage(self.tr("status_backup_failed"), 5000)
 
