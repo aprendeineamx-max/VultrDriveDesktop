@@ -261,7 +261,10 @@ def main():
     splash = None
     try:
         from splash_screen import FastSplashScreen
-        splash = FastSplashScreen()
+        splash = FastSplashScreen(
+            title=app_tr("splash_title", "Vultr Drive Desktop"),
+            subtitle=app_tr("splash_subtitle", "Productividad conectada a la nube")
+        )
         splash.show()
         app.processEvents()  # Forzar renderizado del splash
     except:

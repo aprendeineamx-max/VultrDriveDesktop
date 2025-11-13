@@ -5,7 +5,7 @@ from PyQt6.QtGui import QPixmap, QPainter, QColor, QFont, QFontMetrics, QKeyEven
 
 
 class FastSplashScreen(QSplashScreen):
-    def __init__(self):
+    def __init__(self, title=None, subtitle=None):
         canvas = QPixmap(720, 360)
         canvas.fill(Qt.GlobalColor.transparent)
 
@@ -13,9 +13,9 @@ class FastSplashScreen(QSplashScreen):
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
-        self._title = "Vultr Drive Desktop"
-        self._subtitle = "Productividad conectada a la nube"
-        self._message = "Iniciando..."
+        self._title = title or "Vultr Drive Desktop"
+        self._subtitle = subtitle or "Productividad conectada a la nube"
+        self._message = ""
         self._message_color = QColor(210, 220, 235)
         self._message_alignment = Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom
         
@@ -46,6 +46,14 @@ class FastSplashScreen(QSplashScreen):
 
     def clearMessage(self):
         self._message = ""
+        self.update()
+
+    def setTitle(self, title: str):
+        self._title = title or self._title
+        self.update()
+
+    def setSubtitle(self, subtitle: str):
+        self._subtitle = subtitle or self._subtitle
         self.update()
 
     def _fit_font(self, family, text, max_width, max_point, min_point):
