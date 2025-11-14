@@ -3,5 +3,39 @@
         "access_key": "G0LDHU6PIXWDEDJTAQ4B",
         "secret_key": "AUxkwxrBSe3SK1k6MdknXnvloCB9EQiuU7HLw1eZ",
         "host_base": "lax1.vultrobjects.com"
-    }
+    },
+    "_saved_mounts": [
+        {
+            "letter": "W",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "disconnected",
+            "mounted_at": "2025-11-13T06:14:37.337673",
+            "error_message": null
+        },
+        {
+            "letter": "Y",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "disconnected",
+            "mounted_at": "2025-11-14T01:42:05.832030",
+            "error_message": null
+        },
+        {
+            "letter": "V",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "connected",
+            "mounted_at": "2025-11-14T01:46:17.793041",
+            "error_message": null
+        },
+        {
+            "letter": "Z",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "disconnected",
+            "mounted_at": "2025-11-14T01:42:32.092810",
+            "error_message": null
+        }
+    ]
 }

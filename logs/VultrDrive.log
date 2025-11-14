@@ -551,3 +551,186 @@ Error: None
 2025-11-13 03:51:48 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:51:57 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:52:00 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 04:05:46 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 04:28:47 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 04:31:44 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 04:43:42 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 04:59:11 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 05:11:42 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 05:11:44 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-13 05:11:46 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-13 05:11:46 | INFO     | VultrDrive.ui.main_window | load_profile:1368 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-13 05:11:46 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-13 05:11:47 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-13 05:11:47 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-13 05:11:47 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1244 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-13 05:11:48 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-13 05:11:48 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1307 | Buckets cargados exitosamente: 2
+2025-11-13 05:11:48 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 05:11:49 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 05:17:15 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 05:17:17 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 05:39:14 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 06:06:47 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 06:06:49 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-13 06:06:51 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-13 06:06:51 | INFO     | VultrDrive.ui.main_window | load_profile:1336 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-13 06:06:51 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-13 06:06:51 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-13 06:06:52 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-13 06:06:52 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1212 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-13 06:06:52 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-13 06:06:52 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1275 | Buckets cargados exitosamente: 2
+2025-11-13 06:06:52 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 06:06:54 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 06:12:19 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 06:12:21 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 06:14:32 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[W:almacen-de-backups-cuenta-destino]'
+2025-11-13 06:14:37 | INFO     | VultrDrive.ui.main_window | on_success:1512 | Montaje completado (mount_drive[W:almacen-de-backups-cuenta-destino]): Montado exitosamente en W:
+2025-11-13 06:17:38 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Y:almacen-de-backups-cuenta-destino]'
+2025-11-13 06:17:43 | INFO     | VultrDrive.ui.main_window | on_success:1512 | Montaje completado (mount_drive[Y:almacen-de-backups-cuenta-destino]): Montado exitosamente en Y:
+2025-11-13 06:17:50 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 06:17:51 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 06:23:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 06:23:21 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 15:39:14 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 21:05:44 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 21:05:46 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-13 21:05:46 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: type object 'QSizePolicy' has no attribute 'Minimum'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 214, in __init__
+    self.setup_main_tab()
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 876, in setup_main_tab
+    self._mount_tab_spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+                                               ^^^^^^^^^^^^^^^^^^^
+AttributeError: type object 'QSizePolicy' has no attribute 'Minimum'
+2025-11-13 21:07:07 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 21:07:09 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-13 21:07:10 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-13 21:07:10 | INFO     | VultrDrive.ui.main_window | load_profile:1419 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-13 21:07:10 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-13 21:07:10 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-13 21:07:11 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1295 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-13 21:07:11 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-13 21:07:11 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-13 21:07:11 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1358 | Buckets cargados exitosamente: 2
+2025-11-13 21:07:11 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:07:13 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:11:12 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Y:almacen-de-backups-cuenta-destino]'
+2025-11-13 21:11:17 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[Y:almacen-de-backups-cuenta-destino]): Montado exitosamente en Y:
+2025-11-13 21:12:39 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:12:40 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:15:33 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 21:18:09 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:18:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:23:39 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:23:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:29:09 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:29:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:34:39 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:34:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:40:09 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:40:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:45:39 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:45:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:51:09 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:51:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 21:56:39 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 21:56:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:02:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:02:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:07:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:07:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:13:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:13:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:18:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:18:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:24:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:24:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:29:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:29:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:35:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:35:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:40:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:40:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:46:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:46:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:51:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:51:41 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 22:57:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 22:57:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:02:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:02:42 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:08:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:08:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:13:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:13:43 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:19:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:19:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:24:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:24:42 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:30:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:30:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:35:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:35:42 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:41:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:41:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:43:29 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-13 23:43:31 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-13 23:43:33 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-13 23:43:33 | INFO     | VultrDrive.ui.main_window | load_profile:1419 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-13 23:43:33 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-13 23:43:33 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-13 23:43:34 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1295 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-13 23:43:34 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-13 23:43:34 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-13 23:43:34 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1358 | Buckets cargados exitosamente: 2
+2025-11-13 23:43:34 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-13 23:43:36 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-13 23:54:18 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 01:40:07 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 01:40:09 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 01:40:11 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-14 01:40:11 | INFO     | VultrDrive.ui.main_window | load_profile:1419 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-14 01:40:11 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 01:40:11 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-14 01:40:13 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1295 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-14 01:40:13 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-14 01:40:13 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-14 01:40:13 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1358 | Buckets cargados exitosamente: 2
+2025-11-14 01:40:13 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 01:40:14 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 01:40:46 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 01:40:48 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 01:40:49 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-14 01:40:49 | INFO     | VultrDrive.ui.main_window | load_profile:1419 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-14 01:40:49 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 01:40:49 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-14 01:40:50 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1295 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-14 01:40:50 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-14 01:40:50 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-14 01:40:50 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1358 | Buckets cargados exitosamente: 2
+2025-11-14 01:40:50 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 01:40:51 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 01:41:22 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:41:27 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 01:41:47 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:41:52 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 01:42:00 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Y:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:42:05 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[Y:almacen-de-backups-cuenta-destino]): Montado exitosamente en Y:
+2025-11-14 01:42:27 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Z:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:42:32 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[Z:almacen-de-backups-cuenta-destino]): Montado exitosamente en Z:
+2025-11-14 01:43:41 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:43:41 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Drive letter V: is already in use
+2025-11-14 01:43:45 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:43:45 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Drive letter V: is already in use
+2025-11-14 01:45:35 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:45:40 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 01:46:12 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 01:46:17 | INFO     | VultrDrive.ui.main_window | on_success:1595 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 01:46:19 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 01:46:20 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 01:46:43 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
