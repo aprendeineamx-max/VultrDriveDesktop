@@ -332,6 +332,11 @@ class Translations:
             'drive_unmount_all_success': 'Todas las unidades desmontadas exitosamente',
             'drive_unmount_all_none': 'No hay unidades montadas',
             'drive_unmount_all_error': 'Error al desmontar unidades: {}',
+            'refresh_drive': 'Actualizar Unidad',
+            'status_refreshing_drive': 'Actualizando unidad {}...',
+            'status_refresh_drive_success': 'Unidad {} actualizada correctamente.',
+            'error_refresh_drive': 'No se pudo actualizar la unidad {}: {}',
+
         }
     
     def _english(self):
@@ -636,6 +641,11 @@ class Translations:
             'drive_unmount_all_success': 'All drives unmounted successfully',
             'drive_unmount_all_none': 'No drives mounted',
             'drive_unmount_all_error': 'Error unmounting drives: {}',
+            'refresh_drive': 'Refresh Drive',
+            'status_refreshing_drive': 'Refreshing drive {}...',
+            'status_refresh_drive_success': 'Drive {} refreshed.',
+            'error_refresh_drive': 'Unable to refresh drive {}: {}',
+
         }
     
     def _french(self):
@@ -919,6 +929,11 @@ class Translations:
             'drive_unmount_all_success': 'Tous les lecteurs démontés avec succès',
             'drive_unmount_all_none': 'Aucun lecteur monté',
             'drive_unmount_all_error': 'Erreur lors du démontage des lecteurs : {}',
+            'refresh_drive': 'Actualiser le Lecteur',
+            'status_refreshing_drive': 'Actualisation du lecteur {}...',
+            'status_refresh_drive_success': 'Lecteur {} actualisé.',
+            'error_refresh_drive': "Impossible d'actualiser le lecteur {} : {}",
+
         }
     
     def _german(self):
@@ -1202,6 +1217,11 @@ class Translations:
             'drive_unmount_all_success': 'Alle Laufwerke erfolgreich unmountet',
             'drive_unmount_all_none': 'Keine Laufwerke gemountet',
             'drive_unmount_all_error': 'Fehler beim Unmounten der Laufwerke: {}',
+            'refresh_drive': 'Laufwerk aktualisieren',
+            'status_refreshing_drive': 'Laufwerk {} wird aktualisiert...',
+            'status_refresh_drive_success': 'Laufwerk {} aktualisiert.',
+            'error_refresh_drive': 'Laufwerk {} konnte nicht aktualisiert werden: {}',
+
         }
     
     def _portuguese(self):
@@ -1301,6 +1321,10 @@ class Translations:
             'backup_failed': 'Falha no backup.',
             'mount_success': 'Montado em {}:',
             'mount_failed': 'Falha na montagem: {}',
+            'status_refreshing_drive': 'Atualizando unidade {}...',
+            'status_refresh_drive_success': 'Unidade {} atualizada.',
+            'error_refresh_drive': 'Não foi possível atualizar a unidade {}: {}',
+            'refresh_drive': 'Atualizar Unidade',
             'unmount_success': 'Desmontado com sucesso.',
             'format_cancelled': 'Formatação cancelada.',
             'bucket_formatted': 'Bucket formatado.',

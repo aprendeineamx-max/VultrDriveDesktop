@@ -6,6 +6,7 @@
                              QStyle)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
+from typing import Optional, Tuple
 from config_manager import ConfigManager
 from s3_handler import S3Handler
 from ui.settings_window import SettingsWindow
@@ -19,6 +20,7 @@ from multiple_mount_manager import MultipleMountManager
 from ui.multi_mounts_widget import MultiMountsWidget
 from storage_session_manager import StorageSessionManager
 from functools import partial
+import time
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
 try:
@@ -157,6 +159,12 @@ class MainWindow(QMainWindow):
         self.task_runner = TaskRunner(self)
         self._refreshing_buckets = False
         self._current_bucket_handler = None
+        self._manual_refresh_in_progress = False
+        self._auto_refresh_in_progress = False
+        self.mount_refresh_timer = QTimer(self)
+        self.mount_refresh_timer.setInterval(60000)
+        self.mount_refresh_timer.timeout.connect(self._auto_refresh_mount_if_needed)
+        self.mount_refresh_timer.start()
         
         # ===== QUICK WINS: Inicializar gestores =====
         # Gestor de inicio automático
@@ -1098,9 +1106,27 @@ class MainWindow(QMainWindow):
         self.unmount_button.clicked.connect(self.unmount_drive)
         self.unmount_button.setEnabled(False)
 
+        self.refresh_drive_button = QPushButton(self.tr("refresh_drive"))
+        self.refresh_drive_button.setEnabled(False)
+        self.refresh_drive_button.clicked.connect(self.manual_refresh_mount)
+        self.refresh_drive_button.setStyleSheet("""
+            QPushButton {
+                background-color: #ffc107;
+                color: #222;
+                font-weight: bold;
+                border-radius: 5px;
+                padding: 8px;
+            }
+            QPushButton:disabled {
+                background-color: #555;
+                color: #999;
+            }
+        """)
+
         buttons_layout.addWidget(self.mount_button)
         buttons_layout.addWidget(self.open_drive_button)
         buttons_layout.addWidget(self.unmount_button)
+        buttons_layout.addWidget(self.refresh_drive_button)
 
         actions_layout.addLayout(buttons_layout)
         actions_group.setLayout(actions_layout)
@@ -1794,6 +1820,7 @@ class MainWindow(QMainWindow):
             self.unmount_button.setEnabled(False)
             self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(False)
+            self.refresh_drive_button.setEnabled(False)
             self.mount_status_label.setText("⭕ Selecciona una letra de unidad")
             return
 
@@ -1816,6 +1843,7 @@ class MainWindow(QMainWindow):
             self.open_drive_button.setEnabled(True)
             self.mount_button.setEnabled(False)
             self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.refresh_drive_button.setEnabled(True)
             self.mount_status_label.setText(self.tr("drive_letter_mounted_status").format(selected_letter))
         else:
             self.unmount_button.setEnabled(False)
@@ -1823,7 +1851,120 @@ class MainWindow(QMainWindow):
             self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(True)
             self.mount_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
+            self.refresh_drive_button.setEnabled(False)
             self.mount_status_label.setText(self.tr("drive_letter_not_mounted_status").format(selected_letter))
+
+    def _remount_drive_backend(self, drive_letter: str, profile_name: str, bucket_name: Optional[str]):
+        unmount_success, unmount_message = self.rclone_manager.unmount_drive(drive_letter)
+        if not unmount_success:
+            return False, unmount_message
+        time.sleep(2)
+        success, message, process = self.rclone_manager.mount_drive(
+            profile_name,
+            drive_letter,
+            bucket_name
+        )
+        if success and self.multiple_mount_manager:
+            try:
+                self.multiple_mount_manager.record_mount_success(
+                    drive_letter,
+                    profile_name,
+                    bucket_name or '',
+                    process
+                )
+            except Exception:
+                pass
+        return success, message
+
+    def manual_refresh_mount(self):
+        if self._manual_refresh_in_progress:
+            return
+
+        drive_letter = self.drive_letter_input.currentText()
+        if not drive_letter:
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_drive_letter_text"))
+            return
+
+        profile_name = self.profile_selector.currentText()
+        if not profile_name:
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
+            return
+
+        bucket_name = self.bucket_selector.currentText() if self.active_profile_type == 's3' else None
+        self._manual_refresh_in_progress = True
+        self.statusBar().showMessage(self.tr("status_refreshing_drive").format(drive_letter))
+
+        description = f"refresh_mount[{drive_letter}]"
+        self.task_runner.run(
+            lambda: self._remount_drive_backend(drive_letter, profile_name, bucket_name),
+            on_success=lambda result: self._on_manual_refresh_result(drive_letter, result),
+            on_error=lambda exc: self._on_manual_refresh_error(drive_letter, exc),
+            description=description,
+        )
+
+    def _on_manual_refresh_result(self, drive_letter: str, result: Tuple[bool, str]):
+        self._manual_refresh_in_progress = False
+        success, message = result
+        if success:
+            self.statusBar().showMessage(self.tr("status_refresh_drive_success").format(drive_letter), 4000)
+            self.detect_mounted_drives()
+        else:
+            QMessageBox.warning(
+                self,
+                self.tr("warning"),
+                self.tr("error_refresh_drive").format(drive_letter, message)
+            )
+            self.statusBar().showMessage(self.tr("error_refresh_drive").format(drive_letter, message), 5000)
+
+    def _on_manual_refresh_error(self, drive_letter: str, exc: Exception):
+        self._manual_refresh_in_progress = False
+        error_msg = str(exc)
+        QMessageBox.critical(
+            self,
+            self.tr("error"),
+            self.tr("error_refresh_drive").format(drive_letter, error_msg)
+        )
+        self.statusBar().showMessage(self.tr("error_refresh_drive").format(drive_letter, error_msg), 5000)
+
+    def _auto_refresh_mount_if_needed(self):
+        if self.active_profile_type != 'mega':
+            return
+
+        drive_letter = self.drive_letter_input.currentText()
+        if not drive_letter:
+            return
+
+        try:
+            detected = DriveDetector.detect_mounted_drives()
+            mounted_letters = [d['letter'] for d in detected] if detected else []
+        except Exception:
+            mounted_letters = []
+
+        if drive_letter not in mounted_letters or self._auto_refresh_in_progress:
+            return
+
+        profile_name = self.profile_selector.currentText()
+        if not profile_name:
+            return
+
+        self._auto_refresh_in_progress = True
+        self.task_runner.run(
+            lambda: self._remount_drive_backend(drive_letter, profile_name, None),
+            on_success=lambda result: self._on_auto_refresh_result(result),
+            on_error=self._on_auto_refresh_error,
+            description=f"auto_refresh[{drive_letter}]",
+        )
+
+    def _on_auto_refresh_result(self, result: Tuple[bool, str]):
+        self._auto_refresh_in_progress = False
+        success, _ = result
+        if success:
+            self.detect_mounted_drives()
+
+    def _on_auto_refresh_error(self, exc: Exception):
+        self._auto_refresh_in_progress = False
+        if LOGGING_AVAILABLE:
+            logger.warning("Error en auto-refresh de MEGA: %s", exc)
 
     def format_bucket(self):
         if not self._require_s3_features():
@@ -2360,6 +2501,7 @@ class MainWindow(QMainWindow):
                     self.notification_manager.warning("Dashboard", f"Error al actualizar: {error.message}")
             if LOGGING_AVAILABLE:
                 logger.error(f"Error al actualizar dashboard: {e}", exc_info=True)
+
 
 
 
