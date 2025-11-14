@@ -551,3 +551,272 @@ Error: None
 2025-11-13 03:51:48 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:51:57 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:52:00 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 14:43:45 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 14:56:34 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 14:56:36 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 14:56:36 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: No se encontrA3 rclone.exe. Copia rclone.exe a la carpeta del proyecto o agrega rclone al PATH.
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 141, in __init__
+    self.rclone_manager = RcloneManager(self.config_manager)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 33, in __init__
+    self.rclone_exe = self._resolve_rclone_executable()
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 65, in _resolve_rclone_executable
+    raise FileNotFoundError(
+FileNotFoundError: No se encontrA3 rclone.exe. Copia rclone.exe a la carpeta del proyecto o agrega rclone al PATH.
+2025-11-14 15:14:01 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 15:14:03 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 15:14:04 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-14 15:14:04 | INFO     | VultrDrive.ui.main_window | load_profile:1498 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-14 15:14:04 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 15:14:05 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-14 15:14:05 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'session_bootstrap'
+2025-11-14 15:14:05 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil almacen-de-backups-cuenta-destino (s3) - last_login=None days=0.00 refresh=True
+2025-11-14 15:14:05 | ERROR    | VultrDrive.ui.main_window | ensure_profiles_ready:35 | Error verificando perfil almacen-de-backups-cuenta-destino: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 32, in ensure_profiles_ready
+    states[profile_name] = self._ensure_profile(profile_name, auto_mount=auto_mount)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 79, in _ensure_profile
+    refresh_success, refresh_message = self.refresh_profile_session(profile_name, profile)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 117, in refresh_profile_session
+    section = self.rclone_manager.create_rclone_config(profile_name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:14:05 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil mega-base (mega) - last_login=None days=0.00 refresh=True
+2025-11-14 15:14:05 | ERROR    | VultrDrive.ui.main_window | ensure_profiles_ready:35 | Error verificando perfil mega-base: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 32, in ensure_profiles_ready
+    states[profile_name] = self._ensure_profile(profile_name, auto_mount=auto_mount)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 79, in _ensure_profile
+    refresh_success, refresh_message = self.refresh_profile_session(profile_name, profile)
+                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\storage_session_manager.py", line 117, in refresh_profile_session
+    section = self.rclone_manager.create_rclone_config(profile_name)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:14:05 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-14 15:14:05 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-14 15:14:05 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1418 | Buckets cargados exitosamente: 2
+2025-11-14 15:14:05 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:14:06 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:14:06 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 15:14:07 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1418 | Buckets cargados exitosamente: 2
+2025-11-14 15:14:23 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:14:23 | ERROR    | VultrDrive.core.task_runner | run:61 | Tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]' falló: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\core\task_runner.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 1645, in execute_mount
+    success, message, process = self.rclone_manager.mount_drive(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 190, in mount_drive
+    section_name = self.create_rclone_config(profile_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:14:23 | ERROR    | VultrDrive.ui.main_window | on_error:1667 | Error en tarea de montaje (mount_drive[V:almacen-de-backups-cuenta-destino]): File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+NoneType: None
+2025-11-14 15:14:28 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:14:28 | ERROR    | VultrDrive.core.task_runner | run:61 | Tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]' falló: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\core\task_runner.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 1645, in execute_mount
+    success, message, process = self.rclone_manager.mount_drive(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 190, in mount_drive
+    section_name = self.create_rclone_config(profile_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:14:28 | ERROR    | VultrDrive.ui.main_window | on_error:1667 | Error en tarea de montaje (mount_drive[V:almacen-de-backups-cuenta-destino]): File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+NoneType: None
+2025-11-14 15:15:21 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:15:21 | ERROR    | VultrDrive.core.task_runner | run:61 | Tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]' falló: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\core\task_runner.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 1645, in execute_mount
+    success, message, process = self.rclone_manager.mount_drive(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 190, in mount_drive
+    section_name = self.create_rclone_config(profile_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:15:21 | ERROR    | VultrDrive.ui.main_window | on_error:1667 | Error en tarea de montaje (mount_drive[V:almacen-de-backups-cuenta-destino]): File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+NoneType: None
+2025-11-14 15:15:26 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:15:26 | ERROR    | VultrDrive.core.task_runner | run:61 | Tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]' falló: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\core\task_runner.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\ui\main_window.py", line 1645, in execute_mount
+    success, message, process = self.rclone_manager.mount_drive(
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 190, in mount_drive
+    section_name = self.create_rclone_config(profile_name)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 140, in create_rclone_config
+    parser = self._load_config_parser()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\VultrDriveDesktop\rclone_manager.py", line 120, in _load_config_parser
+    parser.read(self.rclone_config_file)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 713, in read
+    self._read(fp, filename)
+  File "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\Lib\configparser.py", line 1102, in _read
+    raise MissingSectionHeaderError(fpname, lineno, line)
+configparser.MissingSectionHeaderError: File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+2025-11-14 15:15:26 | ERROR    | VultrDrive.ui.main_window | on_error:1667 | Error en tarea de montaje (mount_drive[V:almacen-de-backups-cuenta-destino]): File contains no section headers.
+file: 'C:\\Users\\Administrator\\Desktop\\VultrDriveDesktop\\data\\rclone\\rclone.conf', line: 1
+'ï»¿[profile_almacen-de-backups-cuenta-destino]\n'
+NoneType: None
+2025-11-14 15:16:14 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 15:16:16 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 15:16:17 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-14 15:16:17 | INFO     | VultrDrive.ui.main_window | load_profile:1498 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-14 15:16:17 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 15:16:17 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-14 15:16:17 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'session_bootstrap'
+2025-11-14 15:16:17 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil almacen-de-backups-cuenta-destino (s3) - last_login=None days=0.00 refresh=True
+2025-11-14 15:16:17 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-14 15:16:18 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-14 15:16:18 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1418 | Buckets cargados exitosamente: 2
+2025-11-14 15:16:18 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:16:18 | INFO     | VultrDrive.ui.main_window | refresh_profile_session:140 | Perfil almacen-de-backups-cuenta-destino validado correctamente.
+2025-11-14 15:16:18 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:16:18 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 15:16:20 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1418 | Buckets cargados exitosamente: 2
+2025-11-14 15:16:23 | WARNING  | VultrDrive.ui.main_window | _auto_mount:174 | Auto-mount fallA3 para almacen-de-backups-cuenta-destino: 2025/11/14 15:16:18 ERROR : symlinks not supported without the --links flag: /
+The service rclone has been started.
+
+2025-11-14 15:16:23 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil mega-base (mega) - last_login=None days=0.00 refresh=True
+2025-11-14 15:16:24 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:16:25 | INFO     | VultrDrive.ui.main_window | refresh_profile_session:140 | Perfil mega-base validado correctamente.
+2025-11-14 15:16:29 | INFO     | VultrDrive.ui.main_window | on_success:1661 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 15:16:30 | INFO     | VultrDrive.ui.main_window | _auto_mount:170 | Perfil mega-base montado automaticamente en W
+2025-11-14 15:16:53 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Y:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:16:58 | INFO     | VultrDrive.ui.main_window | on_success:1661 | Montaje completado (mount_drive[Y:almacen-de-backups-cuenta-destino]): Montado exitosamente en Y:
+2025-11-14 15:17:46 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[Y:almacen-de-backups-cuenta-destino]'
+2025-11-14 15:17:51 | INFO     | VultrDrive.ui.main_window | on_success:1661 | Montaje completado (mount_drive[Y:almacen-de-backups-cuenta-destino]): Montado exitosamente en Y:
+2025-11-14 15:19:52 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 15:19:53 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2025-11-14 15:19:54 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2025-11-14 15:19:54 | INFO     | VultrDrive.ui.main_window | load_profile:1498 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2025-11-14 15:19:54 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2025-11-14 15:19:55 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2025-11-14 15:19:55 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'session_bootstrap'
+2025-11-14 15:19:55 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil almacen-de-backups-cuenta-destino (s3) - last_login=2025-11-14T22:16:18.526042 days=0.00 refresh=False
+2025-11-14 15:19:55 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2025-11-14 15:19:55 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1355 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2025-11-14 15:19:55 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 2 buckets: ['almacen-de-backups-cuenta-destino', 'civer-backups']
+2025-11-14 15:19:55 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1418 | Buckets cargados exitosamente: 2
+2025-11-14 15:19:55 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:19:56 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:20:00 | WARNING  | VultrDrive.ui.main_window | _auto_mount:174 | Auto-mount fallA3 para almacen-de-backups-cuenta-destino: 2025/11/14 15:19:55 ERROR : symlinks not supported without the --links flag: /
+The service rclone has been started.
+
+2025-11-14 15:20:00 | DEBUG    | VultrDrive.ui.main_window | _ensure_profile:73 | Perfil mega-base (mega) - last_login=2025-11-14T22:16:25.067839 days=0.00 refresh=False
+2025-11-14 15:20:05 | INFO     | VultrDrive.ui.main_window | _auto_mount:170 | Perfil mega-base montado automaticamente en W
+2025-11-14 15:21:46 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:21:46 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:25:24 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:25:24 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:27:16 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:27:16 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:30:54 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:30:54 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:32:46 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:32:46 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:36:24 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:36:24 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:38:16 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:38:17 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:41:54 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:41:54 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 15:43:01 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2025-11-14 15:43:46 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 15:43:46 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)

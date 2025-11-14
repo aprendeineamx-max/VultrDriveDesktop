@@ -12,9 +12,9 @@
         "auto_mount_letter": "V",
         "refresh_interval_days": 5,
         "session": {
-            "last_login_ts": null,
-            "last_check_ts": null,
-            "last_status": "unknown",
+            "last_login_ts": "2025-11-14T22:16:18.526042",
+            "last_check_ts": "2025-11-14T22:16:18.526042",
+            "last_status": "ok",
             "last_error": null,
             "last_mount_letter": null,
             "last_mount_ts": null
@@ -28,12 +28,31 @@
         "auto_mount_letter": "W",
         "refresh_interval_days": 3,
         "session": {
-            "last_login_ts": null,
-            "last_check_ts": null,
-            "last_status": "unknown",
+            "last_login_ts": "2025-11-14T22:16:25.067839",
+            "last_check_ts": "2025-11-14T22:16:25.067839",
+            "last_status": "ok",
             "last_error": null,
-            "last_mount_letter": null,
-            "last_mount_ts": null
+            "last_mount_letter": "W",
+            "last_mount_ts": "2025-11-14T22:20:05.617819"
+        },
+        "rclone_obscured_pass": "EDSp-1RJlzk_z22PFEzsUY4P7Vps_8glBYXBwQB7Wf0"
+    },
+    "_saved_mounts": [
+        {
+            "letter": "V",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "disconnected",
+            "mounted_at": "2025-11-14T15:16:29.968114",
+            "error_message": null
+        },
+        {
+            "letter": "Y",
+            "profile": "almacen-de-backups-cuenta-destino",
+            "bucket": "almacen-de-backups-cuenta-destino",
+            "status": "disconnected",
+            "mounted_at": "2025-11-14T15:17:51.606455",
+            "error_message": null
         }
-    }
+    ]
 }
