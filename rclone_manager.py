@@ -45,12 +45,18 @@ class RcloneManager:
         candidates = [
             os.path.join(self.base_path, 'rclone.exe'),
             os.path.join(self.base_path, 'rclone', 'rclone.exe'),
+            os.path.join(self.base_path, 'rclone-v1.71.2-windows-amd64', 'rclone.exe'),
+            os.path.join(self.base_path, 'dependencies', 'rclone.exe'),
             os.path.join(os.path.dirname(self.base_path), 'rclone.exe'),
             'rclone.exe',
             'rclone',
         ]
 
+        checked_paths = []
+
         for candidate in candidates:
+            normalized = candidate
+            checked_paths.append(normalized)
             try:
                 if candidate in ('rclone', 'rclone.exe'):
                     result = subprocess.run([candidate, 'version'], capture_output=True, text=True, timeout=2)
@@ -62,8 +68,28 @@ class RcloneManager:
             except Exception:
                 continue
 
+        # Búsqueda profunda dentro del repositorio para mantener portabilidad
+        search_roots = [
+            self.base_path,
+            os.path.join(self.base_path, 'dependencies'),
+            os.path.join(self.base_path, 'rclone-v1.71.2-windows-amd64'),
+        ]
+
+        for root in search_roots:
+            if not os.path.isdir(root):
+                continue
+            for dirpath, _, filenames in os.walk(root):
+                for filename in filenames:
+                    if filename.lower() == 'rclone.exe':
+                        discovered = os.path.join(dirpath, filename)
+                        return discovered
+
+        checked_text = '\n- '.join(checked_paths)
         raise FileNotFoundError(
-            "No se encontrA3 rclone.exe. Copia rclone.exe a la carpeta del proyecto o agrega rclone al PATH."
+            "No se encontró rclone.exe dentro del repositorio.\n"
+            "Copia rclone.exe a la carpeta del proyecto (por ejemplo dentro de "
+            "'rclone-v1.71.2-windows-amd64') o deja el binario en cualquiera de las rutas buscadas:\n"
+            f"- {checked_text}"
         )
 
     def _build_base_cmd(self, *args) -> List[str]:
@@ -91,7 +117,8 @@ class RcloneManager:
     def _load_config_parser(self) -> configparser.ConfigParser:
         parser = configparser.ConfigParser()
         if os.path.exists(self.rclone_config_file):
-            parser.read(self.rclone_config_file)
+            with open(self.rclone_config_file, 'r', encoding='utf-8-sig') as cfg:
+                parser.read_file(cfg)
         return parser
 
     def _get_section_name(self, profile_name: str) -> str:
