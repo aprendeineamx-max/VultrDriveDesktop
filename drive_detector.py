@@ -3,6 +3,7 @@ Drive Detector - Detecta unidades montadas por rclone
 """
 import subprocess
 import re
+import time
 from typing import List, Dict, Tuple
 
 class DriveDetector:
@@ -187,7 +188,6 @@ class DriveDetector:
                 print(f"[DEBUG] No se encontro PID especifico para {drive_letter}:")
                 print(f"[DEBUG] Verificando si la unidad esta montada...")
                 
-                # Verificar si la unidad existe
                 vol_result = subprocess.run(
                     ['cmd', '/c', 'vol', drive_path],
                     capture_output=True,
@@ -195,15 +195,18 @@ class DriveDetector:
                     creationflags=subprocess.CREATE_NO_WINDOW,
                     timeout=5
                 )
-                
+
                 if vol_result.returncode != 0:
-                    # La unidad no existe, ya está desmontada
                     print(f"[DEBUG] La unidad {drive_letter}: no esta montada")
                     msg = tr('drive_unmount_not_mounted', f"La unidad {drive_letter}: no está montada o ya fue desmontada")
                     return True, msg.format(drive_letter) if '{}' in msg else msg
-                
-                # La unidad existe pero no encontramos el proceso
-                print(f"[DEBUG] La unidad existe pero no hay proceso rclone asociado")
+
+                print(f"[DEBUG] La unidad existe pero no hay proceso rclone asociado, aplicando desmontaje forzado")
+                forced, forced_msg = DriveDetector._force_dismount_letter(drive_letter)
+                if forced:
+                    msg = tr('drive_unmount_success', f"Unidad {drive_letter}: desmontada exitosamente")
+                    return True, msg.format(drive_letter) if '{}' in msg else msg
+
                 msg = tr('drive_unmount_no_process', f"No se pudo desmontar la unidad {drive_letter}:\nNo se encontró el proceso rclone asociado.\nIntenta usar 'Desmontar Todas' o reiniciar la aplicación.")
                 return False, msg.format(drive_letter) if '{}' in msg else msg
             
@@ -242,7 +245,11 @@ class DriveDetector:
                 msg = tr('drive_unmount_success', f"Unidad {drive_letter}: desmontada exitosamente")
                 return True, msg.format(drive_letter) if '{}' in msg else msg
             else:
-                print(f"[DEBUG] La unidad todavia existe despues de matar el proceso")
+                print(f"[DEBUG] La unidad todavia existe despues de matar el proceso, intentando desmontaje forzado")
+                forced, forced_msg = DriveDetector._force_dismount_letter(drive_letter)
+                if forced:
+                    msg = tr('drive_unmount_success', f"Unidad {drive_letter}: desmontada exitosamente")
+                    return True, msg.format(drive_letter) if '{}' in msg else msg
                 msg = tr('drive_unmount_incomplete', f"No se pudo desmontar completamente la unidad {drive_letter}:\nEl proceso fue terminado pero la unidad aún responde.\nIntenta cerrar archivos abiertos y usa 'Desmontar Todas'.")
                 return False, msg.format(drive_letter) if '{}' in msg else msg
                 
@@ -276,11 +283,26 @@ class DriveDetector:
                 text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
-            
-            if result.returncode == 0:
-                return True, tr('drive_unmount_all_success', "Todas las unidades desmontadas exitosamente")
+
+            letters = []
+            for letter in 'VWXYZ':
+                vol_check = subprocess.run(
+                    ['cmd', '/c', 'vol', f'{letter}:'],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                if vol_check.returncode == 0:
+                    forced, _ = DriveDetector._force_dismount_letter(letter)
+                    if forced:
+                        letters.append(letter)
+
+            if result.returncode == 0 or letters:
+                msg = tr('drive_unmount_all_success', "Todas las unidades desmontadas exitosamente")
+                if letters:
+                    msg += f" (Forzado: {', '.join(letters)})"
+                return True, msg
             else:
-                # No hay procesos de rclone
                 return True, tr('drive_unmount_all_none', "No hay unidades montadas")
                 
         except Exception as e:
@@ -335,3 +357,54 @@ class DriveDetector:
             'serial': 'N/A',
             'mounted': False
         }
+
+    @staticmethod
+    def _force_dismount_letter(drive_letter: str) -> Tuple[bool, str]:
+        """Intentar desmontar una unidad incluso sin proceso activo."""
+        drive_path = f"{drive_letter}:"
+        try:
+            subprocess.run(
+                ['mountvol', drive_path, '/D'],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            time.sleep(1.0)
+        except Exception as exc:
+            print(f"[DEBUG] mountvol fallo para {drive_letter}: {exc}")
+
+        vol_check = subprocess.run(
+            ['cmd', '/c', 'vol', drive_path],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+
+        if vol_check.returncode != 0:
+            print(f"[DEBUG] Desmontaje forzado exitoso para {drive_letter}")
+            return True, f"Unidad {drive_letter}: desmontada forzadamente"
+
+        # Intento adicional con PowerShell para liberar WinFsp si sigue montada
+        try:
+            ps_cmd = f"Try {{ $null = [System.IO.Directory]::Delete('{drive_path}\\\\') }} Catch {{}}"
+            subprocess.run(
+                ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_cmd],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            time.sleep(0.5)
+        except Exception:
+            pass
+
+        vol_check2 = subprocess.run(
+            ['cmd', '/c', 'vol', drive_path],
+            capture_output=True,
+            text=True,
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        if vol_check2.returncode != 0:
+            print(f"[DEBUG] Desmontaje forzado con PowerShell exitoso para {drive_letter}")
+            return True, f"Unidad {drive_letter}: desmontada forzadamente"
+
+        return False, f"No fue posible desmontar {drive_letter} con desmontaje forzado"

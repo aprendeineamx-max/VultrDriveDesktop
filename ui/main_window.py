@@ -873,7 +873,12 @@ class MainWindow(QMainWindow):
         if hasattr(self, "multi_mounts_widget") and self.multi_mounts_widget:
             layout.addWidget(self.multi_mounts_widget)
 
-        self._mount_tab_spacer = QSpacerItem(0, 0, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self._mount_tab_spacer = QSpacerItem(
+            0,
+            0,
+            QSizePolicy.Policy.Minimum,
+            QSizePolicy.Policy.Expanding
+        )
         layout.addItem(self._mount_tab_spacer)
         
         # Configurar el scroll area
