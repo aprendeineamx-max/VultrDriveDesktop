@@ -1,7 +1,8 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
+﻿from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
                              QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
                              QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
+                             QSpinBox, QTableWidget, QTableWidgetItem, QHeaderView,
                              QStyle)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
@@ -16,6 +17,7 @@ from notification_manager import NotificationManager, NotificationType
 from core.task_runner import TaskRunner
 from multiple_mount_manager import MultipleMountManager
 from ui.multi_mounts_widget import MultiMountsWidget
+from storage_session_manager import StorageSessionManager
 from functools import partial
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
@@ -135,7 +137,11 @@ class MainWindow(QMainWindow):
 
         self.config_manager = ConfigManager()
         self.s3_handler = None
+        self.active_profile_type = 's3'
         self.rclone_manager = RcloneManager(self.config_manager)
+        self.session_manager = StorageSessionManager(self.config_manager, self.rclone_manager, logger)
+        self.profile_states = {}
+        self.profile_refresh_spins = {}
         self.multiple_mount_manager = None
         self.real_time_sync = None
         self.upload_thread = None
@@ -242,6 +248,9 @@ class MainWindow(QMainWindow):
             QTimer.singleShot(500, lambda: self._auto_load_profile())
         else:
             self.statusBar().showMessage(self.tr("no_profiles_found"))
+
+        self.refresh_profile_refresh_controls()
+        QTimer.singleShot(1500, self._bootstrap_sessions)
 
         self.setup_tray_icon()
         self.update_background_button_text()
@@ -760,6 +769,50 @@ class MainWindow(QMainWindow):
         actions_group.setLayout(actions_layout)
         layout.addWidget(actions_group)
 
+        # Auto refresh / session overview
+        session_group = QGroupBox(self.tr("session_auto_refresh_group"))
+        session_layout = QVBoxLayout()
+
+        session_info = QLabel(self.tr("session_auto_refresh_help"))
+        session_info.setWordWrap(True)
+        session_info.setStyleSheet("color: #888; font-size: 10pt;")
+        session_layout.addWidget(session_info)
+
+        global_interval_layout = QHBoxLayout()
+        global_interval_layout.addWidget(QLabel(self.tr("session_global_interval_label")))
+        self.global_refresh_spin = QSpinBox()
+        self.global_refresh_spin.setRange(1, 365)
+        self.global_refresh_spin.setValue(self.config_manager.get_global_refresh_interval())
+        self.global_refresh_spin.valueChanged.connect(self.on_global_refresh_changed)
+        global_interval_layout.addWidget(self.global_refresh_spin)
+        global_interval_layout.addStretch()
+        session_layout.addLayout(global_interval_layout)
+
+        self.profile_refresh_container = QWidget()
+        self.profile_refresh_layout = QVBoxLayout(self.profile_refresh_container)
+        self.profile_refresh_layout.setContentsMargins(0, 0, 0, 0)
+        self.profile_refresh_layout.setSpacing(6)
+        session_layout.addWidget(self.profile_refresh_container)
+
+        self.profile_status_table = QTableWidget(0, 7)
+        self.profile_status_table.setHorizontalHeaderLabels([
+            self.tr("session_table_profile"),
+            self.tr("session_table_type"),
+            self.tr("session_table_status"),
+            self.tr("session_table_days"),
+            self.tr("session_table_next_refresh"),
+            self.tr("session_table_mount"),
+            self.tr("session_table_error"),
+        ])
+        self.profile_status_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.profile_status_table.verticalHeader().setVisible(False)
+        self.profile_status_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.profile_status_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        session_layout.addWidget(self.profile_status_table)
+
+        session_group.setLayout(session_layout)
+        layout.addWidget(session_group)
+
         # Settings button
         settings_layout = QHBoxLayout()
         self.settings_button = QPushButton(self.tr("manage_profiles"))
@@ -777,6 +830,121 @@ class MainWindow(QMainWindow):
         tab_layout = QVBoxLayout(self.main_tab)
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
+
+    def on_global_refresh_changed(self, value: int):
+        self.config_manager.set_global_refresh_interval(value)
+        self.refresh_profile_refresh_controls()
+        self._bootstrap_sessions()
+
+    def _on_profile_refresh_changed(self, profile_name: str, value: int):
+        self.config_manager.set_profile_refresh_interval(profile_name, value)
+        self._bootstrap_sessions()
+
+    def refresh_profile_refresh_controls(self):
+        if not hasattr(self, 'profile_refresh_layout'):
+            return
+
+        while self.profile_refresh_layout.count():
+            item = self.profile_refresh_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        self.profile_refresh_spins = {}
+        for profile_name in self.config_manager.list_profiles():
+            row_widget = QWidget()
+            row_layout = QHBoxLayout(row_widget)
+            row_layout.setContentsMargins(0, 0, 0, 0)
+
+            label = QLabel(self.tr("session_profile_interval_label").format(profile_name))
+            row_layout.addWidget(label)
+
+            spin = QSpinBox()
+            spin.setRange(1, 365)
+            spin.setValue(self.config_manager.get_profile_refresh_interval(profile_name))
+            spin.valueChanged.connect(lambda value, name=profile_name: self._on_profile_refresh_changed(name, value))
+            row_layout.addWidget(spin)
+            row_layout.addStretch()
+
+            self.profile_refresh_layout.addWidget(row_widget)
+            self.profile_refresh_spins[profile_name] = spin
+
+    def _bootstrap_sessions(self):
+        if not hasattr(self, 'session_manager'):
+            return
+
+        def execute():
+            return self.session_manager.ensure_profiles_ready(auto_mount=True)
+
+        def on_success(result):
+            self.profile_states = result or {}
+            self.update_profile_status_table()
+            if hasattr(self, 'dashboard_tab'):
+                QTimer.singleShot(10, self.update_dashboard_stats)
+
+        self.statusBar().showMessage(self.tr("session_status_refreshing"))
+        self.task_runner.run(
+            execute,
+            on_success=on_success,
+            description="session_bootstrap",
+        )
+
+    def update_profile_status_table(self):
+        if not hasattr(self, 'profile_status_table'):
+            return
+
+        states = self.session_manager.get_states()
+        self.profile_status_table.setRowCount(len(states))
+        for row_index, (profile, state) in enumerate(states.items()):
+            self.profile_status_table.setItem(row_index, 0, QTableWidgetItem(profile))
+            self.profile_status_table.setItem(row_index, 1, QTableWidgetItem(state.get('type', 'unknown').upper()))
+
+            status_key = state.get('status', 'unknown')
+            status_text = self.tr("session_status_ok") if status_key == 'ok' else self.tr("session_status_error")
+            self.profile_status_table.setItem(row_index, 2, QTableWidgetItem(status_text))
+
+            days_text = self._format_days_value(state.get('days_active'))
+            self.profile_status_table.setItem(row_index, 3, QTableWidgetItem(days_text))
+
+            next_refresh = self._format_datetime(state.get('next_refresh_ts'))
+            self.profile_status_table.setItem(row_index, 4, QTableWidgetItem(next_refresh))
+
+            mount_status = self._format_mount_status(state.get('mount_status'))
+            self.profile_status_table.setItem(row_index, 5, QTableWidgetItem(mount_status))
+
+            error_text = state.get('last_error') or self.tr("session_no_errors")
+            self.profile_status_table.setItem(row_index, 6, QTableWidgetItem(error_text))
+
+        self.profile_status_table.resizeRowsToContents()
+        self.statusBar().showMessage(self.tr("session_status_ready"), 3000)
+
+    def _format_days_value(self, value):
+        if value is None:
+            return self.tr("session_days_unknown")
+        return self.tr("session_days_template").format(value)
+
+    def _format_datetime(self, iso_value):
+        if not iso_value:
+            return self.tr("session_next_refresh_unknown")
+        try:
+            from datetime import datetime
+            dt_value = datetime.fromisoformat(iso_value)
+            return dt_value.strftime("%Y-%m-%d %H:%M")
+        except Exception:
+            return iso_value
+
+    def _format_mount_status(self, mount_state):
+        if not mount_state:
+            return self.tr("session_mount_unknown")
+        status = mount_state.get('status')
+        message = mount_state.get('message', '')
+        if status == 'mounted':
+            return self.tr("session_mount_ok").format(message)
+        if status == 'error':
+            return self.tr("session_mount_error").format(message)
+        if status == 'skipped':
+            return self.tr("session_mount_skipped").format(message)
+        return message or self.tr("session_mount_unknown")
 
     def setup_mount_tab(self):
         # Crear un scroll area para toda la pestaña
@@ -1067,8 +1235,7 @@ class MainWindow(QMainWindow):
 
     def start_real_time_sync(self):
         """Start real-time synchronization"""
-        if not self.s3_handler:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
+        if not self._require_s3_features():
             return
 
         if self.bucket_selector.count() == 0:
@@ -1134,7 +1301,7 @@ class MainWindow(QMainWindow):
         layout.setContentsMargins(10, 10, 10, 10)
 
         # Warning label
-        warning_label = QLabel(f"⚠️ {self.tr('advanced_warning')}")
+        warning_label = QLabel(f"[!]️ {self.tr('advanced_warning')}")
         warning_label.setStyleSheet("font-weight: bold; color: #ff6b6b; font-size: 12pt;")
         layout.addWidget(warning_label)
 
@@ -1169,6 +1336,13 @@ class MainWindow(QMainWindow):
         tab_layout.addWidget(scroll)
 
     def refresh_buckets(self, force_remote=False):
+        if self.active_profile_type != 's3':
+            self.bucket_selector.clear()
+            self.bucket_selector.addItem(self.tr("mega_virtual_bucket"))
+            self.bucket_selector.setCurrentIndex(0)
+            self.statusBar().showMessage(self.tr("mega_bucket_placeholder_status"))
+            return
+
         if not self.s3_handler:
             self.statusBar().showMessage(self.tr("select_profile_first"))
             return
@@ -1258,91 +1432,97 @@ class MainWindow(QMainWindow):
     def load_profile(self, profile_name):
         if not profile_name:
             self.s3_handler = None
+            self.active_profile_type = 's3'
             self.statusBar().showMessage(self.tr("no_profile_selected"))
             return
             
         config = self.config_manager.get_config(profile_name)
-        if config:
-            try:
-                # Validar que las credenciales no estén vacías
-                access_key = config.get('access_key', '').strip()
-                secret_key = config.get('secret_key', '').strip()
-                host_base = config.get('host_base', '').strip()
-                
-                if not access_key or not secret_key:
-                    error_msg = self.tr("profile_credentials_empty")
-                    self.statusBar().showMessage(f"❌ {error_msg}")
-                    if LOGGING_AVAILABLE:
-                        logger.error(f"Perfil '{profile_name}' tiene credenciales vacías")
-                    
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, self.tr("warning"), error_msg)
-                    return
-                
-                if not host_base:
-                    error_msg = self.tr("profile_host_empty")
-                    self.statusBar().showMessage(f"❌ {error_msg}")
-                    if LOGGING_AVAILABLE:
-                        logger.error(f"Perfil '{profile_name}' tiene host_base vacío")
-                    
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, self.tr("warning"), error_msg)
-                    return
-                
-                # Intentar crear el handler
-                self.s3_handler = S3Handler(access_key, secret_key, host_base)
-                self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
-                
-                # ===== ACTUALIZAR MONITOR =====
+        if not config:
+            error_msg = self.tr("profile_not_found").format(profile_name)
+            self.statusBar().showMessage(f"[!] {error_msg}")
+            if LOGGING_AVAILABLE:
+                logger.error(error_msg)
+            self.s3_handler = None
+            self.active_profile_type = 's3'
+            return
+        
+        try:
+            self.active_profile_type = config.get('type', 's3').lower()
+            if self.active_profile_type != 's3':
+                self.s3_handler = None
+                self.bucket_selector.clear()
+                self.bucket_selector.addItem(self.tr("mega_virtual_bucket"))
+                self.bucket_selector.setCurrentIndex(0)
+                self.statusBar().showMessage(self.tr("mega_profile_loaded").format(profile_name))
                 if self.state_monitor:
                     self.state_monitor.update_component_status(
                         's3_handler',
                         ComponentStatus.READY,
-                        {'profile_name': profile_name}
+                        {'profile_name': profile_name, 'type': 'mega'}
                     )
-                
+                return
+            
+            access_key = config.get('access_key', '').strip()
+            secret_key = config.get('secret_key', '').strip()
+            host_base = config.get('host_base', '').strip()
+            
+            if not access_key or not secret_key:
+                error_msg = self.tr("profile_credentials_empty")
+                self.statusBar().showMessage(f"[!] {error_msg}")
                 if LOGGING_AVAILABLE:
-                    logger.info(f"Perfil '{profile_name}' cargado exitosamente")
-                
-                # Refrescar buckets
-                self.refresh_buckets()
-                
-            except ValueError as e:
-                # Error de validación (credenciales vacías, etc.)
-                error_msg = str(e)
-                self.statusBar().showMessage(f"❌ {error_msg}")
-                if LOGGING_AVAILABLE:
-                    logger.error(f"Error al cargar perfil '{profile_name}': {error_msg}")
-                
+                    logger.error(f"Perfil '{profile_name}' tiene credenciales vacías")
                 from PyQt6.QtWidgets import QMessageBox
-                QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
-                self.s3_handler = None
-                
-            except Exception as e:
-                # Otros errores
-                error_msg = self.tr("profile_load_unexpected_error").format(str(e))
-                self.statusBar().showMessage(f"❌ {error_msg}")
+                QMessageBox.warning(self, self.tr("warning"), error_msg)
+                return
+            
+            if not host_base:
+                error_msg = self.tr("profile_host_empty")
+                self.statusBar().showMessage(f"[!] {error_msg}")
                 if LOGGING_AVAILABLE:
-                    logger.error(f"Error inesperado al cargar perfil '{profile_name}': {str(e)}", exc_info=True)
-                
-                if ERROR_HANDLING_AVAILABLE:
-                    error = handle_error(e, context="load_profile")
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, self.tr("profile_load_error_title"), error.message)
-                else:
-                    from PyQt6.QtWidgets import QMessageBox
-                    QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
-                self.s3_handler = None
-        else:
-            error_msg = self.tr("profile_not_found").format(profile_name)
-            self.statusBar().showMessage(f"❌ {error_msg}")
+                    logger.error(f"Perfil '{profile_name}' tiene host_base vacío")
+                from PyQt6.QtWidgets import QMessageBox
+                QMessageBox.warning(self, self.tr("warning"), error_msg)
+                return
+            
+            self.s3_handler = S3Handler(access_key, secret_key, host_base)
+            self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
+            
+            if self.state_monitor:
+                self.state_monitor.update_component_status(
+                    's3_handler',
+                    ComponentStatus.READY,
+                    {'profile_name': profile_name}
+                )
+            
             if LOGGING_AVAILABLE:
-                logger.error(error_msg)
+                logger.info(f"Perfil '{profile_name}' cargado exitosamente")
+            
+            self.refresh_buckets()
+            
+        except ValueError as exc:
+            error_msg = str(exc)
+            self.statusBar().showMessage(f"[!] {error_msg}")
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al cargar perfil '{profile_name}': {error_msg}")
+            from PyQt6.QtWidgets import QMessageBox
+            QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
             self.s3_handler = None
-
+            self.active_profile_type = 's3'
+        except Exception as exc:
+            error_msg = self.tr("profile_load_unexpected_error").format(str(exc))
+            self.statusBar().showMessage(f"[!] {error_msg}")
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error inesperado al cargar perfil '{profile_name}': {str(exc)}", exc_info=True)
+            from PyQt6.QtWidgets import QMessageBox
+            if ERROR_HANDLING_AVAILABLE:
+                error = handle_error(exc, context="load_profile")
+                QMessageBox.warning(self, self.tr("profile_load_error_title"), error.message)
+            else:
+                QMessageBox.warning(self, self.tr("profile_load_error_title"), error_msg)
+            self.s3_handler = None
+            self.active_profile_type = 's3'
     def upload_file(self):
-        if not self.s3_handler:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
+        if not self._require_s3_features():
             return
 
         if self.bucket_selector.count() == 0:
@@ -1388,8 +1568,7 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("status_upload_failed"), 5000)
 
     def full_backup(self):
-        if not self.s3_handler:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
+        if not self._require_s3_features():
             return
 
         if self.bucket_selector.count() == 0:
@@ -1449,17 +1628,18 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
 
-        if self.bucket_selector.count() == 0:
+        if self.active_profile_type == 's3' and self.bucket_selector.count() == 0:
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_bucket_to_mount"))
             return
 
         drive_letter = self.drive_letter_input.currentText()
         profile_name = self.profile_selector.currentText()
-        bucket_name = self.bucket_selector.currentText()
+        bucket_name = self.bucket_selector.currentText() if self.active_profile_type == 's3' else ''
 
         # Mostrar mensaje inmediatamente en la barra de estado
-        self.statusBar().showMessage(self.tr("status_mounting").format(bucket_name, drive_letter))
-        description = f"mount_drive[{drive_letter}:{bucket_name}]"
+        display_target = bucket_name or self.tr("mega_virtual_bucket")
+        self.statusBar().showMessage(self.tr("status_mounting").format(display_target, drive_letter))
+        description = f"mount_drive[{drive_letter}:{display_target}]"
 
         def execute_mount():
             success, message, process = self.rclone_manager.mount_drive(
@@ -1646,8 +1826,7 @@ class MainWindow(QMainWindow):
             self.mount_status_label.setText(self.tr("drive_letter_not_mounted_status").format(selected_letter))
 
     def format_bucket(self):
-        if not self.s3_handler:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
+        if not self._require_s3_features():
             return
 
         if self.bucket_selector.count() == 0:
@@ -1701,6 +1880,8 @@ class MainWindow(QMainWindow):
             self.load_profile(profiles[0])
         else:
             self.load_profile(None)
+        self.refresh_profile_refresh_controls()
+        self._bootstrap_sessions()
     
     def update_close_without_unmount_button_visibility(self):
         """Actualiza la visibilidad del botón 'Cerrar sin Desmontar' basado en unidades montadas"""
@@ -1765,7 +1946,7 @@ class MainWindow(QMainWindow):
                         result_text += f"🔧 Proceso(s): {drive['process_ids']}\n"
                         result_text += f"✅ Estado: Proceso activo\n\n"
                     else:
-                        result_text += f"⚠️  Proceso: No detectado (sesión anterior)\n"
+                        result_text += f"[!]️  Proceso: No detectado (sesión anterior)\n"
                         result_text += f"📌 Estado: Montada sin proceso activo\n\n"
                 
                 result_text += "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1861,7 +2042,7 @@ class MainWindow(QMainWindow):
         """Desmonta una unidad específica"""
         reply = QMessageBox.question(
             self,
-            "⚠️ Confirmar Desmontaje",
+            "[!]️ Confirmar Desmontaje",
             f"¿Estás seguro de que deseas desmontar la unidad {drive_letter}:?\n\n"
             f"Los archivos abiertos desde esta unidad se cerrarán.\n"
             f"Las demás unidades permanecerán montadas.",
@@ -2097,6 +2278,22 @@ class MainWindow(QMainWindow):
         try:
             from datetime import datetime
             stats = {}
+            stats['profile_type'] = getattr(self, 'active_profile_type', 's3')
+
+            if self.active_profile_type != 's3' or not self.s3_handler:
+                stats['space_used'] = 0
+                stats['space_total'] = 0
+                stats['files_synced_today'] = 0
+                stats['transfer_speed'] = 0.0
+                stats['last_sync'] = None
+                try:
+                    from drive_detector import DriveDetector
+                    detected = DriveDetector.detect_mounted_drives()
+                    stats['mounted_drives'] = [d['letter'] for d in detected] if detected else []
+                except Exception:
+                    stats['mounted_drives'] = []
+                self.dashboard_tab.update_stats(stats)
+                return
 
             # Obtener espacio usado del bucket
             if self.s3_handler and self.bucket_selector.count() > 0:
@@ -2163,5 +2360,7 @@ class MainWindow(QMainWindow):
                     self.notification_manager.warning("Dashboard", f"Error al actualizar: {error.message}")
             if LOGGING_AVAILABLE:
                 logger.error(f"Error al actualizar dashboard: {e}", exc_info=True)
+
+
 
 

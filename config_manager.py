@@ -1,4 +1,4 @@
-import json
+﻿import json
 import os
 import sys
 
@@ -11,6 +11,8 @@ except ImportError:
     print("[ConfigManager] Advertencia: encryption_manager no disponible. Credenciales se guardarán en texto plano.")
 
 class ConfigManager:
+    GLOBAL_SETTINGS_KEY = '_global_settings'
+    SAVED_MOUNTS_KEY = '_saved_mounts'
     def __init__(self, config_file='config.json', enable_encryption=False):
         # ===== DESHABILITAR ENCRIPTACIÓN: Credenciales en texto plano para portabilidad =====
         # Detectar si estamos ejecutando desde PyInstaller
@@ -21,6 +23,7 @@ class ConfigManager:
             # Ejecutando desde script Python
             base_path = os.path.dirname(os.path.abspath(__file__))
         
+        self.base_path = base_path
         self.config_file = os.path.join(base_path, config_file)
         
         # ===== ENCRIPTACIÓN DESHABILITADA: Siempre usar texto plano =====
@@ -28,6 +31,11 @@ class ConfigManager:
         self.encryption_manager = None
         
         self.configs = self.load_configs()
+        if not isinstance(self.configs, dict):
+            self.configs = {}
+        if self.GLOBAL_SETTINGS_KEY not in self.configs:
+            self.configs[self.GLOBAL_SETTINGS_KEY] = {'auto_refresh_days': 7}
+            self.save_configs()
 
     def load_configs(self):
         """Cargar configuraciones y desencriptar credenciales"""
@@ -87,6 +95,37 @@ class ConfigManager:
                                     except Exception as e:
                                         print(f"[ConfigManager] No se pudo decodificar secret_key: {e}")
                     
+                    # Normalizar metadatos adicionales para cada perfil
+                    for profile_name, profile_data in configs.items():
+                        if not isinstance(profile_data, dict) or profile_name.startswith('_'):
+                            continue
+                        profile_type = profile_data.get('type', 's3')
+                        normalized_type = profile_type.lower() if isinstance(profile_type, str) else 's3'
+                        if profile_data.get('type') != normalized_type:
+                            profile_data['type'] = normalized_type
+                            needs_save = True
+                        profile_type = normalized_type
+                        if profile_type == 's3' and not profile_data.get('default_bucket'):
+                            profile_data['default_bucket'] = profile_name
+                            needs_save = True
+                        if 'auto_mount' not in profile_data:
+                            profile_data['auto_mount'] = True
+                            needs_save = True
+                        if 'auto_mount_letter' not in profile_data:
+                            profile_data['auto_mount_letter'] = 'V'
+                            needs_save = True
+                        if 'refresh_interval_days' not in profile_data:
+                            profile_data['refresh_interval_days'] = configs.get(self.GLOBAL_SETTINGS_KEY, {}).get('auto_refresh_days', 7)
+                            needs_save = True
+                        session_block = profile_data.get('session')
+                        if not isinstance(session_block, dict):
+                            session_block = {}
+                            profile_data['session'] = session_block
+                            needs_save = True
+                        for key in ('last_login_ts', 'last_check_ts', 'last_status', 'last_error', 'last_mount_letter', 'last_mount_ts'):
+                            if key not in session_block:
+                                session_block[key] = None
+                                needs_save = True
                     # Guardar configuraciones decodificadas si hubo cambios
                     if needs_save:
                         try:
@@ -232,7 +271,59 @@ class ConfigManager:
         return self.configs.get(profile_name)
 
     def list_profiles(self):
-        return list(self.configs.keys())
+        return [
+            name for name in self.configs.keys()
+            if not name.startswith('_')
+        ]
+
+    def get_global_refresh_interval(self, default=7):
+        settings = self.configs.get(self.GLOBAL_SETTINGS_KEY, {})
+        return int(settings.get('auto_refresh_days', default))
+
+    def set_global_refresh_interval(self, days: int):
+        settings = self.configs.get(self.GLOBAL_SETTINGS_KEY, {})
+        settings['auto_refresh_days'] = int(days)
+        self.configs[self.GLOBAL_SETTINGS_KEY] = settings
+        self.save_configs()
+
+    def get_profile_refresh_interval(self, profile_name, default=None):
+        profile = self.get_config(profile_name) or {}
+        if default is None:
+            default = self.get_global_refresh_interval()
+        return int(profile.get('refresh_interval_days', default))
+
+    def set_profile_refresh_interval(self, profile_name, days: int):
+        profile = self.configs.get(profile_name, {})
+        profile['refresh_interval_days'] = int(days)
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def update_profile_field(self, profile_name, field, value):
+        profile = self.configs.get(profile_name, {})
+        profile[field] = value
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def get_profile_session(self, profile_name):
+        profile = self.get_config(profile_name) or {}
+        session = profile.get('session')
+        if not isinstance(session, dict):
+            session = {}
+        return session
+
+    def update_profile_session(self, profile_name, **fields):
+        profile = self.configs.get(profile_name, {})
+        session = profile.get('session')
+        if not isinstance(session, dict):
+            session = {}
+        session.update(fields)
+        profile['session'] = session
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def get_profile_session_field(self, profile_name, field, default=None):
+        session = self.get_profile_session(profile_name)
+        return session.get(field, default)
 
     # ===== Persistencia de montajes múltiples =====
 
@@ -241,7 +332,7 @@ class ConfigManager:
         try:
             if not isinstance(self.configs, dict):
                 self.configs = {}
-            self.configs['_saved_mounts'] = mounts_data
+            self.configs[self.SAVED_MOUNTS_KEY] = mounts_data
             with open(self.config_file, 'w', encoding='utf-8') as f:
                 json.dump(self.configs, f, indent=4, ensure_ascii=False)
         except Exception as e:
@@ -251,4 +342,6 @@ class ConfigManager:
         """Obtener montajes guardados de la configuración."""
         if not isinstance(self.configs, dict):
             return []
-        return self.configs.get('_saved_mounts', [])
+        return self.configs.get(self.SAVED_MOUNTS_KEY, [])
+
+

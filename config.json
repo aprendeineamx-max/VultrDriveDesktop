@@ -1,7 +1,39 @@
 {
+    "_global_settings": {
+        "auto_refresh_days": 7
+    },
     "almacen-de-backups-cuenta-destino": {
+        "type": "s3",
         "access_key": "G0LDHU6PIXWDEDJTAQ4B",
         "secret_key": "AUxkwxrBSe3SK1k6MdknXnvloCB9EQiuU7HLw1eZ",
-        "host_base": "lax1.vultrobjects.com"
+        "host_base": "lax1.vultrobjects.com",
+        "default_bucket": "almacen-de-backups-cuenta-destino",
+        "auto_mount": true,
+        "auto_mount_letter": "V",
+        "refresh_interval_days": 5,
+        "session": {
+            "last_login_ts": null,
+            "last_check_ts": null,
+            "last_status": "unknown",
+            "last_error": null,
+            "last_mount_letter": null,
+            "last_mount_ts": null
+        }
+    },
+    "mega-base": {
+        "type": "mega",
+        "email": "0snflty3@duck.com",
+        "password": "%R0ckanlover|!35",
+        "auto_mount": true,
+        "auto_mount_letter": "W",
+        "refresh_interval_days": 3,
+        "session": {
+            "last_login_ts": null,
+            "last_check_ts": null,
+            "last_status": "unknown",
+            "last_error": null,
+            "last_mount_letter": null,
+            "last_mount_ts": null
+        }
     }
 }
