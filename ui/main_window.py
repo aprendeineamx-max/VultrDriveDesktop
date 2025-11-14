@@ -745,7 +745,9 @@ class MainWindow(QMainWindow):
             )
 
             if reply == QMessageBox.StandardButton.Yes:
-                self.rclone_manager.unmount_drive(self.drive_letter_input.currentText())
+                drive_letter = self._get_selected_drive_letter()
+                if drive_letter:
+                    self.rclone_manager.unmount_drive(drive_letter)
 
         if self.tray_icon:
             self.tray_icon.hide()
@@ -1558,6 +1560,15 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, self.tr("error"), message)
             self.statusBar().showMessage(self.tr("status_backup_failed"), 5000)
 
+    def _normalize_drive_letter(self, letter: str | None) -> str:
+        """Normaliza letras de unidad para comparaciones y comandos."""
+        if not letter:
+            return ""
+        return letter.strip().upper()
+
+    def _get_selected_drive_letter(self) -> str:
+        return self._normalize_drive_letter(self.drive_letter_input.currentText())
+
     def mount_drive(self):
         if not self.profile_selector.currentText():
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
@@ -1567,7 +1578,10 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_bucket_to_mount"))
             return
 
-        drive_letter = self.drive_letter_input.currentText()
+        drive_letter = self._get_selected_drive_letter()
+        if not drive_letter:
+            QMessageBox.warning(self, self.tr("warning"), self.tr("select_drive_letter_text"))
+            return
         profile_name = self.profile_selector.currentText()
         bucket_name = self.bucket_selector.currentText()
 
@@ -1691,8 +1705,13 @@ class MainWindow(QMainWindow):
 
     def open_drive(self):
         """Abrir la unidad montada en el Explorador de archivos"""
-        drive_letter = self.drive_letter_input.currentText()
+        drive_letter = self._get_selected_drive_letter()
         if not drive_letter:
+            QMessageBox.warning(
+                self,
+                self.tr("select_drive_letter_title"),
+                self.tr("select_drive_letter_text")
+            )
             return
 
         path = f"{drive_letter}:\\"
@@ -1708,7 +1727,7 @@ class MainWindow(QMainWindow):
 
     def unmount_drive(self):
         """Desmonta la unidad seleccionada usando la misma lógica del botón naranja"""
-        drive_letter = self.drive_letter_input.currentText()
+        drive_letter = self._get_selected_drive_letter()
 
         if not drive_letter:
             QMessageBox.warning(
@@ -1722,7 +1741,7 @@ class MainWindow(QMainWindow):
 
     def update_unmount_button_state(self, *args, detected_drives=None):
         """Actualizar el estado de los botones de acuerdo con la letra seleccionada"""
-        selected_letter = self.drive_letter_input.currentText()
+        selected_letter = self._get_selected_drive_letter()
 
         if not selected_letter:
             self.unmount_button.setEnabled(False)
@@ -1734,15 +1753,16 @@ class MainWindow(QMainWindow):
         mounted_letters = []
 
         if detected_drives is not None:
-            mounted_letters = [d['letter'] for d in detected_drives] if detected_drives else []
+            mounted_letters = [self._normalize_drive_letter(d['letter']) for d in detected_drives] if detected_drives else []
         else:
             try:
                 detected = DriveDetector.detect_mounted_drives()
-                mounted_letters = [d['letter'] for d in detected] if detected else []
+                mounted_letters = [self._normalize_drive_letter(d['letter']) for d in detected] if detected else []
             except Exception as e:
                 print(f"Error detectando unidades: {e}")
 
         is_mounted = selected_letter in mounted_letters
+        display_letter = selected_letter or self.drive_letter_input.currentText()
 
         if is_mounted:
             self.unmount_button.setEnabled(True)
@@ -1750,14 +1770,14 @@ class MainWindow(QMainWindow):
             self.open_drive_button.setEnabled(True)
             self.mount_button.setEnabled(False)
             self.mount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
-            self.mount_status_label.setText(self.tr("drive_letter_mounted_status").format(selected_letter))
+            self.mount_status_label.setText(self.tr("drive_letter_mounted_status").format(display_letter))
         else:
             self.unmount_button.setEnabled(False)
             self.unmount_button.setStyleSheet("background-color: #CCCCCC; color: gray; font-weight: bold; border-radius: 5px; padding: 8px;")
             self.open_drive_button.setEnabled(False)
             self.mount_button.setEnabled(True)
             self.mount_button.setStyleSheet("background-color: #4CAF50; color: white; font-weight: bold; border-radius: 5px; padding: 8px;")
-            self.mount_status_label.setText(self.tr("drive_letter_not_mounted_status").format(selected_letter))
+            self.mount_status_label.setText(self.tr("drive_letter_not_mounted_status").format(display_letter))
 
     def format_bucket(self):
         if not self.s3_handler:
@@ -1914,10 +1934,11 @@ class MainWindow(QMainWindow):
                 f"No se pudieron detectar las unidades montadas:\n\n{str(e)}"
             )
         finally:
-            letters = [d['letter'] for d in detected_drives] if detected_drives else []
+            letters = [self._normalize_drive_letter(d['letter']) for d in detected_drives] if detected_drives else []
             if hasattr(self, 'dashboard_tab') and hasattr(self.dashboard_tab, 'update_mounted_drives'):
                 self.dashboard_tab.update_mounted_drives(letters)
-            if letters and self.drive_letter_input.currentText() not in letters:
+            current_letter = self._get_selected_drive_letter()
+            if letters and current_letter not in letters:
                 self.drive_letter_input.setCurrentText(letters[0])
             self.update_unmount_button_state(detected_drives=detected_drives)
             self._refresh_multi_mounts_widget()
