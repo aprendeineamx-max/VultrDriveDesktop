@@ -126,14 +126,15 @@ class DriveDetector:
     def find_process_ids_for_letter(drive_letter: str) -> List[int]:
         """Obtener lista de PIDs de rclone asociados a una letra."""
         try:
-            ps_command = f"""
-            $letter = '{drive_letter.upper()}'
-            $processes = Get-WmiObject Win32_Process -Filter "name='rclone.exe'"
-            foreach ($p in $processes) {{
-                if ($p.CommandLine -like "* $letter:*") {{
-                    Write-Output $p.ProcessId
-                }}
-            }}
+            letter = drive_letter.upper()
+            ps_command = r"""
+$processes = Get-WmiObject Win32_Process -Filter "name='rclone.exe'"
+foreach ($p in $processes) {
+    $cmd = ""
+    try { $cmd = $p.CommandLine } catch { $cmd = "" }
+    if (-not $cmd) { $cmd = "" }
+    Write-Output "$($p.ProcessId)|||$cmd"
+}
             """
             result = subprocess.run(
                 ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_command],
@@ -144,11 +145,32 @@ class DriveDetector:
                 creationflags=subprocess.CREATE_NO_WINDOW,
                 timeout=15
             )
-            pids = []
-            for line in result.stdout.strip().split('\n'):
-                line = line.strip()
-                if line.isdigit():
-                    pids.append(int(line))
+
+            pattern = re.compile(
+                rf"(?i)(^|[\s\"'=]){letter}:(?:[\\/\s\"]|$)"
+            )
+            alt_pattern = re.compile(
+                rf"(?i)--drive-letter(?:=|\s+){letter}(?:\s|$)"
+            )
+
+            pids: List[int] = []
+            all_candidates: List[int] = []
+            for raw_line in result.stdout.splitlines():
+                if not raw_line:
+                    continue
+                parts = raw_line.split('|||', 1)
+                pid_text = parts[0].strip()
+                cmdline = parts[1].strip() if len(parts) > 1 else ''
+                if not pid_text.isdigit():
+                    continue
+                all_candidates.append(int(pid_text))
+                if not cmdline:
+                    continue
+                if pattern.search(cmdline) or alt_pattern.search(cmdline):
+                    pids.append(int(pid_text))
+            if not pids and len(all_candidates) == 1:
+                # Si solo hay un proceso rclone activo, asumir que corresponde a la letra
+                pids = all_candidates
             return pids
         except Exception:
             return []
@@ -211,7 +233,10 @@ class DriveDetector:
                 return False, msg.format(drive_letter) if '{}' in msg else msg
             
             # PASO 2: Matar los PIDs específicos
-            print(f"[DEBUG] Matando {len(pids_to_kill)} proceso(s): {', '.join(pids_to_kill)}")
+            print(
+                f"[DEBUG] Matando {len(pids_to_kill)} proceso(s): "
+                f"{', '.join(str(pid) for pid in pids_to_kill)}"
+            )
             
             for pid in pids_to_kill:
                 print(f"[DEBUG] Ejecutando taskkill /F /PID {pid}")
@@ -361,32 +386,94 @@ class DriveDetector:
     @staticmethod
     def _force_dismount_letter(drive_letter: str) -> Tuple[bool, str]:
         """Intentar desmontar una unidad incluso sin proceso activo."""
+        drive_letter = drive_letter.upper()
         drive_path = f"{drive_letter}:"
+
+        def _drive_exists() -> bool:
+            try:
+                vol_check = subprocess.run(
+                    ['cmd', '/c', 'vol', drive_path],
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                return vol_check.returncode == 0
+            except Exception:
+                return False
+
+        def _attempt_command(cmd: List[str], description: str, wait_seconds: float = 0.6) -> bool:
+            try:
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    creationflags=subprocess.CREATE_NO_WINDOW
+                )
+                if result.returncode not in (0, 2):
+                    print(
+                        f"[DEBUG] {description} retorno {result.returncode}: {result.stderr.strip() or result.stdout.strip()}"
+                    )
+                time.sleep(wait_seconds)
+            except Exception as exc:
+                print(f"[DEBUG] {description} fallo para {drive_letter}: {exc}")
+            exists = _drive_exists()
+            if not exists:
+                print(f"[DEBUG] {description} elimino la unidad {drive_letter}:")
+                return True
+            return False
+
+        attempts = [
+            (['net', 'use', drive_path, '/delete', '/yes'], 'net use /delete'),
+            ([
+                'powershell',
+                '-NoProfile',
+                '-NonInteractive',
+                '-Command',
+                f"Try {{ Dismount-Volume -DriveLetter '{drive_letter}' -Force -Confirm:$false }} Catch {{}}"
+            ], 'Dismount-Volume'),
+            (['mountvol', drive_path, '/D'], 'mountvol /D (sin barra)'),
+            (['mountvol', f'{drive_letter}:\\', '/D'], 'mountvol /D (con barra)'),
+            (['fsutil', 'volume', 'dismount', drive_path], 'fsutil volume dismount')
+        ]
+
+        for cmd, description in attempts:
+            if _attempt_command(cmd, description):
+                return True, f"Unidad {drive_letter}: desmontada forzadamente"
+
+        # Intento adicional con DefineDosDevice para limpiar el enlace simbA3lico de la letra
         try:
-            subprocess.run(
-                ['mountvol', drive_path, '/D'],
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW
+            import ctypes
+            from ctypes import wintypes
+
+            DDD_REMOVE_DEFINITION = 0x00000002
+            DDD_EXACT_MATCH_ON_REMOVE = 0x00000004
+            DDD_NO_BROADCAST_SYSTEM = 0x00000008
+            flags = (
+                DDD_REMOVE_DEFINITION |
+                DDD_EXACT_MATCH_ON_REMOVE |
+                DDD_NO_BROADCAST_SYSTEM
             )
-            time.sleep(1.0)
+
+            res = ctypes.windll.kernel32.DefineDosDeviceW(
+                flags,
+                f"{drive_letter}:",
+                None
+            )
+            if res:
+                time.sleep(0.5)
+                if not _drive_exists():
+                    print(f"[DEBUG] DefineDosDevice removio {drive_letter}:")
+                    return True, f"Unidad {drive_letter}: desmontada forzadamente"
         except Exception as exc:
-            print(f"[DEBUG] mountvol fallo para {drive_letter}: {exc}")
+            print(f"[DEBUG] DefineDosDevice fallo para {drive_letter}: {exc}")
 
-        vol_check = subprocess.run(
-            ['cmd', '/c', 'vol', drive_path],
-            capture_output=True,
-            text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-
-        if vol_check.returncode != 0:
-            print(f"[DEBUG] Desmontaje forzado exitoso para {drive_letter}")
-            return True, f"Unidad {drive_letter}: desmontada forzadamente"
-
-        # Intento adicional con PowerShell para liberar WinFsp si sigue montada
+        # Intento final eliminando el directorio WinFsp
         try:
-            ps_cmd = f"Try {{ $null = [System.IO.Directory]::Delete('{drive_path}\\\\') }} Catch {{}}"
+            ps_cmd = (
+                f"Try {{ $path = '{drive_letter}:\\\\';"
+                " if (Test-Path $path) {"
+                " [System.IO.Directory]::Delete($path) } } Catch {}"
+            )
             subprocess.run(
                 ['powershell', '-NoProfile', '-NonInteractive', '-Command', ps_cmd],
                 capture_output=True,
@@ -394,17 +481,10 @@ class DriveDetector:
                 creationflags=subprocess.CREATE_NO_WINDOW
             )
             time.sleep(0.5)
+            if not _drive_exists():
+                print(f"[DEBUG] Eliminacion manual removio {drive_letter}:")
+                return True, f"Unidad {drive_letter}: desmontada forzadamente"
         except Exception:
             pass
-
-        vol_check2 = subprocess.run(
-            ['cmd', '/c', 'vol', drive_path],
-            capture_output=True,
-            text=True,
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-        if vol_check2.returncode != 0:
-            print(f"[DEBUG] Desmontaje forzado con PowerShell exitoso para {drive_letter}")
-            return True, f"Unidad {drive_letter}: desmontada forzadamente"
 
         return False, f"No fue posible desmontar {drive_letter} con desmontaje forzado"
