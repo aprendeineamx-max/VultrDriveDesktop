@@ -239,9 +239,10 @@ foreach ($p in $processes) {
             )
             
             for pid in pids_to_kill:
-                print(f"[DEBUG] Ejecutando taskkill /F /PID {pid}")
+                pid_text = str(pid)
+                print(f"[DEBUG] Ejecutando taskkill /F /PID {pid_text}")
                 result = subprocess.run(
-                    ['taskkill', '/F', '/PID', pid],
+                    ['taskkill', '/F', '/PID', pid_text],
                     capture_output=True,
                     text=True,
                     creationflags=subprocess.CREATE_NO_WINDOW,
