@@ -35,7 +35,12 @@ class RcloneManager:
         os.makedirs(self.rclone_config_dir, exist_ok=True)
         self.rclone_config_file = os.path.join(self.rclone_config_dir, 'rclone.conf')
 
+        self.cache_root = os.path.join(self.base_path, 'data', 'cache')
+        os.makedirs(self.cache_root, exist_ok=True)
+
         self.mount_processes: Dict[str, subprocess.Popen] = {}
+        self.mount_rc_ports: Dict[str, int] = {}
+        self.rc_port_base = 5600
 
     # ------------------------------------------------------------------
     # Utilidades internas
@@ -120,6 +125,22 @@ class RcloneManager:
             with open(self.rclone_config_file, 'r', encoding='utf-8-sig') as cfg:
                 parser.read_file(cfg)
         return parser
+
+    def _allocate_rc_port(self, drive_letter: str) -> int:
+        letter = drive_letter.upper()
+        if letter in self.mount_rc_ports:
+            return self.mount_rc_ports[letter]
+
+        port = self.rc_port_base
+        allocated = set(self.mount_rc_ports.values())
+        while port in allocated:
+            port += 1
+        self.mount_rc_ports[letter] = port
+        return port
+
+    def _release_rc_port(self, drive_letter: str):
+        drive_letter = (drive_letter or '').upper()
+        self.mount_rc_ports.pop(drive_letter, None)
 
     def _get_section_name(self, profile_name: str) -> str:
         return f"profile_{profile_name}"
@@ -212,25 +233,54 @@ class RcloneManager:
             # Si ya existe, intentar desmontar antes
             self.unmount_drive_by_letter(drive_letter)
 
-        cmd = self._build_base_cmd(
-            'mount',
-            target,
-            mount_point,
-            '--vfs-cache-mode', 'writes',
-            '--vfs-cache-max-age', '1h',
-            '--vfs-cache-poll-interval', '15s',
-            '--vfs-read-chunk-size', '128M',
-            '--vfs-read-chunk-size-limit', '2G',
-            '--buffer-size', '32M',
+        cache_dir = os.path.join(self.cache_root, drive_letter)
+        os.makedirs(cache_dir, exist_ok=True)
+
+        rc_port = self._allocate_rc_port(drive_letter)
+        rc_addr = f"127.0.0.1:{rc_port}"
+
+        cmd = self._build_base_cmd('mount', target, mount_point)
+
+        common_flags = [
+            '--cache-dir', cache_dir,
+            '--buffer-size', '64M',
             '--timeout', '1h',
-            '--retries', '3',
+            '--retries', '5',
             '--low-level-retries', '10',
-            '--stats', '1m',
+            '--stats', '30s',
             '--no-modtime',
             '--no-checksum',
-            '--dir-cache-time', '5m',
-            '--volname', f"{profile_name}-{profile_type}".replace(' ', '_')
-        )
+            '--transfers', '4',
+            '--volname', f"{profile_name}-{profile_type}".replace(' ', '_'),
+            '--rc',
+            '--rc-addr', rc_addr,
+            '--rc-no-auth',
+        ]
+
+        if profile_type == 'mega':
+            mega_flags = [
+                '--vfs-cache-mode', 'full',
+                '--vfs-cache-max-age', '24h',
+                '--vfs-cache-max-size', profile.get('vfs_cache_max_size', '15G'),
+                '--dir-cache-time', '15s',
+                '--poll-interval', '30s',
+                '--vfs-read-chunk-size', '64M',
+                '--vfs-read-chunk-size-limit', '1G',
+                '--use-mmap',
+            ]
+            cmd.extend(mega_flags)
+        else:
+            s3_flags = [
+                '--vfs-cache-mode', 'writes',
+                '--vfs-cache-max-age', '1h',
+                '--vfs-cache-poll-interval', '15s',
+                '--vfs-read-chunk-size', '128M',
+                '--vfs-read-chunk-size-limit', '2G',
+                '--dir-cache-time', '5m',
+            ]
+            cmd.extend(s3_flags)
+
+        cmd.extend(common_flags)
 
         try:
             process = subprocess.Popen(
@@ -242,11 +292,13 @@ class RcloneManager:
                 cwd=os.path.dirname(self.rclone_exe) if os.path.isfile(self.rclone_exe) else None
             )
         except FileNotFoundError as exc:
+            self._release_rc_port(drive_letter)
             if ERROR_HANDLING_AVAILABLE:
                 error = MountError(f"No se pudo ejecutar rclone: {exc}", suggestion="Verifica que rclone.exe estA? en la carpeta del proyecto.")
                 return False, error.get_user_message(), None
             return False, f"No se pudo ejecutar rclone: {exc}", None
         except Exception as exc:
+            self._release_rc_port(drive_letter)
             if ERROR_HANDLING_AVAILABLE:
                 error = handle_error(exc, context="mount_drive")
                 return False, error.get_user_message(), None
@@ -265,6 +317,7 @@ class RcloneManager:
 
         stdout, stderr = process.communicate(timeout=5)
         error_msg = stderr.decode('utf-8', errors='ignore') if stderr else stdout.decode('utf-8', errors='ignore')
+        self._release_rc_port(drive_letter)
         return False, error_msg or "Error desconocido al montar con rclone.", None
 
     def mount_profile(self, profile_name: str, drive_letter: str, bucket_name: Optional[str] = None):
@@ -274,6 +327,33 @@ class RcloneManager:
         profile = self.config_manager.get_config(profile_name) or {}
         bucket = bucket_name or profile.get('default_bucket')
         return self.mount_drive(profile_name, drive_letter, bucket)
+
+    def refresh_mount(self, drive_letter: str, path: str = '/', recursive: bool = True) -> Tuple[bool, str]:
+        """
+        Forzar que rclone refresque el contenido del montaje (invalida cache).
+        Requiere que el montaje se haya iniciado con '--rc'.
+        """
+        drive_letter = (drive_letter or '').upper()
+        rc_port = self.mount_rc_ports.get(drive_letter)
+        if not rc_port:
+            return False, f"No hay RC activo para la unidad {drive_letter}."
+
+        args = [
+            'rc',
+            '--rc-addr', f"127.0.0.1:{rc_port}",
+            'vfs/refresh',
+            f"dir={path}",
+            f"recursive={'true' if recursive else 'false'}",
+        ]
+
+        cmd = self._build_base_cmd(*args)
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=20)
+            if result.returncode == 0:
+                return True, f"Cache refrescado para {drive_letter}:"
+            return False, result.stderr.strip() or result.stdout.strip() or "Error al refrescar montaje"
+        except Exception as exc:
+            return False, str(exc)
 
     def unmount_drive(self, drive_letter: str) -> Tuple[bool, str]:
         return self.unmount_drive_by_letter(drive_letter)
@@ -288,7 +368,9 @@ class RcloneManager:
             except Exception:
                 pass
         if drive_letter:
-            self.mount_processes.pop(drive_letter.upper(), None)
+            letter = drive_letter.upper()
+            self.mount_processes.pop(letter, None)
+            self._release_rc_port(letter)
         return True, f"Proceso rclone terminado para {drive_letter or 'unidad desconocida'}"
 
     def _find_process_ids_for_letter(self, drive_letter: str) -> List[int]:
@@ -315,6 +397,7 @@ class RcloneManager:
 
         vol_check = subprocess.run(['cmd', '/c', 'vol', drive_path], capture_output=True, text=True)
         if vol_check.returncode != 0:
+            self._release_rc_port(drive_letter)
             return True, f"Unidad {drive_letter}: desmontada exitosamente"
 
         for pid in self._find_process_ids_for_letter(drive_letter):
@@ -323,6 +406,7 @@ class RcloneManager:
 
         vol_check = subprocess.run(['cmd', '/c', 'vol', drive_path], capture_output=True, text=True)
         if vol_check.returncode != 0:
+            self._release_rc_port(drive_letter)
             return True, f"Unidad {drive_letter}: desmontada exitosamente"
 
         return False, f"No se pudo desmontar la unidad {drive_letter}. Cierra archivos abiertos y vuelve a intentar."
