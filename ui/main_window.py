@@ -1158,9 +1158,11 @@ class MainWindow(QMainWindow):
         actions_layout = QVBoxLayout()
 
         self.mount_status_label = QLabel(self.tr("status_not_mounted"))
+        self.mount_status_label.setWordWrap(True)
         actions_layout.addWidget(self.mount_status_label)
 
         buttons_layout = QHBoxLayout()
+        buttons_layout.setSpacing(12)
         self.mount_button = QPushButton(self.tr("mount_drive"))
         self.mount_button.clicked.connect(self.mount_drive)
 
@@ -1232,19 +1234,14 @@ class MainWindow(QMainWindow):
         
         # Configurar el scroll area
         scroll.setWidget(container)
-        
+
         # Agregar el scroll area al tab
         tab_layout = QVBoxLayout(self.mount_tab)
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
 
-        mount_layout_container = QVBoxLayout(self.mount_tab)
-        mount_layout_container.setContentsMargins(0, 0, 0, 0)
-        mount_layout_container.addLayout(detector_layout)
-        mount_layout_container.addWidget(mount_group)
-
-        if hasattr(self, 'multi_mounts_widget') and self.multi_mounts_widget:
-            mount_layout_container.addWidget(self.multi_mounts_widget)
+        # Ajustar el estado inicial de los botones/letras
+        QTimer.singleShot(0, self.update_unmount_button_state)
 
     def setup_sync_tab(self):
         # Crear un scroll area para toda la pestaña
