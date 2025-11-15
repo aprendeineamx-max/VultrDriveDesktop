@@ -78,8 +78,9 @@ class StorageSessionManager:
         if needs_refresh:
             refresh_success, refresh_message = self.refresh_profile_session(profile_name, profile)
 
+        profile_auto_mount = profile.get('auto_mount', True)
         mount_status = {'status': 'skipped', 'message': 'Auto-mount deshabilitado'}
-        if refresh_success and auto_mount and profile.get('auto_mount', True):
+        if refresh_success and auto_mount and profile_auto_mount:
             mount_status = self._auto_mount(profile_name, profile_type, profile)
 
         updated_session = self.config_manager.get_profile_session(profile_name)

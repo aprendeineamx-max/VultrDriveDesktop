@@ -34,8 +34,23 @@ class ConfigManager:
         if not isinstance(self.configs, dict):
             self.configs = {}
         if self.GLOBAL_SETTINGS_KEY not in self.configs:
-            self.configs[self.GLOBAL_SETTINGS_KEY] = {'auto_refresh_days': 7}
+            self.configs[self.GLOBAL_SETTINGS_KEY] = {
+                'auto_refresh_days': 7,
+                'auto_mount_enabled': False
+            }
             self.save_configs()
+        else:
+            settings = self.configs.get(self.GLOBAL_SETTINGS_KEY, {})
+            changed = False
+            if 'auto_refresh_days' not in settings:
+                settings['auto_refresh_days'] = 7
+                changed = True
+            if 'auto_mount_enabled' not in settings:
+                settings['auto_mount_enabled'] = False
+                changed = True
+            if changed:
+                self.configs[self.GLOBAL_SETTINGS_KEY] = settings
+                self.save_configs()
 
     def load_configs(self):
         """Cargar configuraciones y desencriptar credenciales"""
@@ -286,6 +301,16 @@ class ConfigManager:
         self.configs[self.GLOBAL_SETTINGS_KEY] = settings
         self.save_configs()
 
+    def get_global_auto_mount(self) -> bool:
+        settings = self.configs.get(self.GLOBAL_SETTINGS_KEY, {})
+        return bool(settings.get('auto_mount_enabled', False))
+
+    def set_global_auto_mount(self, enabled: bool):
+        settings = self.configs.get(self.GLOBAL_SETTINGS_KEY, {})
+        settings['auto_mount_enabled'] = bool(enabled)
+        self.configs[self.GLOBAL_SETTINGS_KEY] = settings
+        self.save_configs()
+
     def get_profile_refresh_interval(self, profile_name, default=None):
         profile = self.get_config(profile_name) or {}
         if default is None:
@@ -295,6 +320,24 @@ class ConfigManager:
     def set_profile_refresh_interval(self, profile_name, days: int):
         profile = self.configs.get(profile_name, {})
         profile['refresh_interval_days'] = int(days)
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def set_profile_auto_mount(self, profile_name: str, enabled: bool):
+        profile = self.configs.get(profile_name, {})
+        profile['auto_mount'] = bool(enabled)
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def set_profile_auto_mount_letter(self, profile_name: str, letter: str):
+        profile = self.configs.get(profile_name, {})
+        profile['auto_mount_letter'] = (letter or '').upper()
+        self.configs[profile_name] = profile
+        self.save_configs()
+
+    def set_profile_default_bucket(self, profile_name: str, bucket: str):
+        profile = self.configs.get(profile_name, {})
+        profile['default_bucket'] = bucket or ''
         self.configs[profile_name] = profile
         self.save_configs()
 

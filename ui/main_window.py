@@ -3,7 +3,7 @@
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
                              QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
                              QSpinBox, QTableWidget, QTableWidgetItem, QHeaderView,
-                             QStyle)
+                             QCheckBox, QStyle)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from typing import Optional, Tuple
@@ -144,6 +144,10 @@ class MainWindow(QMainWindow):
         self.session_manager = StorageSessionManager(self.config_manager, self.rclone_manager, logger)
         self.profile_states = {}
         self.profile_refresh_spins = {}
+        self.profile_auto_mount_checkboxes = {}
+        self.profile_auto_mount_letters = {}
+        self.profile_default_bucket_inputs = {}
+        self.auto_mount_enabled = self.config_manager.get_global_auto_mount()
         self.multiple_mount_manager = None
         self.real_time_sync = None
         self.upload_thread = None
@@ -796,6 +800,11 @@ class MainWindow(QMainWindow):
         global_interval_layout.addStretch()
         session_layout.addLayout(global_interval_layout)
 
+        self.global_auto_mount_checkbox = QCheckBox(self.tr("session_auto_mount_global"))
+        self.global_auto_mount_checkbox.setChecked(self.config_manager.get_global_auto_mount())
+        self.global_auto_mount_checkbox.stateChanged.connect(self.on_global_auto_mount_changed)
+        session_layout.addWidget(self.global_auto_mount_checkbox)
+
         self.profile_refresh_container = QWidget()
         self.profile_refresh_layout = QVBoxLayout(self.profile_refresh_container)
         self.profile_refresh_layout.setContentsMargins(0, 0, 0, 0)
@@ -844,9 +853,32 @@ class MainWindow(QMainWindow):
         self.refresh_profile_refresh_controls()
         self._bootstrap_sessions()
 
+    def on_global_auto_mount_changed(self, state):
+        enabled = state == Qt.CheckState.Checked
+        self.config_manager.set_global_auto_mount(enabled)
+        self.auto_mount_enabled = enabled
+        self._bootstrap_sessions()
+
     def _on_profile_refresh_changed(self, profile_name: str, value: int):
         self.config_manager.set_profile_refresh_interval(profile_name, value)
         self._bootstrap_sessions()
+
+    def on_profile_auto_mount_changed(self, profile_name: str, enabled: bool):
+        self.config_manager.set_profile_auto_mount(profile_name, enabled)
+        if self.config_manager.get_global_auto_mount():
+            self._bootstrap_sessions()
+
+    def on_profile_letter_changed(self, profile_name: str, letter: str):
+        if not letter:
+            return
+        self.config_manager.set_profile_auto_mount_letter(profile_name, letter)
+        if self.config_manager.get_global_auto_mount():
+            self._bootstrap_sessions()
+
+    def on_profile_bucket_changed(self, profile_name: str, bucket: str):
+        self.config_manager.set_profile_default_bucket(profile_name, bucket.strip())
+        if self.config_manager.get_global_auto_mount():
+            self._bootstrap_sessions()
 
     def refresh_profile_refresh_controls(self):
         if not hasattr(self, 'profile_refresh_layout'):
@@ -859,7 +891,14 @@ class MainWindow(QMainWindow):
                 widget.deleteLater()
 
         self.profile_refresh_spins = {}
+        self.profile_auto_mount_checkboxes = {}
+        self.profile_auto_mount_letters = {}
+        self.profile_default_bucket_inputs = {}
+
         for profile_name in self.config_manager.list_profiles():
+            profile_data = self.config_manager.get_config(profile_name) or {}
+            profile_type = profile_data.get('type', 's3').lower()
+
             row_widget = QWidget()
             row_layout = QHBoxLayout(row_widget)
             row_layout.setContentsMargins(0, 0, 0, 0)
@@ -872,17 +911,62 @@ class MainWindow(QMainWindow):
             spin.setValue(self.config_manager.get_profile_refresh_interval(profile_name))
             spin.valueChanged.connect(lambda value, name=profile_name: self._on_profile_refresh_changed(name, value))
             row_layout.addWidget(spin)
-            row_layout.addStretch()
-
-            self.profile_refresh_layout.addWidget(row_widget)
             self.profile_refresh_spins[profile_name] = spin
+
+            auto_checkbox = QCheckBox(self.tr("session_profile_auto_mount_label"))
+            auto_checkbox.setChecked(profile_data.get('auto_mount', True))
+            auto_checkbox.stateChanged.connect(
+                lambda state, name=profile_name: self.on_profile_auto_mount_changed(
+                    name, state == Qt.CheckState.Checked
+                )
+            )
+            row_layout.addWidget(auto_checkbox)
+            self.profile_auto_mount_checkboxes[profile_name] = auto_checkbox
+
+            letter_label = QLabel(self.tr("session_profile_letter_label"))
+            row_layout.addWidget(letter_label)
+
+            letter_combo = QComboBox()
+            letters = [chr(code) for code in range(ord('V'), ord('Z') + 1)]
+            for letter in letters:
+                letter_combo.addItem(letter)
+            current_letter = (profile_data.get('auto_mount_letter') or letters[0]).upper()
+            if current_letter not in letters:
+                letter_combo.addItem(current_letter)
+            letter_combo.setCurrentText(current_letter)
+            letter_combo.currentTextChanged.connect(
+                lambda value, name=profile_name: self.on_profile_letter_changed(name, value)
+            )
+            row_layout.addWidget(letter_combo)
+            self.profile_auto_mount_letters[profile_name] = letter_combo
+
+            if profile_type == 's3':
+                bucket_label = QLabel(self.tr("session_profile_bucket_label"))
+                row_layout.addWidget(bucket_label)
+                bucket_input = QLineEdit(profile_data.get('default_bucket', ''))
+                bucket_input.setPlaceholderText(self.tr("session_profile_bucket_placeholder"))
+                bucket_input.editingFinished.connect(
+                    lambda name=profile_name, widget=bucket_input: self.on_profile_bucket_changed(name, widget.text())
+                )
+                row_layout.addWidget(bucket_input, 1)
+                self.profile_default_bucket_inputs[profile_name] = bucket_input
+            else:
+                bucket_label = QLabel(self.tr("session_profile_mega_root"))
+                bucket_label.setStyleSheet("color: #888;")
+                row_layout.addWidget(bucket_label, 1)
+                self.profile_default_bucket_inputs[profile_name] = None
+
+            row_layout.addStretch()
+            self.profile_refresh_layout.addWidget(row_widget)
 
     def _bootstrap_sessions(self):
         if not hasattr(self, 'session_manager'):
             return
 
+        auto_mount_enabled = self.config_manager.get_global_auto_mount()
+
         def execute():
-            return self.session_manager.ensure_profiles_ready(auto_mount=True)
+            return self.session_manager.ensure_profiles_ready(auto_mount=auto_mount_enabled)
 
         def on_success(result):
             self.profile_states = result or {}

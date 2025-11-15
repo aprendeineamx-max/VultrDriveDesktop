@@ -1,6 +1,7 @@
 {
     "_global_settings": {
-        "auto_refresh_days": 7
+        "auto_refresh_days": 7,
+        "auto_mount_enabled": false
     },
     "almacen-de-backups-cuenta-destino": {
         "type": "s3",
