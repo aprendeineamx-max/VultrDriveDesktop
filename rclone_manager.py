@@ -231,6 +231,7 @@ class RcloneManager:
             '--dir-cache-time', '5m',
             '--volname', f"{profile_name}-{profile_type}".replace(' ', '_')
         )
+        cmd.extend(['--links'])
 
         try:
             process = subprocess.Popen(
