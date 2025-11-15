@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout, 
-                             QHBoxLayout, QListWidget, QMessageBox, QCheckBox, QGroupBox, QTabWidget)
-from PyQt6.QtCore import pyqtSignal, Qt
+                             QHBoxLayout, QListWidget, QMessageBox, QTabWidget, QComboBox)
+from PyQt6.QtCore import pyqtSignal
 
 class SettingsWindow(QWidget):
     profiles_updated = pyqtSignal()
@@ -43,6 +43,11 @@ class SettingsWindow(QWidget):
         self.form_layout = QFormLayout()
         self.profile_name_input = QLineEdit()
         self.profile_name_input.setPlaceholderText(self.tr("settings_profile_placeholder"))
+
+        self.profile_type_combo = QComboBox()
+        self.profile_type_combo.addItem(self.tr("settings_profile_type_s3"), "s3")
+        self.profile_type_combo.addItem(self.tr("settings_profile_type_mega"), "mega")
+        self.profile_type_combo.currentIndexChanged.connect(self.update_profile_form_visibility)
         
         self.access_key_input = QLineEdit()
         self.access_key_input.setPlaceholderText(self.tr("settings_access_key_placeholder"))
@@ -54,10 +59,20 @@ class SettingsWindow(QWidget):
         self.host_base_input = QLineEdit()
         self.host_base_input.setPlaceholderText(self.tr("settings_host_placeholder"))
 
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText(self.tr("settings_email_placeholder"))
+
+        self.password_input = QLineEdit()
+        self.password_input.setPlaceholderText(self.tr("settings_password_placeholder"))
+        self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
+
         self.form_layout.addRow(self.tr("settings_profile_label"), self.profile_name_input)
+        self.form_layout.addRow(self.tr("settings_profile_type_label"), self.profile_type_combo)
         self.form_layout.addRow(self.tr("settings_access_key_label"), self.access_key_input)
         self.form_layout.addRow(self.tr("settings_secret_key_label"), self.secret_key_input)
         self.form_layout.addRow(self.tr("settings_host_label"), self.host_base_input)
+        self.form_layout.addRow(self.tr("settings_email_label"), self.email_input)
+        self.form_layout.addRow(self.tr("settings_password_label"), self.password_input)
         
         right_layout.addLayout(self.form_layout)
 
@@ -70,60 +85,7 @@ class SettingsWindow(QWidget):
         profiles_layout.addLayout(right_layout, 2)
         
         self.tabs.addTab(profiles_tab, self.tr("settings_profiles_tab"))
-        
-        # Pestaña 2: Configuración General
-        general_tab = QWidget()
-        general_layout = QVBoxLayout(general_tab)
-        general_layout.setContentsMargins(20, 20, 20, 20)
-        general_layout.setSpacing(15)
-        
-        # Grupo: Inicio Automático
-        startup_group = QGroupBox(self.tr("settings_startup_group"))
-        startup_layout = QVBoxLayout()
-        
-        self.chk_startup = QCheckBox(self.tr("settings_startup_checkbox"))
-        if self.main_window and hasattr(self.main_window, 'startup_manager'):
-            self.chk_startup.setChecked(self.main_window.startup_manager.is_enabled())
-        self.chk_startup.stateChanged.connect(self.on_startup_changed)
-        startup_layout.addWidget(self.chk_startup)
-        
-        self.chk_minimized = QCheckBox(self.tr("settings_startup_minimized"))
-        if self.main_window and hasattr(self.main_window, 'startup_manager'):
-            self.chk_minimized.setEnabled(self.chk_startup.isChecked())
-        self.chk_minimized.stateChanged.connect(self.on_startup_minimized_changed)
-        startup_layout.addWidget(self.chk_minimized)
-        
-        startup_info = QLabel(self.tr("settings_startup_info"))
-        startup_info.setWordWrap(True)
-        startup_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
-        startup_layout.addWidget(startup_info)
-        
-        startup_group.setLayout(startup_layout)
-        general_layout.addWidget(startup_group)
-        
-        # Grupo: Notificaciones
-        notifications_group = QGroupBox(self.tr("settings_notifications_group"))
-        notifications_layout = QVBoxLayout()
-        
-        self.chk_notifications = QCheckBox(self.tr("settings_notifications_checkbox"))
-        if self.main_window and hasattr(self.main_window, 'notification_manager'):
-            self.chk_notifications.setChecked(self.main_window.notification_manager.enabled)
-        else:
-            self.chk_notifications.setChecked(True)
-        self.chk_notifications.stateChanged.connect(self.on_notifications_changed)
-        notifications_layout.addWidget(self.chk_notifications)
-        
-        notifications_info = QLabel(self.tr("settings_notifications_info"))
-        notifications_info.setWordWrap(True)
-        notifications_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
-        notifications_layout.addWidget(notifications_info)
-        
-        notifications_group.setLayout(notifications_layout)
-        general_layout.addWidget(notifications_group)
-        
-        general_layout.addStretch()
-        
-        self.tabs.addTab(general_tab, self.tr("settings_general_tab"))
+        self.update_profile_form_visibility()
 
         self.refresh_profile_list()
 
@@ -133,26 +95,60 @@ class SettingsWindow(QWidget):
 
     def load_profile_details(self, item):
         profile_name = item.text()
-        config = self.config_manager.get_config(profile_name)
-        if config:
-            self.profile_name_input.setText(profile_name)
+        config = self.config_manager.get_config(profile_name) or {}
+        profile_type = (config.get('type') or 's3').lower()
+        index = self.profile_type_combo.findData(profile_type)
+        if index >= 0:
+            self.profile_type_combo.setCurrentIndex(index)
+        else:
+            self.profile_type_combo.setCurrentIndex(0)
+
+        self.profile_name_input.setText(profile_name)
+
+        if profile_type == 'mega':
+            self.email_input.setText(config.get('email', ''))
+            self.password_input.setText(config.get('password', ''))
+            self.access_key_input.clear()
+            self.secret_key_input.clear()
+            self.host_base_input.clear()
+        else:
             self.access_key_input.setText(config.get('access_key', ''))
             self.secret_key_input.setText(config.get('secret_key', ''))
             self.host_base_input.setText(config.get('host_base', ''))
+            self.email_input.clear()
+            self.password_input.clear()
+
+        self.update_profile_form_visibility()
 
     def save_profile(self):
-        profile_name = self.profile_name_input.text()
-        access_key = self.access_key_input.text()
-        secret_key = self.secret_key_input.text()
-        host_base = self.host_base_input.text()
+        profile_name = self.profile_name_input.text().strip()
+        profile_type = self.profile_type_combo.currentData() or 's3'
 
-        if profile_name and access_key and secret_key and host_base:
-            self.config_manager.add_config(profile_name, access_key, secret_key, host_base)
-            self.profiles_updated.emit()
-            self.refresh_profile_list()
-            self.clear_form()
+        if profile_type == 'mega':
+            email = self.email_input.text().strip()
+            password = self.password_input.text().strip()
+            if not (profile_name and email and password):
+                QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_mega_fields"))
+                return
+            self.config_manager.save_profile(profile_name, 'mega', email=email, password=password)
         else:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_all_fields"))
+            access_key = self.access_key_input.text().strip()
+            secret_key = self.secret_key_input.text().strip()
+            host_base = self.host_base_input.text().strip()
+            if not (profile_name and access_key and secret_key and host_base):
+                QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_s3_fields"))
+                return
+            self.config_manager.save_profile(
+                profile_name,
+                's3',
+                access_key=access_key,
+                secret_key=secret_key,
+                host_base=host_base
+            )
+
+        self.profiles_updated.emit()
+        self.refresh_profile_list()
+        self.clear_form()
 
     def delete_profile(self):
         selected_items = self.profile_list.selectedItems()
@@ -177,56 +173,26 @@ class SettingsWindow(QWidget):
         self.access_key_input.clear()
         self.secret_key_input.clear()
         self.host_base_input.clear()
-    
-    def on_startup_changed(self, state):
-        """Callback cuando cambia el checkbox de inicio automático"""
-        if not self.main_window or not hasattr(self.main_window, 'startup_manager'):
-            return
-        
-        enabled = state == Qt.CheckState.Checked
-        minimized = self.chk_minimized.isChecked()
-        
-        success, message = self.main_window.startup_manager.toggle(enabled, minimized)
-        
-        if success:
-            if self.main_window.notification_manager:
-                self.main_window.notification_manager.success(
-                    self.tr("settings_notification_saved_title"),
-                    message
-                )
-        else:
-            if self.main_window.notification_manager:
-                self.main_window.notification_manager.error(
-                    self.tr("settings_notification_error_title"),
-                    message
-                )
-        
-        self.chk_minimized.setEnabled(enabled)
-    
-    def on_startup_minimized_changed(self, state):
-        """Callback cuando cambia el checkbox de iniciar minimizado"""
-        if not self.main_window or not hasattr(self.main_window, 'startup_manager'):
-            return
-        
-        if not self.chk_startup.isChecked():
-            return
-        
-        minimized = state == Qt.CheckState.Checked
-        success, message = self.main_window.startup_manager.enable(minimized)
-        
-        if success and self.main_window.notification_manager:
-            self.main_window.notification_manager.info(
-                self.tr("settings_notification_updated_title"),
-                message
-            )
-    
-    def on_notifications_changed(self, state):
-        """Callback cuando cambia el checkbox de notificaciones"""
-        if not self.main_window or not hasattr(self.main_window, 'notification_manager'):
-            return
-        
-        enabled = state == Qt.CheckState.Checked
-        self.main_window.notification_manager.set_enabled(enabled)
+        self.email_input.clear()
+        self.password_input.clear()
+        self.profile_type_combo.setCurrentIndex(0)
+        self.update_profile_form_visibility()
+
+    def update_profile_form_visibility(self):
+        profile_type = self.profile_type_combo.currentData() or 's3'
+        is_mega = profile_type == 'mega'
+
+        def toggle_field(widget, visible):
+            label = self.form_layout.labelForField(widget)
+            if label:
+                label.setVisible(visible)
+            widget.setVisible(visible)
+
+        toggle_field(self.access_key_input, not is_mega)
+        toggle_field(self.secret_key_input, not is_mega)
+        toggle_field(self.host_base_input, not is_mega)
+        toggle_field(self.email_input, is_mega)
+        toggle_field(self.password_input, is_mega)
 
     def tr(self, key):
         if self.translations:

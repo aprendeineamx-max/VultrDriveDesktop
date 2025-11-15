@@ -181,15 +181,44 @@ class ConfigManager:
 
     def add_config(self, profile_name, access_key, secret_key, host_base):
         """
-        Agregar o actualizar configuración de perfil
-        
-        Las credenciales se guardan en texto plano (sin encriptación) para portabilidad
+        Mantener compatibilidad con versiones anteriores que solo manejaban S3.
         """
-        self.configs[profile_name] = {
-            'access_key': access_key,
-            'secret_key': secret_key,
-            'host_base': host_base
-        }
+        self.save_profile(
+            profile_name,
+            's3',
+            access_key=access_key,
+            secret_key=secret_key,
+            host_base=host_base,
+        )
+
+    def save_profile(self, profile_name: str, profile_type: str, **fields):
+        """
+        Crear o actualizar un perfil (S3 o MEGA) en texto plano.
+        """
+        profile = self.configs.get(profile_name, {}).copy()
+        profile_type = (profile_type or 's3').lower()
+        profile['type'] = profile_type
+
+        def _clean(value):
+            if isinstance(value, str):
+                return value.strip()
+            return value
+
+        if profile_type == 'mega':
+            profile['email'] = _clean(fields.get('email', ''))
+            profile['password'] = _clean(fields.get('password', ''))
+            profile.pop('access_key', None)
+            profile.pop('secret_key', None)
+            profile.pop('host_base', None)
+            profile.pop('default_bucket', None)
+        else:
+            profile['access_key'] = _clean(fields.get('access_key', ''))
+            profile['secret_key'] = _clean(fields.get('secret_key', ''))
+            profile['host_base'] = _clean(fields.get('host_base', ''))
+            profile.pop('email', None)
+            profile.pop('password', None)
+
+        self.configs[profile_name] = profile
         self.save_configs()
     
     def is_encryption_enabled(self):

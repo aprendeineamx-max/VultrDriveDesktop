@@ -239,7 +239,12 @@ class MainWindow(QMainWindow):
         self.setup_sync_tab()
         self.tabs.addTab(self.sync_tab, self.tr("sync_tab"))
 
-        # Tab 4: Advanced
+        # Tab 4: Configuración
+        self.config_tab = QWidget()
+        self.setup_config_tab()
+        self.tabs.addTab(self.config_tab, self.tr("config_tab"))
+
+        # Tab 5: Advanced
         self.advanced_tab = QWidget()
         self.setup_advanced_tab()
         self.tabs.addTab(self.advanced_tab, self.tr("advanced_tab"))
@@ -293,9 +298,10 @@ class MainWindow(QMainWindow):
             self.multiple_mount_manager = MultipleMountManager(self.rclone_manager)
             self.multi_mounts_widget = MultiMountsWidget(self.multiple_mount_manager, self.translations)
             self.multi_mounts_widget.request_new_mount.connect(self.show_mount_tab)
-            if hasattr(self, "mounts_content_layout") and self.multi_mounts_widget.parent() is None:
-                insert_index = max(0, self.mounts_content_layout.count() - 1)
-                self.mounts_content_layout.insertWidget(insert_index, self.multi_mounts_widget)
+            if hasattr(self, "mount_tab_content_layout") and self.multi_mounts_widget.parent() is None:
+                layout = self.mount_tab_content_layout
+                insert_index = max(0, layout.count() - 1)
+                layout.insertWidget(insert_index, self.multi_mounts_widget)
         except Exception as exc:
             if LOGGING_AVAILABLE:
                 logger.error("No se pudo inicializar MultipleMountManager: %s", exc, exc_info=True)
@@ -451,7 +457,7 @@ class MainWindow(QMainWindow):
         """Mostrar ventana y cambiar a pestaña de montaje"""
         self.restore_from_tray()
         if hasattr(self, 'tabs'):
-            # Cambiar a pestaña "Montar Disco" (índice 1)
+            # Cambiar a pestaña "Montar Unidades" (índice 1)
             self.tabs.setCurrentIndex(1)
 
     def update_language_button_text(self):
@@ -738,7 +744,6 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(container)
         layout.setSpacing(15)
         layout.setContentsMargins(10, 10, 10, 10)
-        self.mounts_content_layout = layout
 
         # Profile selection group
         profile_group = QGroupBox(self.tr("profile_selection"))
@@ -750,7 +755,6 @@ class MainWindow(QMainWindow):
         profile_layout.addWidget(self.profile_label)
         profile_layout.addWidget(self.profile_selector, 1)
         profile_group.setLayout(profile_layout)
-        layout.addWidget(profile_group)
 
         # Bucket selection group
         bucket_group = QGroupBox(self.tr("bucket_selection"))
@@ -763,7 +767,11 @@ class MainWindow(QMainWindow):
         bucket_layout.addWidget(self.bucket_selector, 1)
         bucket_layout.addWidget(self.refresh_buckets_btn)
         bucket_group.setLayout(bucket_layout)
-        layout.addWidget(bucket_group)
+
+        selectors_layout = QHBoxLayout()
+        selectors_layout.addWidget(profile_group, 1)
+        selectors_layout.addWidget(bucket_group, 1)
+        layout.addLayout(selectors_layout)
 
         # Main action buttons
         actions_group = QGroupBox(self.tr("actions"))
@@ -780,63 +788,6 @@ class MainWindow(QMainWindow):
         actions_layout.addLayout(buttons_layout)
         actions_group.setLayout(actions_layout)
         layout.addWidget(actions_group)
-
-        # Auto refresh / session overview
-        session_group = QGroupBox(self.tr("session_auto_refresh_group"))
-        session_layout = QVBoxLayout()
-
-        session_info = QLabel(self.tr("session_auto_refresh_help"))
-        session_info.setWordWrap(True)
-        session_info.setStyleSheet("color: #888; font-size: 10pt;")
-        session_layout.addWidget(session_info)
-
-        global_interval_layout = QHBoxLayout()
-        global_interval_layout.addWidget(QLabel(self.tr("session_global_interval_label")))
-        self.global_refresh_spin = QSpinBox()
-        self.global_refresh_spin.setRange(1, 365)
-        self.global_refresh_spin.setValue(self.config_manager.get_global_refresh_interval())
-        self.global_refresh_spin.valueChanged.connect(self.on_global_refresh_changed)
-        global_interval_layout.addWidget(self.global_refresh_spin)
-        global_interval_layout.addStretch()
-        session_layout.addLayout(global_interval_layout)
-
-        self.global_auto_mount_checkbox = QCheckBox(self.tr("session_auto_mount_global"))
-        self.global_auto_mount_checkbox.setChecked(self.config_manager.get_global_auto_mount())
-        self.global_auto_mount_checkbox.stateChanged.connect(self.on_global_auto_mount_changed)
-        session_layout.addWidget(self.global_auto_mount_checkbox)
-
-        self.profile_refresh_container = QWidget()
-        self.profile_refresh_layout = QVBoxLayout(self.profile_refresh_container)
-        self.profile_refresh_layout.setContentsMargins(0, 0, 0, 0)
-        self.profile_refresh_layout.setSpacing(6)
-        session_layout.addWidget(self.profile_refresh_container)
-
-        self.profile_status_table = QTableWidget(0, 7)
-        self.profile_status_table.setHorizontalHeaderLabels([
-            self.tr("session_table_profile"),
-            self.tr("session_table_type"),
-            self.tr("session_table_status"),
-            self.tr("session_table_days"),
-            self.tr("session_table_next_refresh"),
-            self.tr("session_table_mount"),
-            self.tr("session_table_error"),
-        ])
-        self.profile_status_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-        self.profile_status_table.verticalHeader().setVisible(False)
-        self.profile_status_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-        self.profile_status_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
-        session_layout.addWidget(self.profile_status_table)
-
-        session_group.setLayout(session_layout)
-        layout.addWidget(session_group)
-
-        # Settings button
-        settings_layout = QHBoxLayout()
-        self.settings_button = QPushButton(self.tr("manage_profiles"))
-        self.settings_button.clicked.connect(self.open_settings)
-        settings_layout.addStretch()
-        settings_layout.addWidget(self.settings_button)
-        layout.addLayout(settings_layout)
 
         layout.addStretch()
         
@@ -1230,6 +1181,7 @@ class MainWindow(QMainWindow):
         info_group.setLayout(info_layout)
         layout.addWidget(info_group)
 
+        self.mount_tab_content_layout = layout
         layout.addStretch()
         
         # Configurar el scroll area
@@ -1239,6 +1191,30 @@ class MainWindow(QMainWindow):
         tab_layout = QVBoxLayout(self.mount_tab)
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
+
+    def on_config_startup_changed(self, state):
+        if not hasattr(self, 'startup_manager') or not self.startup_manager:
+            return
+        enabled = state == Qt.CheckState.Checked
+        minimized = self.config_startup_minimized_checkbox.isChecked()
+        success, message = self.startup_manager.toggle(enabled, minimized)
+        self.config_startup_minimized_checkbox.setEnabled(enabled)
+        self._notify_settings(success, message, "settings_notification_saved_title")
+
+    def on_config_startup_minimized_changed(self, state):
+        if not hasattr(self, 'startup_manager') or not self.startup_manager:
+            return
+        if not self.config_startup_checkbox.isChecked():
+            return
+        minimized = state == Qt.CheckState.Checked
+        success, message = self.startup_manager.enable(minimized)
+        self._notify_settings(success, message, "settings_notification_updated_title")
+
+    def on_config_notifications_changed(self, state):
+        if not hasattr(self, 'notification_manager') or not self.notification_manager:
+            return
+        enabled = state == Qt.CheckState.Checked
+        self.notification_manager.set_enabled(enabled)
 
         # Ajustar el estado inicial de los botones/letras
         QTimer.singleShot(0, self.update_unmount_button_state)
@@ -1330,6 +1306,115 @@ class MainWindow(QMainWindow):
         
         # Agregar el scroll area al tab
         tab_layout = QVBoxLayout(self.sync_tab)
+        tab_layout.setContentsMargins(0, 0, 0, 0)
+        tab_layout.addWidget(scroll)
+
+    def setup_config_tab(self):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
+
+        container = QWidget()
+        layout = QVBoxLayout(container)
+        layout.setSpacing(15)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        general_group = QGroupBox(self.tr("config_general_group"))
+        general_layout = QVBoxLayout()
+
+        self.config_startup_checkbox = QCheckBox(self.tr("settings_startup_checkbox"))
+        if hasattr(self, 'startup_manager') and self.startup_manager:
+            self.config_startup_checkbox.setChecked(self.startup_manager.is_enabled())
+        self.config_startup_checkbox.stateChanged.connect(self.on_config_startup_changed)
+        general_layout.addWidget(self.config_startup_checkbox)
+
+        self.config_startup_minimized_checkbox = QCheckBox(self.tr("settings_startup_minimized"))
+        self.config_startup_minimized_checkbox.setChecked(False)
+        self.config_startup_minimized_checkbox.setEnabled(self.config_startup_checkbox.isChecked())
+        self.config_startup_minimized_checkbox.stateChanged.connect(self.on_config_startup_minimized_changed)
+        general_layout.addWidget(self.config_startup_minimized_checkbox)
+
+        startup_info = QLabel(self.tr("settings_startup_info"))
+        startup_info.setWordWrap(True)
+        startup_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
+        general_layout.addWidget(startup_info)
+
+        self.config_notifications_checkbox = QCheckBox(self.tr("settings_notifications_checkbox"))
+        if hasattr(self, 'notification_manager') and self.notification_manager:
+            self.config_notifications_checkbox.setChecked(self.notification_manager.enabled)
+        else:
+            self.config_notifications_checkbox.setChecked(True)
+            self.config_notifications_checkbox.setEnabled(False)
+        self.config_notifications_checkbox.stateChanged.connect(self.on_config_notifications_changed)
+        general_layout.addWidget(self.config_notifications_checkbox)
+
+        notifications_info = QLabel(self.tr("settings_notifications_info"))
+        notifications_info.setWordWrap(True)
+        notifications_info.setStyleSheet("color: #888; font-size: 9pt; margin-top: 10px;")
+        general_layout.addWidget(notifications_info)
+
+        general_group.setLayout(general_layout)
+        layout.addWidget(general_group)
+
+        session_group = QGroupBox(self.tr("session_auto_refresh_group"))
+        session_layout = QVBoxLayout()
+
+        session_info = QLabel(self.tr("session_auto_refresh_help"))
+        session_info.setWordWrap(True)
+        session_info.setStyleSheet("color: #888; font-size: 10pt;")
+        session_layout.addWidget(session_info)
+
+        global_interval_layout = QHBoxLayout()
+        global_interval_layout.addWidget(QLabel(self.tr("session_global_interval_label")))
+        self.global_refresh_spin = QSpinBox()
+        self.global_refresh_spin.setRange(1, 365)
+        self.global_refresh_spin.setValue(self.config_manager.get_global_refresh_interval())
+        self.global_refresh_spin.valueChanged.connect(self.on_global_refresh_changed)
+        global_interval_layout.addWidget(self.global_refresh_spin)
+        global_interval_layout.addStretch()
+        session_layout.addLayout(global_interval_layout)
+
+        self.global_auto_mount_checkbox = QCheckBox(self.tr("session_auto_mount_global"))
+        self.global_auto_mount_checkbox.setChecked(self.config_manager.get_global_auto_mount())
+        self.global_auto_mount_checkbox.stateChanged.connect(self.on_global_auto_mount_changed)
+        session_layout.addWidget(self.global_auto_mount_checkbox)
+
+        self.profile_refresh_container = QWidget()
+        self.profile_refresh_layout = QVBoxLayout(self.profile_refresh_container)
+        self.profile_refresh_layout.setContentsMargins(0, 0, 0, 0)
+        self.profile_refresh_layout.setSpacing(6)
+        session_layout.addWidget(self.profile_refresh_container)
+
+        self.profile_status_table = QTableWidget(0, 7)
+        self.profile_status_table.setHorizontalHeaderLabels([
+            self.tr("session_table_profile"),
+            self.tr("session_table_type"),
+            self.tr("session_table_status"),
+            self.tr("session_table_days"),
+            self.tr("session_table_next_refresh"),
+            self.tr("session_table_mount"),
+            self.tr("session_table_error"),
+        ])
+        self.profile_status_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.profile_status_table.verticalHeader().setVisible(False)
+        self.profile_status_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        self.profile_status_table.setSelectionMode(QTableWidget.SelectionMode.NoSelection)
+        session_layout.addWidget(self.profile_status_table)
+
+        session_group.setLayout(session_layout)
+        layout.addWidget(session_group)
+
+        settings_layout = QHBoxLayout()
+        self.settings_button = QPushButton(self.tr("manage_profiles"))
+        self.settings_button.clicked.connect(self.open_settings)
+        settings_layout.addStretch()
+        settings_layout.addWidget(self.settings_button)
+        layout.addLayout(settings_layout)
+
+        layout.addStretch()
+
+        scroll.setWidget(container)
+        tab_layout = QVBoxLayout(self.config_tab)
         tab_layout.setContentsMargins(0, 0, 0, 0)
         tab_layout.addWidget(scroll)
 
@@ -2090,6 +2175,14 @@ class MainWindow(QMainWindow):
         self.settings_window = SettingsWindow(self.config_manager, self)
         self.settings_window.profiles_updated.connect(self.update_profiles)
         self.settings_window.show()
+
+    def _notify_settings(self, success, message, success_title_key):
+        if not hasattr(self, 'notification_manager') or not self.notification_manager:
+            return
+        if success:
+            self.notification_manager.success(self.tr(success_title_key), message)
+        else:
+            self.notification_manager.error(self.tr("settings_notification_error_title"), message)
 
     def update_profiles(self):
         current_profile = self.profile_selector.currentText()
