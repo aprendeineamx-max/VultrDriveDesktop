@@ -1214,3 +1214,9 @@ The service rclone has been started.
 2025-11-14 22:05:43 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
 2025-11-14 22:05:43 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
 2025-11-14 22:05:43 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1610 | Buckets cargados exitosamente: 2
+2025-11-14 22:11:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 22:11:10 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)
+2025-11-14 22:14:34 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:almacen-de-backups-cuenta-destino]'
+2025-11-14 22:14:39 | INFO     | VultrDrive.ui.main_window | on_success:1853 | Montaje completado (mount_drive[V:almacen-de-backups-cuenta-destino]): Montado exitosamente en V:
+2025-11-14 22:16:40 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'almacen-de-backups-cuenta-destino'
+2025-11-14 22:16:40 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'almacen-de-backups-cuenta-destino': 411212631254 bytes (392162.93 MB)

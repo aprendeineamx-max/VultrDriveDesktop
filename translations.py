@@ -11,6 +11,14 @@ class Translations:
     def __init__(self):
         self.current_language = 'es'  # Default: EspaÃ±ol
         self._translations = None  # Lazy loading
+
+    def _normalize_text(self, value):
+        if not isinstance(value, str):
+            return value
+        try:
+            return value.encode('latin-1').decode('utf-8')
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            return value
     
     @property
     def translations(self):
@@ -1611,17 +1619,20 @@ class Translations:
         # Try current language
         if key in self.translations[self.current_language]:
             text = self.translations[self.current_language][key]
-            return text.format(*args) if args else text
+            text = text.format(*args) if args else text
+            return self._normalize_text(text)
         
         # Fallback to Spanish (default)
         if self.current_language != 'es' and key in self.translations['es']:
             text = self.translations['es'][key]
-            return text.format(*args) if args else text
+            text = text.format(*args) if args else text
+            return self._normalize_text(text)
         
         # Fallback to English
         if key in self.translations['en']:
             text = self.translations['en'][key]
-            return text.format(*args) if args else text
+            text = text.format(*args) if args else text
+            return self._normalize_text(text)
         
         # Last resort
         return key
