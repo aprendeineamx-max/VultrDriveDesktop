@@ -20,6 +20,15 @@ class Translations:
         except (UnicodeEncodeError, UnicodeDecodeError):
             return value
     
+    def _normalize_dict(self, data):
+        normalized = {}
+        for key, value in data.items():
+            if isinstance(value, dict):
+                normalized[key] = self._normalize_dict(value)
+            else:
+                normalized[key] = self._normalize_text(value)
+        return normalized
+    
     @property
     def translations(self):
         """Lazy load translations (only loaded when needed)"""
@@ -30,13 +39,14 @@ class Translations:
     def _create_translations(self):
         """Create all translations dictionary"""
 
-        return {
+        raw = {
             'es': self._spanish(),
             'en': self._english(),
             'fr': self._french(),
             'de': self._german(),
             'pt': self._portuguese(),
         }
+        return {lang: self._normalize_dict(values) for lang, values in raw.items()}
     
     def _spanish(self):
         """ðŸ‡²ðŸ‡½ EspaÃ±ol (MÃ©xico) - Complete"""
@@ -251,6 +261,7 @@ class Translations:
             'settings_existing_profiles': 'Perfiles Existentes:',
             'settings_delete_profile_button': 'Eliminar Perfil Seleccionado',
             'settings_add_edit_profile': 'Agregar o Editar Perfil:',
+            'settings_new_profile_button': '➕ Nuevo Perfil',
             'settings_profile_placeholder': 'Ej: mi-cuenta-vultr',
             'settings_profile_type_label': 'Tipo de Perfil:',
             'settings_profile_type_s3': 'Almacenamiento S3',
@@ -577,6 +588,7 @@ class Translations:
             'settings_existing_profiles': 'Existing Profiles:',
             'settings_delete_profile_button': 'Delete Selected Profile',
             'settings_add_edit_profile': 'Add or Edit Profile:',
+            'settings_new_profile_button': '➕ New Profile',
             'settings_profile_placeholder': 'ex: my-vultr-account',
             'settings_profile_type_label': 'Profile Type:',
             'settings_profile_type_s3': 'S3 Storage',
@@ -893,6 +905,7 @@ class Translations:
             'settings_existing_profiles': 'Profils existants :',
             'settings_delete_profile_button': 'Supprimer le profil sÃ©lectionnÃ©',
             'settings_add_edit_profile': 'Ajouter ou modifier un profil :',
+            'settings_new_profile_button': '➕ Nouveau profil',
             'settings_profile_placeholder': 'ex : mon-compte-vultr',
             'settings_profile_type_label': 'Type de profil :',
             'settings_profile_type_s3': 'Stockage S3',
@@ -1198,6 +1211,7 @@ class Translations:
             'settings_existing_profiles': 'Vorhandene Profile:',
             'settings_delete_profile_button': 'AusgewÃ¤hltes Profil lÃ¶schen',
             'settings_add_edit_profile': 'Profil hinzufÃ¼gen oder bearbeiten:',
+            'settings_new_profile_button': '➕ Neues Profil',
             'settings_profile_placeholder': 'z.â€¯B. mein-vultr-konto',
             'settings_profile_type_label': 'Profiltyp:',
             'settings_profile_type_s3': 'S3-Speicher',
@@ -1507,6 +1521,7 @@ class Translations:
             'settings_existing_profiles': 'Perfis existentes:',
             'settings_delete_profile_button': 'Excluir perfil selecionado',
             'settings_add_edit_profile': 'Adicionar ou editar perfil:',
+            'settings_new_profile_button': '➕ Novo Perfil',
             'settings_profile_placeholder': 'ex: minha-conta-vultr',
             'settings_profile_type_label': 'Tipo de perfil:',
             'settings_profile_type_s3': 'Armazenamento S3',

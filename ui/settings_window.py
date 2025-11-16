@@ -1,6 +1,6 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QLabel, QLineEdit, QPushButton, QFormLayout, 
                              QHBoxLayout, QListWidget, QMessageBox, QTabWidget, QComboBox)
-from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtCore import pyqtSignal, Qt
 
 class SettingsWindow(QWidget):
     profiles_updated = pyqtSignal()
@@ -29,9 +29,13 @@ class SettingsWindow(QWidget):
         left_layout = QVBoxLayout()
         left_layout.addWidget(QLabel(self.tr("settings_existing_profiles")))
         self.profile_list = QListWidget()
-        self.profile_list.itemClicked.connect(self.load_profile_details)
+        self.profile_list.itemSelectionChanged.connect(self._on_profile_selected)
         left_layout.addWidget(self.profile_list)
         
+        self.new_profile_button = QPushButton(self.tr("settings_new_profile_button"))
+        self.new_profile_button.clicked.connect(self.start_new_profile)
+        left_layout.addWidget(self.new_profile_button)
+
         self.delete_button = QPushButton(self.tr("settings_delete_profile_button"))
         self.delete_button.clicked.connect(self.delete_profile)
         left_layout.addWidget(self.delete_button)
@@ -89,12 +93,30 @@ class SettingsWindow(QWidget):
 
         self.refresh_profile_list()
 
-    def refresh_profile_list(self):
+    def refresh_profile_list(self, select_profile=None):
+        self.profile_list.blockSignals(True)
         self.profile_list.clear()
-        self.profile_list.addItems(self.config_manager.list_profiles())
+        profiles = self.config_manager.list_profiles()
+        self.profile_list.addItems(profiles)
+        self.profile_list.blockSignals(False)
+
+        if select_profile:
+            matches = self.profile_list.findItems(select_profile, Qt.MatchFlag.MatchExactly)
+            if matches:
+                self.profile_list.setCurrentItem(matches[0])
+                self.load_profile_details(matches[0])
+                return
+        self.start_new_profile(clear_selection=False)
+
+    def _on_profile_selected(self):
+        items = self.profile_list.selectedItems()
+        if not items:
+            self.start_new_profile(clear_selection=False)
+            return
+        self.load_profile_details(items[0])
 
     def load_profile_details(self, item):
-        profile_name = item.text()
+        profile_name = item if isinstance(item, str) else item.text()
         config = self.config_manager.get_config(profile_name) or {}
         profile_type = (config.get('type') or 's3').lower()
         index = self.profile_type_combo.findData(profile_type)
@@ -147,8 +169,7 @@ class SettingsWindow(QWidget):
             )
 
         self.profiles_updated.emit()
-        self.refresh_profile_list()
-        self.clear_form()
+        self.refresh_profile_list(select_profile=profile_name)
 
     def delete_profile(self):
         selected_items = self.profile_list.selectedItems()
@@ -166,9 +187,12 @@ class SettingsWindow(QWidget):
             self.config_manager.delete_config(profile_name)
             self.profiles_updated.emit()
             self.refresh_profile_list()
-            self.clear_form()
 
-    def clear_form(self):
+    def start_new_profile(self, clear_selection=True):
+        if clear_selection:
+            self.profile_list.blockSignals(True)
+            self.profile_list.clearSelection()
+            self.profile_list.blockSignals(False)
         self.profile_name_input.clear()
         self.access_key_input.clear()
         self.secret_key_input.clear()
@@ -177,6 +201,10 @@ class SettingsWindow(QWidget):
         self.password_input.clear()
         self.profile_type_combo.setCurrentIndex(0)
         self.update_profile_form_visibility()
+        self.profile_name_input.setFocus()
+
+    def clear_form(self):
+        self.start_new_profile(clear_selection=False)
 
     def update_profile_form_visibility(self):
         profile_type = self.profile_type_combo.currentData() or 's3'
