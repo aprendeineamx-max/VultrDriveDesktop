@@ -244,11 +244,6 @@ class MainWindow(QMainWindow):
         self.setup_config_tab()
         self.tabs.addTab(self.config_tab, self.tr("config_tab"))
 
-        # Tab 5: Advanced
-        self.advanced_tab = QWidget()
-        self.setup_advanced_tab()
-        self.tabs.addTab(self.advanced_tab, self.tr("advanced_tab"))
-
         # Status Bar
         self.setStatusBar(QStatusBar(self))
         self.statusBar().showMessage(self.tr("ready"))
@@ -1411,6 +1406,29 @@ class MainWindow(QMainWindow):
         settings_layout.addWidget(self.settings_button)
         layout.addLayout(settings_layout)
 
+        warning_label = QLabel(f"[!]\u26A0 {self.tr('advanced_warning')}")
+        warning_label.setStyleSheet("font-weight: bold; color: #ff6b6b; font-size: 12pt;")
+        warning_label.setWordWrap(True)
+        layout.addWidget(warning_label)
+
+        format_group = QGroupBox(self.tr('bucket_management'))
+        format_layout = QVBoxLayout()
+
+        format_info = QLabel(self.tr('format_warning'))
+        format_info.setWordWrap(True)
+        format_layout.addWidget(format_info)
+
+        self.format_button = QPushButton(f"🗑️ {self.tr('format_bucket')}")
+        self.format_button.clicked.connect(self.format_bucket)
+        self.format_button.setStyleSheet(
+            "QPushButton { background-color: #c92a2a; }"
+            "QPushButton:hover { background-color: #a51e1e; }"
+        )
+        format_layout.addWidget(self.format_button)
+
+        format_group.setLayout(format_layout)
+        layout.addWidget(format_group)
+
         layout.addStretch()
 
         scroll.setWidget(container)
@@ -1479,53 +1497,6 @@ class MainWindow(QMainWindow):
         from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
         self.sync_log.append(f"[{timestamp}] {message}")
-
-    def setup_advanced_tab(self):
-        # Crear un scroll area para toda la pestaña
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QScrollArea.Shape.NoFrame)
-        
-        # Widget contenedor para el scroll
-        container = QWidget()
-        layout = QVBoxLayout(container)
-        layout.setSpacing(15)
-        layout.setContentsMargins(10, 10, 10, 10)
-
-        # Warning label
-        warning_label = QLabel(f"[!]️ {self.tr('advanced_warning')}")
-        warning_label.setStyleSheet("font-weight: bold; color: #ff6b6b; font-size: 12pt;")
-        layout.addWidget(warning_label)
-
-        # Format bucket group
-        format_group = QGroupBox(self.tr('bucket_management'))
-        format_layout = QVBoxLayout()
-
-        format_info = QLabel(self.tr('format_warning'))
-       
-        format_info.setWordWrap(True)
-        format_layout.addWidget(format_info)
-
-        self.format_button = QPushButton(f"🗑️ {self.tr('format_bucket')}")
-        self.format_button.clicked.connect(self.format_bucket)
-        self.format_button.setStyleSheet(
-            "QPushButton { background-color: #c92a2a; }"
-            "QPushButton:hover { background-color: #a51e1e; }"
-        )
-        format_layout.addWidget(self.format_button)
-
-        format_group.setLayout(format_layout)
-        layout.addWidget(format_group)
-
-        layout.addStretch()
-        
-        # Configurar el scroll area
-        scroll.setWidget(container)
-        
-        # Agregar el scroll area al tab
-        tab_layout = QVBoxLayout(self.advanced_tab)
-        tab_layout.setContentsMargins(0, 0, 0, 0)
-        tab_layout.addWidget(scroll)
 
     def refresh_buckets(self, force_remote=False):
         if self.active_profile_type != 's3':
