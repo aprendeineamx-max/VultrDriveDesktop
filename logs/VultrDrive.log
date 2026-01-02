@@ -988,3 +988,25 @@ SOLUCIÓN:
 2026-01-02 12:18:47 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
 2026-01-02 12:19:09 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
 2026-01-02 12:20:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:21:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6449118140 bytes (6150.36 MB)
+2026-01-02 12:26:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:27:34 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6728694394 bytes (6416.98 MB)
+2026-01-02 12:32:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:33:49 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6872620904 bytes (6554.24 MB)
+2026-01-02 12:39:11 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:39:35 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6872620904 bytes (6554.24 MB)
+2026-01-02 12:44:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:45:15 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6872620904 bytes (6554.24 MB)
+2026-01-02 12:50:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:51:13 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 12:56:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:57:33 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 12:58:08 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 12:58:10 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 12:58:25 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'unmount_all_drives'
+2026-01-02 12:58:37 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 12:58:40 | INFO     | VultrDrive.ui.main_window | on_success:1517 | Montaje completado (mount_drive[V:bucket-nubepelis]): Montado exitosamente en V:
+2026-01-02 13:00:32 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 13:00:34 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 13:00:53 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 13:00:54 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado

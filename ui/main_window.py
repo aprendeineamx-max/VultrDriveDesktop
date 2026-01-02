@@ -16,6 +16,8 @@ from notification_manager import NotificationManager, NotificationType
 from core.task_runner import TaskRunner
 from multiple_mount_manager import MultipleMountManager
 from ui.multi_mounts_widget import MultiMountsWidget
+from ui.tools_tab import ToolsTab
+from ui.plan_editor import PlanEditorDialog
 from functools import partial
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
@@ -220,6 +222,10 @@ class MainWindow(QMainWindow):
         self.sync_tab = QWidget()
         self.setup_sync_tab()
         self.tabs.addTab(self.sync_tab, self.tr("sync_tab"))
+
+        # Tab: Tools (Subida Inteligente)
+        self.tools_tab = ToolsTab(self.rclone_manager, self.config_manager)
+        self.tabs.addTab(self.tools_tab, "🚀 Herramientas")
 
         # Tab 4: Advanced
         self.advanced_tab = QWidget()
@@ -920,6 +926,25 @@ class MainWindow(QMainWindow):
         mount_group.setToolTip("ℹ️ " + self.tr("mount_config_tooltip"))  # Tooltip informativo
         mount_layout = QVBoxLayout()
 
+        # Plan Selection Logic
+        plan_layout = QHBoxLayout()
+        plan_layout.addWidget(QLabel("🚀 " + self.tr("performance_plan") + ":"))
+        
+        self.mount_plan_selector = QComboBox()
+        self.mount_plan_selector.setToolTip(self.tr("select_performance_plan_tooltip"))
+        plan_layout.addWidget(self.mount_plan_selector, 1)
+        
+        self.edit_mount_plans_btn = QPushButton("⚙️")
+        self.edit_mount_plans_btn.setToolTip(self.tr("edit_plans"))
+        self.edit_mount_plans_btn.setFixedWidth(40)
+        self.edit_mount_plans_btn.clicked.connect(self.open_mount_plan_editor)
+        plan_layout.addWidget(self.edit_mount_plans_btn)
+        
+        mount_layout.addLayout(plan_layout)
+
+        # Cargar planes iniciales
+        self.load_mount_plans()
+
         drive_letter_layout = QHBoxLayout()
         drive_letter_layout.addWidget(QLabel(self.tr("drive_letter")))
         self.drive_letter_input = QComboBox()
@@ -1258,6 +1283,8 @@ class MainWindow(QMainWindow):
 
     def _handle_bucket_response(self, buckets, error_message, force_remote=False):
         self.bucket_selector.clear()
+        if hasattr(self, 'tools_tab'):
+            self.tools_tab.set_buckets(buckets if buckets else [])
 
         if error_message:
             short_error = error_message if len(error_message) <= 120 else f"{error_message[:117]}..."
@@ -1480,6 +1507,37 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, self.tr("error"), message)
             self.statusBar().showMessage(self.tr("status_backup_failed"), 5000)
 
+    def load_mount_plans(self):
+        """Load available plans into the mount selector"""
+        if not hasattr(self, 'mount_plan_selector'):
+            return
+
+        current_plan = self.mount_plan_selector.currentText()
+        self.mount_plan_selector.clear()
+        
+        plans = self.config_manager.get_plans()
+        plan_names = list(plans.keys())
+        self.mount_plan_selector.addItems(plan_names)
+        
+        # Restore selection or default
+        active_plan = self.config_manager.get_active_plan()
+        
+        if current_plan and current_plan in plan_names:
+            self.mount_plan_selector.setCurrentText(current_plan)
+        elif active_plan and active_plan in plan_names:
+            self.mount_plan_selector.setCurrentText(active_plan)
+        elif plan_names:
+            self.mount_plan_selector.setCurrentIndex(0)
+
+    def open_mount_plan_editor(self):
+        """Open the plan editor dialog from the mount tab"""
+        dialog = PlanEditorDialog(self.config_manager, self)
+        if dialog.exec() == QDialog.DialogCode.Accepted:
+            self.load_mount_plans()
+            # Also update tools tab if it exists
+            if hasattr(self, 'tools_tab'):
+                self.tools_tab.load_plans()
+
     def mount_drive(self):
         if not self.profile_selector.currentText():
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
@@ -1492,6 +1550,10 @@ class MainWindow(QMainWindow):
         drive_letter = self.drive_letter_input.currentText()
         profile_name = self.profile_selector.currentText()
         bucket_name = self.bucket_selector.currentText()
+        
+        # Obtener configuración del plan seleccionado
+        plan_name = self.mount_plan_selector.currentText()
+        plan_config = self.config_manager.get_plan(plan_name)
 
         # Mostrar mensaje inmediatamente en la barra de estado
         self.statusBar().showMessage(self.tr("status_mounting").format(bucket_name, drive_letter))
@@ -1502,6 +1564,7 @@ class MainWindow(QMainWindow):
                 profile_name,
                 drive_letter,
                 bucket_name,
+                plan_config=plan_config
             )
             return success, message, drive_letter, bucket_name, process
 

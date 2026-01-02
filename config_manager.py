@@ -389,3 +389,75 @@ class ConfigManager:
         """
         return self.configs.get(profile_name)
 
+    # ===== NUEVO: Gestión de Planes Rclone (Fase 7) =====
+
+    def get_plans(self):
+        """Retorna diccionario de planes. Crea defaults si no existen."""
+        if 'rclone_plans' not in self.configs:
+            self.configs['rclone_plans'] = {
+                "Ultra Performance 🚀": {
+                    "transfers": "320",
+                    "checkers": "320",
+                    "tpslimit": "0",
+                    "burst": "0",
+                    "vfs_cache_mode": "writes",
+                    "vfs_write_back": "5s",
+                    "buffer_size": "64M",
+                    "vfs_read_chunk_size": "128M",
+                    "timeout": "10h",
+                    "retries": "5"
+                },
+                "Balanced ⚖️": {
+                    "transfers": "32",
+                    "checkers": "32",
+                    "tpslimit": "50",
+                    "burst": "20",
+                    "vfs_cache_mode": "writes",
+                    "vfs_write_back": "10s",
+                    "buffer_size": "32M",
+                    "vfs_read_chunk_size": "64M",
+                    "timeout": "1h",
+                    "retries": "3"
+                },
+                "Stability 🛡️": {
+                    "transfers": "4",
+                    "checkers": "8",
+                    "tpslimit": "10",
+                    "burst": "5",
+                    "vfs_cache_mode": "full",
+                    "vfs_write_back": "1m",
+                    "buffer_size": "16M",
+                    "vfs_read_chunk_size": "32M",
+                    "timeout": "30m",
+                    "retries": "10"
+                }
+            }
+            # Set active if not exists
+            if 'active_plan' not in self.configs:
+                self.configs['active_plan'] = "Ultra Performance 🚀"
+            
+            self.save_configs()
+            
+        return self.configs['rclone_plans']
+
+    def get_plan(self, name):
+        plans = self.get_plans()
+        return plans.get(name)
+
+    def save_plan(self, name, plan_config):
+        self.get_plans() # Ensure exists
+        self.configs['rclone_plans'][name] = plan_config
+        self.save_configs()
+
+    def delete_plan(self, name):
+        if 'rclone_plans' in self.configs and name in self.configs['rclone_plans']:
+            del self.configs['rclone_plans'][name]
+            self.save_configs()
+
+    def get_active_plan(self):
+        self.get_plans() # Ensure initialization
+        return self.configs.get('active_plan', "Ultra Performance 🚀")
+
+    def set_active_plan(self, name):
+        self.configs['active_plan'] = name
+        self.save_configs()

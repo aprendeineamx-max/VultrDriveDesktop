@@ -1,6 +1,7 @@
 import os
 import sys
 import subprocess
+import shutil  # Para compresión de carpetas
 import configparser
 import time
 from pathlib import Path
@@ -121,8 +122,15 @@ class RcloneManager:
 
         return section_name
 
-    def mount_drive(self, profile_name, drive_letter, bucket_name=None):
-        """Mount the storage as a network drive"""
+    def mount_drive(self, profile_name, drive_letter, bucket_name=None, plan_config=None):
+        """Mount the storage as a network drive.
+        
+        Args:
+            profile_name (str): Vultr profile name
+            drive_letter (str): Drive letter (e.g., "Z")
+            bucket_name (str, optional): Specific bucket to mount
+            plan_config (dict, optional): Dictionary with Rclone performance flags
+        """
         section_name = self.create_rclone_config(profile_name)
         if not section_name:
             return False, "Profile not found", None
@@ -176,49 +184,73 @@ class RcloneManager:
                 f"Searched paths: {base_path}"
             ), None
 
-        # MODO ALTO RENDIMIENTO ESTABLE (Fórmula F1)
-        # Optimizado para velocidad máxima sin bloquear el inicio
+        # Base Application Log Path
+        log_path = os.path.join(os.path.expanduser("~"), "Desktop", "rclone_debug.txt")
+
+        # Configuración por defecto (Fallback "Alto Rendimiento Estable")
+        params = {
+            "vfs_cache_mode": "writes",
+            "vfs_cache_max_age": "24h",
+            "vfs_write_back": "5s",
+            "transfers": "32",
+            "checkers": "32",
+            "tpslimit": "50",
+            "tpslimit_burst": "20",
+            "buffer_size": "64M",
+            "vfs_read_chunk_size": "128M",
+            "timeout": "10h",
+            "contimeout": "10m",
+            "dir_cache_time": "30m", # Default decente
+            "poll_interval": "1m"
+        }
+
+        # Override con plan_config si existe
+        if plan_config:
+            # Mapear claves del plan a claves de params (son casi iguales pero aseguramos)
+            # plan_config keys: transfers, checkers, tpslimit, tpslimit_burst, vfs_cache_mode, buffer_size, vfs_read_chunk_size, dir_cache_time, poll_interval, timeout, contimeout
+            for key, value in plan_config.items():
+                if value is not None and str(value).strip() != "":
+                    params[key] = str(value)
+
+        # Construir comando
         cmd = [
             rclone_path,
             "mount",
             remote_path,
             mount_point,
-            "--vfs-cache-mode", "writes",  # El mejor balance velocidad/inicio
-            "--vfs-cache-max-age", "24h",
-            "--vfs-write-back", "5s",
-            "--transfers", "32",  # ¡CLAVE! Sube 32 archivos simultáneamente (antes 4)
-            "--checkers", "32",   # Verifica 32 archivos simultáneamente
-            "--tpslimit", "50",   # 50 trans/seg (5x más rápido que default)
-            "--tpslimit-burst", "20",  # Burst controlado para no colgar el inicio
-            "--buffer-size", "64M",
-            "--vfs-read-chunk-size", "128M",
-            "--timeout", "10h",
-            "--contimeout", "10m",
+            "--vfs-cache-mode", params["vfs_cache_mode"],
+            "--vfs-cache-max-age", params.get("vfs_cache_max_age", "24h"),
+            "--vfs-write-back", params.get("vfs_write_back", "5s"),
+            "--transfers", params["transfers"],
+            "--checkers", params["checkers"],
+            "--buffer-size", params["buffer_size"],
+            "--vfs-read-chunk-size", params["vfs_read_chunk_size"],
+            "--timeout", params["timeout"],
+            "--contimeout", params.get("contimeout", "10m"),
+            "--dir-cache-time", params.get("dir_cache_time", "30m"),
+            "--poll-interval", params.get("poll_interval", "1m"),
             "--retries", "5",
             "--stats", "1m",
             "--no-modtime",
             "--no-checksum",
             "--volname", f"Vultr-{profile_name}",
-            "--log-file", os.path.join(os.path.expanduser("~"), "Desktop", "rclone_debug.txt"),
+            "--log-file", log_path,
             "--log-level", "DEBUG"
         ]
+
+        # Añadir TPS Limits solo si son explícitos (0 = ilimitado)
+        tps = params.get("tpslimit", "0")
+        burst = params.get("tpslimit_burst", "0")
+        
+        if tps and tps != "0":
+            cmd.extend(["--tpslimit", tps])
+        if burst and burst != "0":
+            cmd.extend(["--tpslimit-burst", burst])
 
         try:
             # Start the mount process in background for Windows
             # Use CREATE_NEW_PROCESS_GROUP to allow it to run independently
             self.mount_process = subprocess.Popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                stdin=subprocess.PIPE,
-                creationflags=subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP,
-                cwd=os.path.dirname(rclone_path)
-            )
-            
-            # Modo Seguro: Tiempos de espera normales
-            import time
-            time.sleep(3)  # Espera inicial normal
-            
             # Check if the process is still running
             if self.mount_process.poll() is None:
                 # Check if the drive actually appeared
@@ -278,14 +310,23 @@ class RcloneManager:
                     f"Ejecutable de Rclone no encontrado en: {rclone_path}",
                     suggestion="Verifica que rclone.exe esté en la carpeta del programa",
                     original_error=e
-                )
-                return False, error.get_user_message(), None
-            return False, f"Ejecutable de Rclone no encontrado en: {rclone_path}", None
+                    pass
+            
+            # Verificar nuevamente
+            vol_result2 = subprocess.run(
+                ['cmd', '/c', 'vol', drive_path],
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW
+            )
+            
+            if vol_result2.returncode != 0:
+                return True, f"Unidad {drive_letter}: desmontada exitosamente"
+            else:
+                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                
         except Exception as e:
-            if ERROR_HANDLING_AVAILABLE:
-                error = handle_error(e, context=f"mount_drive({profile_name}, {drive_letter}, {bucket_name})")
-                return False, error.get_user_message(), None
-            return False, f"Error al montar: {str(e)}", None
+            return False, f"Error al desmontar: {str(e)}"
 
     def unmount_drive(self, drive_letter):
         """Unmount the drive usando net use (específico para esa letra)"""
@@ -338,7 +379,7 @@ class RcloneManager:
             if vol_result2.returncode != 0:
                 return True, f"Unidad {drive_letter}: desmontada exitosamente"
             else:
-                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                return False, f"No se pudo desmontar la unidad {drive_letter}.\\nIntenta cerrar todos los archivos abiertos desde esta unidad."
                 
         except Exception as e:
             return False, f"Error al desmontar: {str(e)}"
@@ -370,3 +411,149 @@ class RcloneManager:
         except Exception as e:
             print(f"Error listing buckets: {e}")
             return []
+
+    def compress_folder(self, source_folder, output_path=None):
+        """
+        Comprime una carpeta local en un archivo ZIP.
+        Si output_path no se especifica, se crea en %TEMP%
+        Retorna: (True, path_archivo_zip) o (False, error)
+        """
+        try:
+            source_path = Path(source_folder)
+            if not source_path.exists():
+                return False, f"La carpeta origen no existe: {source_folder}"
+
+            if output_path is None:
+                # Usar carpeta temporal del sistema
+                temp_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'VultrDrive_Backups')
+                os.makedirs(temp_dir, exist_ok=True)
+                folder_name = source_path.name
+                timestamp = time.strftime("%Y%m%d_%H%M%S")
+                # Nombre seguro: Carpeta_TIMESTAMP
+                output_base = os.path.join(temp_dir, f"{folder_name}_{timestamp}")
+            else:
+                output_base = os.path.splitext(output_path)[0]
+
+            # shutil.make_archive agrega automáticamente la extensión .zip
+            zip_path = shutil.make_archive(output_base, 'zip', source_folder)
+            return True, zip_path
+        except Exception as e:
+            return False, str(e)
+
+    def upload_file(self, profile_name, local_file, bucket_name, remote_filename=None, progress_callback=None):
+        """
+        Sube un archivo único usando rclone copyto.
+        Ideal para subir el ZIP de backup.
+        """
+        try:
+            rclone_path = self.rclone_exe
+            section_name = self.create_rclone_config(profile_name) # Asegura config
+
+            if not remote_filename:
+                remote_filename = os.path.basename(local_file)
+            
+            # Destino: nombre_seccion:bucket/nombre_archivo
+            remote_path = f"{section_name}:{bucket_name}/{remote_filename}"
+            
+            cmd = [
+                rclone_path,
+                "copyto",
+                local_file,
+                remote_path,
+                "--config", self.rclone_config_file,
+                "--stats", "1s", # Reportar progreso cada segundo
+                "--stats-one-line",
+                "--log-level", "INFO"
+            ]
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, # Rclone escribe stats en stderr por defecto
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            # Leer progreso
+            while True:
+                line = process.stderr.readline()
+                if not line and process.poll() is not None:
+                    break
+                
+                if line and progress_callback:
+                    # Parsear línea de stats de rclone si es necesario
+                    # Ejemplo: " 46% / 10.000 G, 2.000 M/s, 2s"
+                    progress_callback(line.strip())
+
+            if process.returncode == 0:
+                return True, "Subida completada"
+            else:
+                return False, "Error en rclone copyto"
+
+        except Exception as e:
+            return False, str(e)
+
+    def sync_folder_parallel(self, profile_name, local_folder, bucket_name, remote_folder=None, progress_callback=None, **kwargs):
+        """
+        Sube una carpeta completa usando rclone copy con ALTO PARALELISMO.
+        Simula la 'video sincronización'.
+        Kwargs soportados: transfers, checkers, tpslimit, tpslimit_burst
+        """
+        try:
+            rclone_path = self.rclone_exe
+            section_name = self.create_rclone_config(profile_name)
+
+            folder_name = os.path.basename(os.path.normpath(local_folder))
+            if not remote_folder:
+                 remote_folder = folder_name
+            
+            # Destino: nombre_seccion:bucket/nombre_carpeta
+            remote_dest = f"{section_name}:{bucket_name}/{remote_folder}"
+            
+            # Defaults extremos pero configurables
+            transfers = str(kwargs.get('transfers', '32'))
+            checkers = str(kwargs.get('checkers', '32'))
+            tpslimit = str(kwargs.get('tpslimit', '0')) # 0 = Unlimited
+            burst = str(kwargs.get('tpslimit_burst', '0'))
+
+            cmd = [
+                rclone_path,
+                "copy",
+                local_folder,
+                remote_dest,
+                "--config", self.rclone_config_file,
+                "--transfers", transfers,
+                "--checkers", checkers,
+                "--stats", "1s",
+                "--stats-one-line",
+                "--log-level", "INFO"
+            ]
+
+            if tpslimit and tpslimit != '0':
+                cmd.extend(["--tpslimit", tpslimit])
+            
+            if burst and burst != '0':
+                cmd.extend(["--tpslimit-burst", burst])
+
+            process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            while True:
+                line = process.stderr.readline()
+                if not line and process.poll() is not None:
+                    break
+                if line and progress_callback:
+                    progress_callback(line.strip())
+
+            if process.returncode == 0:
+                return True, "Sincronización paralela completada"
+            else:
+                return False, "Error en rclone copy paralelo"
+
+        except Exception as e:
+            return False, str(e)
