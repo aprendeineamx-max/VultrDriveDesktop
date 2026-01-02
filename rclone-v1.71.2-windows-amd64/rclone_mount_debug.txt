@@ -1,0 +1,451 @@
+2026/01/02 11:50:32 INFO  : Starting transaction limiter: max 100 transactions/s with burst 20
+2026/01/02 11:50:33 DEBUG : rclone: Version "v1.71.2" starting with parameters ["C:\\Users\\Administrator\\Desktop\\vultr desktop\\VultrDriveDesktop\\rclone-v1.71.2-windows-amd64\\rclone.exe" "mount" "vultr_Dolphin-1000:bucket-nubepelis" "V:" "--vfs-cache-mode" "full" "--vfs-cache-max-age" "24h" "--vfs-cache-poll-interval" "30s" "--vfs-cache-max-size" "10G" "--vfs-read-chunk-size" "256M" "--vfs-read-chunk-size-limit" "off" "--vfs-write-back" "5s" "--buffer-size" "64M" "--timeout" "10h" "--contimeout" "10m" "--retries" "5" "--low-level-retries" "20" "--stats" "1m" "--no-modtime" "--no-checksum" "--dir-cache-time" "10m" "--volname" "Vultr-Dolphin-1000" "--tpslimit" "100" "--tpslimit-burst" "20" "--log-file" "rclone_mount_debug.txt" "--log-level" "DEBUG"]
+2026/01/02 11:50:33 DEBUG : Creating backend with remote "vultr_Dolphin-1000:bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : Using config file from "C:\\Users\\Administrator\\.config\\rclone\\rclone.conf"
+2026/01/02 11:50:33 INFO  : S3 bucket bucket-nubepelis: poll-interval is not supported by this remote
+2026/01/02 11:50:33 DEBUG : S3 bucket bucket-nubepelis: vfs cache: root is "C:\\Users\\Administrator\\AppData\\Local\\rclone"
+2026/01/02 11:50:33 DEBUG : S3 bucket bucket-nubepelis: vfs cache: data root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfs\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : S3 bucket bucket-nubepelis: vfs cache: metadata root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfsMeta\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 11:50:33 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 11:50:33 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 11:50:33 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 11:50:34 DEBUG : Descargas/7.11.0.47197 - XYZ/7.11.0.47197 - XYZ/Patch.7z: vfs cache: truncate to size=22429070 (not needed as size correct)
+2026/01/02 11:50:34 DEBUG : Descargas/7.11.0.47197 - XYZ/7.11.0.47197 - XYZ/Patch.7z: vfs cache: setting modification time to 2026-01-02 11:03:46.0378662 -0700 MST
+2026/01/02 11:50:34 INFO  : Descargas/7.11.0.47197 - XYZ/7.11.0.47197 - XYZ/Patch.7z: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:35 DEBUG : Descargas/7.11.0.47197 - XYZ/7.11.0.47197 - XYZ: Added virtual directory entry vAddFile: "Patch.7z"
+2026/01/02 11:50:36 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: truncate to size=2025538 (not needed as size correct)
+2026/01/02 11:50:36 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: setting modification time to 2026-01-02 11:03:44.2736039 -0700 MST
+2026/01/02 11:50:36 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:36 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2: Added virtual directory entry vAddDir: "v2"
+2026/01/02 11:50:36 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2: Added virtual directory entry vAddFile: "AutoHotkey.chm"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: truncate to size=1279488 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: setting modification time to 2026-01-02 11:03:44.2847576 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2: Added virtual directory entry vAddFile: "AutoHotkey.exe"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: truncate to size=978432 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: setting modification time to 2026-01-02 11:03:44.2932997 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2: Added virtual directory entry vAddFile: "AutoHotkey32.exe"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: truncate to size=1279488 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: setting modification time to 2026-01-02 11:03:44.2999321 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2: Added virtual directory entry vAddFile: "AutoHotkey64.exe"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: truncate to size=703 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: setting modification time to 2026-01-02 11:03:38.7701133 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 2.ahk"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: truncate to size=720384 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: setting modification time to 2026-01-02 11:03:38.7817142 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 2.exe"
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: truncate to size=1143 (not needed as size correct)
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: setting modification time to 2026-01-02 11:03:38.7868741 -0700 MST
+2026/01/02 11:50:37 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:37 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 3 .ahk"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: truncate to size=720896 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: setting modification time to 2026-01-02 11:03:38.7944756 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 3 .exe"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: truncate to size=720384 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: setting modification time to 2026-01-02 11:03:38.8015897 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 5.1.exe"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: truncate to size=689 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: setting modification time to 2026-01-02 11:03:38.8085657 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 5.ahk"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: truncate to size=720384 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: setting modification time to 2026-01-02 11:03:38.8166529 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles 5.exe"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: truncate to size=720384 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: setting modification time to 2026-01-02 11:03:38.823563 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "poner portapapeles.exe"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: truncate to size=532 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: setting modification time to 2026-01-02 11:03:38.8287014 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "registro_portapapeles.ahk"
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: truncate to size=596 (not needed as size correct)
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: setting modification time to 2026-01-02 11:03:38.8343855 -0700 MST
+2026/01/02 11:50:38 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:38 DEBUG : Descargas/AutoHotkey/.Archivado: Added virtual directory entry vAddFile: "registro_portapapeles_v2.ahk"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: truncate to size=0 (not needed as size correct)
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: setting modification time to 2026-01-02 11:03:44.738333 -0700 MST
+2026/01/02 11:50:39 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey: Added virtual directory entry vAddDir: "Archivos Registro"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro: Added virtual directory entry vAddDir: "Portapapeles"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles: Added virtual directory entry vAddFile: "clipboard_log.csv"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: truncate to size=344992 (not needed as size correct)
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: setting modification time to 2026-01-02 11:03:44.7474025 -0700 MST
+2026/01/02 11:50:39 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles: Added virtual directory entry vAddFile: "clipboard_log.jsonl"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: truncate to size=326517 (not needed as size correct)
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: setting modification time to 2026-01-02 11:03:44.7534192 -0700 MST
+2026/01/02 11:50:39 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles: Added virtual directory entry vAddFile: "clipboard_log.txt"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.xlsx: vfs cache: truncate to size=55010 (not needed as size correct)
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.xlsx: vfs cache: setting modification time to 2026-01-02 11:03:44.7625883 -0700 MST
+2026/01/02 11:50:39 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.xlsx: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles: Added virtual directory entry vAddFile: "clipboard_log.xlsx"
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/clipboard_logger_v2.ahk: vfs cache: truncate to size=6257 (not needed as size correct)
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro/clipboard_logger_v2.ahk: vfs cache: setting modification time to 2026-01-02 11:03:44.4879364 -0700 MST
+2026/01/02 11:50:39 INFO  : Descargas/AutoHotkey/Archivos Registro/clipboard_logger_v2.ahk: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:39 DEBUG : Descargas/AutoHotkey/Archivos Registro: Added virtual directory entry vAddFile: "clipboard_logger_v2.ahk"
+2026/01/02 11:50:39 DEBUG : Descargas/7.11.0.47197 - XYZ/7.11.0.47197 - XYZ/Patch.7z: vfs cache: starting upload
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/Archivos Registro/run_clipboard_logger.cmd: vfs cache: truncate to size=275 (not needed as size correct)
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/Archivos Registro/run_clipboard_logger.cmd: vfs cache: setting modification time to 2026-01-02 11:03:44.496043 -0700 MST
+2026/01/02 11:50:40 INFO  : Descargas/AutoHotkey/Archivos Registro/run_clipboard_logger.cmd: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/Archivos Registro: Added virtual directory entry vAddFile: "run_clipboard_logger.cmd"
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/_tmp_show.ps1: vfs cache: truncate to size=62 (not needed as size correct)
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/_tmp_show.ps1: vfs cache: setting modification time to 2026-01-02 11:03:38.4104149 -0700 MST
+2026/01/02 11:50:40 INFO  : Descargas/AutoHotkey/_tmp_show.ps1: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey: Added virtual directory entry vAddFile: "_tmp_show.ps1"
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/clipboard_log.jsonl: vfs cache: truncate to size=0 (not needed as size correct)
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/clipboard_log.jsonl: vfs cache: setting modification time to 2026-01-02 11:03:38.3926806 -0700 MST
+2026/01/02 11:50:40 INFO  : Descargas/AutoHotkey/clipboard_log.jsonl: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey: Added virtual directory entry vAddFile: "clipboard_log.jsonl"
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/clipboard_log.txt: vfs cache: truncate to size=0 (not needed as size correct)
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey/clipboard_log.txt: vfs cache: setting modification time to 2026-01-02 11:03:38.3977191 -0700 MST
+2026/01/02 11:50:40 INFO  : Descargas/AutoHotkey/clipboard_log.txt: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:40 DEBUG : Descargas/AutoHotkey: Added virtual directory entry vAddFile: "clipboard_log.txt"
+2026/01/02 11:50:41 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: starting upload
+2026/01/02 11:50:41 DEBUG : Descargas/AutoHotkey/start_clipboard_logger.bat: vfs cache: truncate to size=82 (not needed as size correct)
+2026/01/02 11:50:41 DEBUG : Descargas/AutoHotkey/start_clipboard_logger.bat: vfs cache: setting modification time to 2026-01-02 11:03:38.40535 -0700 MST
+2026/01/02 11:50:41 INFO  : Descargas/AutoHotkey/start_clipboard_logger.bat: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:41 DEBUG : Descargas/AutoHotkey: Added virtual directory entry vAddFile: "start_clipboard_logger.bat"
+2026/01/02 11:50:42 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: starting upload
+2026/01/02 11:50:42 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: starting upload
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-1.json: vfs cache: truncate to size=1523496 (not needed as size correct)
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-1.json: vfs cache: setting modification time to 2026-01-02 11:03:35.9328896 -0700 MST
+2026/01/02 11:50:42 INFO  : Descargas/Exportados de figma extension/figma-zip-batch-1.json: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:42 DEBUG : Descargas: Added virtual directory entry vAddDir: "Exportados de figma extension"
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension: Added virtual directory entry vAddFile: "figma-zip-batch-1.json"
+2026/01/02 11:50:42 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-2.json: vfs cache: truncate to size=875960 (not needed as size correct)
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-2.json: vfs cache: setting modification time to 2026-01-02 11:03:35.9400299 -0700 MST
+2026/01/02 11:50:42 INFO  : Descargas/Exportados de figma extension/figma-zip-batch-2.json: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension: Added virtual directory entry vAddFile: "figma-zip-batch-2.json"
+2026/01/02 11:50:42 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-3.json: vfs cache: truncate to size=1424446 (not needed as size correct)
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-3.json: vfs cache: setting modification time to 2026-01-02 11:03:35.9491377 -0700 MST
+2026/01/02 11:50:42 INFO  : Descargas/Exportados de figma extension/figma-zip-batch-3.json: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:42 DEBUG : Descargas/Exportados de figma extension: Added virtual directory entry vAddFile: "figma-zip-batch-3.json"
+2026/01/02 11:50:42 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-4.json: vfs cache: truncate to size=991301 (not needed as size correct)
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension/figma-zip-batch-4.json: vfs cache: setting modification time to 2026-01-02 11:03:35.9552126 -0700 MST
+2026/01/02 11:50:43 INFO  : Descargas/Exportados de figma extension/figma-zip-batch-4.json: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension: Added virtual directory entry vAddFile: "figma-zip-batch-4.json"
+2026/01/02 11:50:43 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension/figma-zip-final.json: vfs cache: truncate to size=732918 (not needed as size correct)
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension/figma-zip-final.json: vfs cache: setting modification time to 2026-01-02 11:03:35.9648309 -0700 MST
+2026/01/02 11:50:43 INFO  : Descargas/Exportados de figma extension/figma-zip-final.json: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:43 DEBUG : Descargas/Exportados de figma extension: Added virtual directory entry vAddFile: "figma-zip-final.json"
+2026/01/02 11:50:43 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:43 DEBUG : Descargas/Hottest Teen Ever/Hottest Teen Ever.mp4: vfs cache: truncate to size=1515932579 (not needed as size correct)
+2026/01/02 11:50:43 DEBUG : Descargas/Hottest Teen Ever/Hottest Teen Ever.mp4: vfs cache: setting modification time to 2026-01-02 11:03:37.752721 -0700 MST
+2026/01/02 11:50:43 INFO  : Descargas/Hottest Teen Ever/Hottest Teen Ever.mp4: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:43 DEBUG : Descargas: Added virtual directory entry vAddDir: "Hottest Teen Ever"
+2026/01/02 11:50:43 DEBUG : Descargas/Hottest Teen Ever: Added virtual directory entry vAddFile: "Hottest Teen Ever.mp4"
+2026/01/02 11:50:43 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:43 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Desktop.ini: vfs cache: truncate to size=184 (not needed as size correct)
+2026/01/02 11:50:43 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Desktop.ini: vfs cache: setting modification time to 2026-01-02 11:03:48.7604339 -0700 MST
+2026/01/02 11:50:43 INFO  : Descargas/Instalacion de Portable Apps - Portable/Documents/Desktop.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:43 DEBUG : Descargas: Added virtual directory entry vAddDir: "Instalacion de Portable Apps - Portable"
+2026/01/02 11:50:43 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable: Added virtual directory entry vAddDir: "Documents"
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents: Added virtual directory entry vAddFile: "Desktop.ini"
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Music/Desktop.ini: vfs cache: truncate to size=163 (not needed as size correct)
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Music/Desktop.ini: vfs cache: setting modification time to 2026-01-02 11:03:49.1272359 -0700 MST
+2026/01/02 11:50:44 INFO  : Descargas/Instalacion de Portable Apps - Portable/Documents/Music/Desktop.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:44 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents: Added virtual directory entry vAddDir: "Music"
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Music: Added virtual directory entry vAddFile: "Desktop.ini"
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Pictures/Desktop.ini: vfs cache: truncate to size=179 (not needed as size correct)
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Pictures/Desktop.ini: vfs cache: setting modification time to 2026-01-02 11:03:49.3750913 -0700 MST
+2026/01/02 11:50:44 INFO  : Descargas/Instalacion de Portable Apps - Portable/Documents/Pictures/Desktop.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents: Added virtual directory entry vAddDir: "Pictures"
+2026/01/02 11:50:44 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Pictures: Added virtual directory entry vAddFile: "Desktop.ini"
+2026/01/02 11:50:44 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Videos/Desktop.ini: vfs cache: truncate to size=148 (not needed as size correct)
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Videos/Desktop.ini: vfs cache: setting modification time to 2026-01-02 11:03:49.9085734 -0700 MST
+2026/01/02 11:50:45 INFO  : Descargas/Instalacion de Portable Apps - Portable/Documents/Videos/Desktop.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents: Added virtual directory entry vAddDir: "Videos"
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/Documents/Videos: Added virtual directory entry vAddFile: "Desktop.ini"
+2026/01/02 11:50:45 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/.nomedia: vfs cache: truncate to size=235 (not needed as size correct)
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/.nomedia: vfs cache: setting modification time to 2026-01-02 11:03:50.531682 -0700 MST
+2026/01/02 11:50:45 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/.nomedia: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable: Added virtual directory entry vAddDir: "PortableApps"
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps: Added virtual directory entry vAddFile: ".nomedia"
+2026/01/02 11:50:45 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/Desktop.ini: vfs cache: truncate to size=163 (not needed as size correct)
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/Desktop.ini: vfs cache: setting modification time to 2026-01-02 11:03:50.5365831 -0700 MST
+2026/01/02 11:50:45 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/Desktop.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps: Added virtual directory entry vAddFile: "Desktop.ini"
+2026/01/02 11:50:45 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/FileZillaPortable.ini: vfs cache: truncate to size=2157 (not needed as size correct)
+2026/01/02 11:50:45 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/FileZillaPortable.ini: vfs cache: setting modification time to 2026-01-02 11:03:51.9769588 -0700 MST
+2026/01/02 11:50:45 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/FileZillaPortable.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:45 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:46 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: md5 = 564c4e3d2bf76b70a41596fee7c209eb OK
+2026/01/02 11:50:46 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: Copied (new)
+2026/01/02 11:50:46 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: fingerprint now "978432,2026-01-02 18:03:44.2932997 +0000 UTC,564c4e3d2bf76b70a41596fee7c209eb"
+2026/01/02 11:50:46 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey32.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:46 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:46 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: starting upload
+2026/01/02 11:50:46 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps: Added virtual directory entry vAddDir: "FileZillaPortable"
+2026/01/02 11:50:46 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable: Added virtual directory entry vAddDir: "App"
+2026/01/02 11:50:46 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App: Added virtual directory entry vAddDir: "AppInfo"
+2026/01/02 11:50:46 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddDir: "Launcher"
+2026/01/02 11:50:46 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher: Added virtual directory entry vAddFile: "FileZillaPortable.ini"
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: md5 = 38746d44eca1f41d1f8e16746eb182f5 OK
+2026/01/02 11:50:47 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: Copied (new)
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: fingerprint now "1279488,2026-01-02 18:03:44.2847576 +0000 UTC,38746d44eca1f41d1f8e16746eb182f5"
+2026/01/02 11:50:47 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: starting upload
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/custom.nsh: vfs cache: truncate to size=1835 (not needed as size correct)
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/custom.nsh: vfs cache: setting modification time to 2026-01-02 11:03:51.970477 -0700 MST
+2026/01/02 11:50:47 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/custom.nsh: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher: Added virtual directory entry vAddFile: "custom.nsh"
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/splash.jpg: vfs cache: truncate to size=41230 (not needed as size correct)
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/splash.jpg: vfs cache: setting modification time to 2026-01-02 11:03:51.9832639 -0700 MST
+2026/01/02 11:50:47 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher/splash.jpg: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/Launcher: Added virtual directory entry vAddFile: "splash.jpg"
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: md5 = c29b2141d9aeb1f617667cd58de9c851 OK
+2026/01/02 11:50:47 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: Copied (new)
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon.ico: vfs cache: truncate to size=48739 (not needed as size correct)
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: fingerprint now "703,2026-01-02 18:03:38.7701133 +0000 UTC,c29b2141d9aeb1f617667cd58de9c851"
+2026/01/02 11:50:47 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.ahk: vfs cache: upload succeeded try #1
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: starting upload
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon.ico: vfs cache: setting modification time to 2026-01-02 11:03:51.6659787 -0700 MST
+2026/01/02 11:50:47 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon.ico: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon.ico"
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_128.png: vfs cache: truncate to size=6127 (not needed as size correct)
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_128.png: vfs cache: setting modification time to 2026-01-02 11:03:51.6740514 -0700 MST
+2026/01/02 11:50:47 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_128.png: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:47 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon_128.png"
+2026/01/02 11:50:47 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_16.png: vfs cache: truncate to size=562 (not needed as size correct)
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_16.png: vfs cache: setting modification time to 2026-01-02 11:03:51.6799966 -0700 MST
+2026/01/02 11:50:48 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_16.png: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:48 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon_16.png"
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_256.png: vfs cache: truncate to size=24620 (not needed as size correct)
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_256.png: vfs cache: setting modification time to 2026-01-02 11:03:51.6880753 -0700 MST
+2026/01/02 11:50:48 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_256.png: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon_256.png"
+2026/01/02 11:50:48 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_32.png: vfs cache: truncate to size=1250 (not needed as size correct)
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_32.png: vfs cache: setting modification time to 2026-01-02 11:03:51.6944772 -0700 MST
+2026/01/02 11:50:48 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_32.png: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon_32.png"
+2026/01/02 11:50:48 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_75.png: vfs cache: truncate to size=4994 (not needed as size correct)
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_75.png: vfs cache: setting modification time to 2026-01-02 11:03:51.7005923 -0700 MST
+2026/01/02 11:50:48 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appicon_75.png: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appicon_75.png"
+2026/01/02 11:50:48 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appinfo.ini: vfs cache: truncate to size=607 (not needed as size correct)
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appinfo.ini: vfs cache: setting modification time to 2026-01-02 11:03:51.7060738 -0700 MST
+2026/01/02 11:50:48 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/appinfo.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:48 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:48 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "appinfo.ini"
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: md5 = 57bb054e56eb6fa154f5bca6affa656a OK
+2026/01/02 11:50:49 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: Copied (new)
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: fingerprint now "2025538,2026-01-02 18:03:44.2736039 +0000 UTC,57bb054e56eb6fa154f5bca6affa656a"
+2026/01/02 11:50:49 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey.chm: vfs cache: upload succeeded try #1
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: starting upload
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/installer.ini: vfs cache: truncate to size=417 (not needed as size correct)
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/installer.ini: vfs cache: setting modification time to 2026-01-02 11:03:51.7112243 -0700 MST
+2026/01/02 11:50:49 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/installer.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "installer.ini"
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/pac_installer_log.ini: vfs cache: truncate to size=549 (not needed as size correct)
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/pac_installer_log.ini: vfs cache: setting modification time to 2026-01-02 11:03:51.7171186 -0700 MST
+2026/01/02 11:50:49 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo/pac_installer_log.ini: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/AppInfo: Added virtual directory entry vAddFile: "pac_installer_log.ini"
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Bin/sqlite3.exe: vfs cache: truncate to size=1189376 (not needed as size correct)
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Bin/sqlite3.exe: vfs cache: setting modification time to 2026-01-02 11:03:52.4727738 -0700 MST
+2026/01/02 11:50:49 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Bin/sqlite3.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App: Added virtual directory entry vAddDir: "Bin"
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Bin: Added virtual directory entry vAddFile: "sqlite3.exe"
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: md5 = 85fcfeb2df793529d2ce1f5927ca7ceb OK
+2026/01/02 11:50:49 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: Copied (new)
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: fingerprint now "1143,2026-01-02 18:03:38.7868741 +0000 UTC,85fcfeb2df793529d2ce1f5927ca7ceb"
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla-putty.reg: vfs cache: truncate to size=394 (not needed as size correct)
+2026/01/02 11:50:49 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .ahk: vfs cache: upload succeeded try #1
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: starting upload
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla-putty.reg: vfs cache: setting modification time to 2026-01-02 11:03:53.0974545 -0700 MST
+2026/01/02 11:50:49 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla-putty.reg: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:49 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App: Added virtual directory entry vAddDir: "DefaultData"
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData: Added virtual directory entry vAddDir: "settings"
+2026/01/02 11:50:49 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings: Added virtual directory entry vAddFile: "filezilla-putty.reg"
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla.xml: vfs cache: truncate to size=222 (not needed as size correct)
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla.xml: vfs cache: setting modification time to 2026-01-02 11:03:53.1034394 -0700 MST
+2026/01/02 11:50:50 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings/filezilla.xml: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/DefaultData/settings: Added virtual directory entry vAddFile: "filezilla.xml"
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: md5 = 2c9dc8194495c54ac9e2c01dc6a12ae4 OK
+2026/01/02 11:50:50 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: Copied (new)
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: fingerprint now "720384,2026-01-02 18:03:38.7817142 +0000 UTC,2c9dc8194495c54ac9e2c01dc6a12ae4"
+2026/01/02 11:50:50 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 2.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: starting upload
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/AUTHORS: vfs cache: truncate to size=3230 (not needed as size correct)
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/AUTHORS: vfs cache: setting modification time to 2026-01-02 11:03:53.4265568 -0700 MST
+2026/01/02 11:50:50 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/AUTHORS: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App: Added virtual directory entry vAddDir: "Filezilla"
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "AUTHORS"
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/GPL.html: vfs cache: truncate to size=16153 (not needed as size correct)
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/GPL.html: vfs cache: setting modification time to 2026-01-02 11:03:53.4955744 -0700 MST
+2026/01/02 11:50:50 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/GPL.html: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "GPL.html"
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: md5 = 38746d44eca1f41d1f8e16746eb182f5 OK
+2026/01/02 11:50:50 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: Copied (new)
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: fingerprint now "1279488,2026-01-02 18:03:44.2999321 +0000 UTC,38746d44eca1f41d1f8e16746eb182f5"
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/NEWS: vfs cache: truncate to size=123014 (not needed as size correct)
+2026/01/02 11:50:50 INFO  : Descargas/AutoHotkey/.Archivado/Instalacion de AHK 2/v2/AutoHotkey64.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: starting upload
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/NEWS: vfs cache: setting modification time to 2026-01-02 11:03:53.6151357 -0700 MST
+2026/01/02 11:50:50 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/NEWS: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:50 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "NEWS"
+2026/01/02 11:50:50 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/filezilla.exe: vfs cache: truncate to size=4536336 (not needed as size correct)
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/filezilla.exe: vfs cache: setting modification time to 2026-01-02 11:03:53.4437003 -0700 MST
+2026/01/02 11:50:51 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/filezilla.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "filezilla.exe"
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: md5 = c8e1d115e0022bb8e5e5fe0b2b7927d5 OK
+2026/01/02 11:50:51 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: Copied (new)
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: fingerprint now "689,2026-01-02 18:03:38.8085657 +0000 UTC,c8e1d115e0022bb8e5e5fe0b2b7927d5"
+2026/01/02 11:50:51 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.ahk: vfs cache: upload succeeded try #1
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: starting upload
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzdefaults.xml: vfs cache: truncate to size=251 (not needed as size correct)
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzdefaults.xml: vfs cache: setting modification time to 2026-01-02 11:03:53.4507565 -0700 MST
+2026/01/02 11:50:51 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzdefaults.xml: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "fzdefaults.xml"
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzputtygen.exe: vfs cache: truncate to size=396816 (not needed as size correct)
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzputtygen.exe: vfs cache: setting modification time to 2026-01-02 11:03:53.4568261 -0700 MST
+2026/01/02 11:50:51 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzputtygen.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:51 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "fzputtygen.exe"
+2026/01/02 11:50:51 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzsftp.exe: vfs cache: truncate to size=736272 (not needed as size correct)
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzsftp.exe: vfs cache: setting modification time to 2026-01-02 11:03:53.4690867 -0700 MST
+2026/01/02 11:50:52 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzsftp.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "fzsftp.exe"
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzstorj.exe: vfs cache: truncate to size=9022992 (not needed as size correct)
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzstorj.exe: vfs cache: setting modification time to 2026-01-02 11:03:53.4877466 -0700 MST
+2026/01/02 11:50:52 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/fzstorj.exe: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "fzstorj.exe"
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfilezilla-50.dll: vfs cache: truncate to size=1121808 (not needed as size correct)
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfilezilla-50.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5071732 -0700 MST
+2026/01/02 11:50:52 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfilezilla-50.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:52 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libfilezilla-50.dll"
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: md5 = 25b9091d5ae41a71a1d99355d086b410 OK
+2026/01/02 11:50:52 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: Copied (new)
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: fingerprint now "720896,2026-01-02 18:03:38.7944756 +0000 UTC,25b9091d5ae41a71a1d99355d086b410"
+2026/01/02 11:50:52 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 3 .exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:52 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles.exe: vfs cache: starting upload
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-commonui-private-3-69-5.dll: vfs cache: truncate to size=655376 (not needed as size correct)
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-commonui-private-3-69-5.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5141617 -0700 MST
+2026/01/02 11:50:53 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-commonui-private-3-69-5.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libfzclient-commonui-private-3-69-5.dll"
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-private-3-69-5.dll: vfs cache: truncate to size=1593360 (not needed as size correct)
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-private-3-69-5.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5311929 -0700 MST
+2026/01/02 11:50:53 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libfzclient-private-3-69-5.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:53 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libfzclient-private-3-69-5.dll"
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: md5 = 28efbb2bd488dfc48503a4a52cf7f3e9 OK
+2026/01/02 11:50:53 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: Copied (new)
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: fingerprint now "720384,2026-01-02 18:03:38.8015897 +0000 UTC,28efbb2bd488dfc48503a4a52cf7f3e9"
+2026/01/02 11:50:53 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.1.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:53 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: starting upload
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgcc_s_dw2-1.dll: vfs cache: truncate to size=224272 (not needed as size correct)
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgcc_s_dw2-1.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5374262 -0700 MST
+2026/01/02 11:50:54 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgcc_s_dw2-1.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libgcc_s_dw2-1.dll"
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgmp-10.dll: vfs cache: truncate to size=601104 (not needed as size correct)
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgmp-10.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5436658 -0700 MST
+2026/01/02 11:50:54 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgmp-10.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libgmp-10.dll"
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgnutls-30.dll: vfs cache: truncate to size=2226704 (not needed as size correct)
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgnutls-30.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5596628 -0700 MST
+2026/01/02 11:50:54 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libgnutls-30.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libgnutls-30.dll"
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: md5 = 93a731306fcafc398dbd3e4f9538800f OK
+2026/01/02 11:50:54 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: Copied (new)
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: fingerprint now "532,2026-01-02 18:03:38.8287014 +0000 UTC,93a731306fcafc398dbd3e4f9538800f"
+2026/01/02 11:50:54 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles.ahk: vfs cache: upload succeeded try #1
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: starting upload
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libhogweed-6.dll: vfs cache: truncate to size=288272 (not needed as size correct)
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libhogweed-6.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5702059 -0700 MST
+2026/01/02 11:50:54 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libhogweed-6.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:54 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libhogweed-6.dll"
+2026/01/02 11:50:54 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libnettle-8.dll: vfs cache: truncate to size=356880 (not needed as size correct)
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libnettle-8.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5831243 -0700 MST
+2026/01/02 11:50:55 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libnettle-8.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libnettle-8.dll"
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: md5 = 9eea017ddc10b6ebc0943eab28b264bc OK
+2026/01/02 11:50:55 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: Copied (new)
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: fingerprint now "720384,2026-01-02 18:03:38.8166529 +0000 UTC,9eea017ddc10b6ebc0943eab28b264bc"
+2026/01/02 11:50:55 INFO  : Descargas/AutoHotkey/.Archivado/poner portapapeles 5.exe: vfs cache: upload succeeded try #1
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: starting upload
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libpng16-16.dll: vfs cache: truncate to size=250384 (not needed as size correct)
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libpng16-16.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.5922779 -0700 MST
+2026/01/02 11:50:55 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libpng16-16.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:55 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libpng16-16.dll"
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: md5 = 4075cb26033e51090398c13238b47221 OK
+2026/01/02 11:50:55 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: Copied (new)
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: fingerprint now "596,2026-01-02 18:03:38.8343855 +0000 UTC,4075cb26033e51090398c13238b47221"
+2026/01/02 11:50:55 INFO  : Descargas/AutoHotkey/.Archivado/registro_portapapeles_v2.ahk: vfs cache: upload succeeded try #1
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:55 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.jsonl: vfs cache: starting upload
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libsqlite3-0.dll: vfs cache: truncate to size=1329680 (not needed as size correct)
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libsqlite3-0.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.6009014 -0700 MST
+2026/01/02 11:50:56 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libsqlite3-0.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libsqlite3-0.dll"
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: md5 = d41d8cd98f00b204e9800998ecf8427e OK
+2026/01/02 11:50:56 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: Copied (new)
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: fingerprint now "0,2026-01-02 18:03:44.738333 +0000 UTC,d41d8cd98f00b204e9800998ecf8427e"
+2026/01/02 11:50:56 INFO  : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.csv: vfs cache: upload succeeded try #1
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.xlsx: vfs cache: delaying writeback as --transfers exceeded
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.txt: vfs cache: starting upload
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libstdc++-6.dll: vfs cache: truncate to size=2442768 (not needed as size correct)
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libstdc++-6.dll: vfs cache: setting modification time to 2026-01-02 11:03:53.610524 -0700 MST
+2026/01/02 11:50:56 INFO  : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla/libstdc++-6.dll: vfs cache: queuing for upload in 5s
+2026/01/02 11:50:56 DEBUG : Descargas/Instalacion de Portable Apps - Portable/PortableApps/FileZillaPortable/App/Filezilla: Added virtual directory entry vAddFile: "libstdc++-6.dll"
+2026/01/02 11:50:56 DEBUG : Descargas/AutoHotkey/Archivos Registro/Portapapeles/clipboard_log.xlsx: vfs cache: delaying writeback as --transfers exceeded

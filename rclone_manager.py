@@ -199,8 +199,10 @@ class RcloneManager:
             "--no-checksum",  # No verificar checksums (más rápido)
             "--dir-cache-time", "10m",  # Aumentado
             "--volname", f"Vultr-{profile_name}",
-            "--tpslimit", "40",  # Límite balanceado: 40 transacciones/seg
-            "--tpslimit-burst", "10"  # Permite ráfagas de hasta 10 transacciones extra
+            "--tpslimit", "100",  # Mantenemos velocidad alta
+            "--tpslimit-burst", "20",  # Reducimos ráfaga inicial para evitar bloqueo "start-up"
+            "--log-file", "rclone_mount_debug.txt",  # LOGGING ACTIVADO
+            "--log-level", "DEBUG"
         ]
 
         try:
@@ -217,35 +219,40 @@ class RcloneManager:
             
             # Wait for the mount to initialize
             import time
-            time.sleep(5)
+            time.sleep(5)  # Espera inicial breve
             
             # Check if the process is still running
             if self.mount_process.poll() is None:
-                # Check if the drive actually appeared
-                if os.path.exists(drive_path):
-                    return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
-                else:
-                    # Give it more time for slow connections
-                    time.sleep(5)
+                # Check if the drive actually appeared and wait loop
+                for _ in range(10): # 10 intentos de 2 segundos = 20s total
                     if os.path.exists(drive_path):
-                        return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
-                    else:
-                        self.mount_process.terminate()
-                        return False, (
-                            f"No se pudo montar la unidad {drive_letter}:\n\n"
-                            f"El proceso de montaje inició pero la unidad no apareció.\n\n"
-                            f"Posibles causas:\n"
-                            f"1. El bucket está vacío (crea una carpeta de prueba primero)\n"
-                            f"2. Problemas de conexión con Vultr\n"
-                            f"3. Credenciales incorrectas\n"
-                            f"4. WinFsp necesita reinicio del sistema\n\n"
-                            f"SOLUCIÓN:\n"
-                            f"- Sube al menos 1 archivo al bucket desde la pestaña Principal\n"
-                            f"- Verifica tu conexión a internet\n"
-                            f"- Reinicia Windows y vuelve a intentar"
-                        ), None
+                         return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                    time.sleep(2)
+                
+                # Si llegamos aquí, no se montó tras el tiempo de espera
+                self.mount_process.terminate()
+                
+                # Leer el log de error para saber qué pasó
+                error_details = "No se generó log."
+                if os.path.exists("rclone_mount_debug.txt"):
+                    try:
+                        with open("rclone_mount_debug.txt", "r", encoding="utf-8") as f:
+                            # Leer las últimas 10 líneas
+                            lines = f.readlines()
+                            error_details = "".join(lines[-15:])
+                    except:
+                        pass
+
+                return False, (
+                    f"No se pudo montar la unidad {drive_letter}:\\n\\n"
+                    f"El proceso inició pero la unidad no apareció.\\n\\n"
+                    f"DETALLES DEL ERROR (rclone log):\\n{error_details}\\n\\n"
+                    f"Intenta reducir los parámetros agresivos."
+                ), None
+
             else:
-                # Process exited, check the error
+                # Process exited immediately
+
                 stdout, stderr = self.mount_process.communicate()
                 error_msg = stderr.decode('utf-8', errors='ignore') if stderr else "Error desconocido"
                 
