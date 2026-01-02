@@ -551,3 +551,40 @@ Error: None
 2025-11-13 03:51:48 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:51:57 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
 2025-11-13 03:52:00 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\VultrDriveDesktop\logs
+2026-01-02 04:59:53 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 04:59:55 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 04:59:57 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para lax1.vultrobjects.com
+2026-01-02 04:59:57 | INFO     | VultrDrive.ui.main_window | load_profile:1305 | Perfil 'almacen-de-backups-cuenta-destino' cargado exitosamente
+2026-01-02 04:59:57 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2026-01-02 04:59:57 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2026-01-02 04:59:58 | ERROR    | VultrDrive.s3_handler | list_buckets:111 | Error de autenticación: InvalidAccessKeyId - None
+2026-01-02 04:59:58 | ERROR    | VultrDrive.ErrorHandler | _log_error:329 | [Autenticación] Credenciales inválidas. Verifica tu Access Key y Secret Key.
+
+Error: None | Contexto: list_buckets
+2026-01-02 04:59:58 | INFO     | VultrDrive.ErrorHandler | _log_error:332 | Sugerencia: 1. Verifica tu Access Key y Secret Key
+2. Asegúrate de que las credenciales sean correctas
+3. Verifica que la cuenta no esté bloqueada
+2026-01-02 04:59:58 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[lax1.vultrobjects.com]'
+2026-01-02 04:59:58 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde lax1.vultrobjects.com
+2026-01-02 04:59:58 | ERROR    | VultrDrive.s3_handler | list_buckets:111 | Error de autenticación: InvalidAccessKeyId - None
+2026-01-02 04:59:58 | ERROR    | VultrDrive.ErrorHandler | _log_error:329 | [Autenticación] Credenciales inválidas. Verifica tu Access Key y Secret Key.
+
+Error: None | Contexto: list_buckets
+2026-01-02 04:59:58 | INFO     | VultrDrive.ErrorHandler | _log_error:332 | Sugerencia: 1. Verifica tu Access Key y Secret Key
+2. Asegúrate de que las credenciales sean correctas
+3. Verifica que la cuenta no esté bloqueada
+2026-01-02 05:05:14 | ERROR    | VultrDrive.ui.main_window | _handle_bucket_response:1239 | Error al refrescar buckets: Credenciales inválidas. Verifica tu Access Key y Secret Key.
+
+Error: None
+2026-01-02 05:05:53 | ERROR    | VultrDrive.ui.main_window | _handle_bucket_response:1239 | Error al refrescar buckets: Credenciales inválidas. Verifica tu Access Key y Secret Key.
+
+Error: None
+2026-01-02 05:05:53 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 05:06:10 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 05:06:10 | INFO     | VultrDrive.ui.main_window | load_profile:1305 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 05:06:10 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 05:06:10 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 05:06:10 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['test-antigravity']
+2026-01-02 05:06:10 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1244 | Buckets cargados exitosamente: 1
+2026-01-02 05:06:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'test-antigravity'
+2026-01-02 05:06:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'test-antigravity': 0 bytes (0.00 MB)

@@ -1,0 +1,59 @@
+{
+  "object_storages": [
+    {
+      "id": "83bd2a88-6fab-4f21-995b-e0da5806d307",
+      "date_created": "2025-12-27T14:53:18+00:00",
+      "cluster_id": 5,
+      "region": "sjc",
+      "location": "Silicon Valley",
+      "label": "Dolphin-1000",
+      "status": "active",
+      "s3_hostname": "sjc1.vultrobjects.com",
+      "s3_access_key": "3Y3MFSZPD8XCC5IMGZWH",
+      "s3_secret_key": "lq95CVjRWqM3CPSXp1Y7P0S8W76bQKz37CtplahX",
+      "tier": {
+        "OBJSTORETIERID": 2,
+        "slug": "tier_008h_0600m",
+        "sales_name": "Standard",
+        "sales_desc": "Affordable bulk storage with data readily available.",
+        "ratelimit_ops_secs": 800,
+        "ratelimit_ops_bytes": 629145600,
+        "is_default": "no",
+        "price": 18,
+        "disk_gb_price": 0.018,
+        "bw_gb_price": 0.01
+      }
+    },
+    {
+      "id": "d05140f5-11ed-4f20-a721-b9170b98ff90",
+      "date_created": "2025-12-27T14:54:12+00:00",
+      "cluster_id": 2,
+      "region": "ewr",
+      "location": "New Jersey",
+      "label": "Dolphin-1000-Premium",
+      "status": "active",
+      "s3_hostname": "ewr1.vultrobjects.com",
+      "s3_access_key": "4BW2T0AX55SN0V0C14UN",
+      "s3_secret_key": "8Hjed5xmFILX0buJ5H7BB4NPaxrC1liKM9WIoRNB",
+      "tier": {
+        "OBJSTORETIERID": 3,
+        "slug": "tier_001k_0800m",
+        "sales_name": "Premium",
+        "sales_desc": "Reliable and durable storage for a variety of uses.",
+        "ratelimit_ops_secs": 1000,
+        "ratelimit_ops_bytes": 838860800,
+        "is_default": "no",
+        "price": 36,
+        "disk_gb_price": 0.036,
+        "bw_gb_price": 0.01
+      }
+    }
+  ],
+  "meta": {
+    "total": 2,
+    "links": {
+      "next": "",
+      "prev": ""
+    }
+  }
+}

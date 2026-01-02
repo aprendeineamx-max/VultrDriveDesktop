@@ -1,7 +1,12 @@
 {
-    "almacen-de-backups-cuenta-destino": {
-        "access_key": "G0LDHU6PIXWDEDJTAQ4B",
-        "secret_key": "AUxkwxrBSe3SK1k6MdknXnvloCB9EQiuU7HLw1eZ",
-        "host_base": "lax1.vultrobjects.com"
+    "Dolphin-1000": {
+        "access_key": "3Y3MFSZPD8XCC5IMGZWH",
+        "secret_key": "lq95CVjRWqM3CPSXp1Y7P0S8W76bQKz37CtplahX",
+        "host_base": "sjc1.vultrobjects.com"
+    },
+    "Dolphin-1000-Premium": {
+        "access_key": "4BW2T0AX55SN0V0C14UN",
+        "secret_key": "8Hjed5xmFILX0buJ5H7BB4NPaxrC1liKM9WIoRNB",
+        "host_base": "ewr1.vultrobjects.com"
     }
 }
