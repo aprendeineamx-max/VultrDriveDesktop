@@ -259,7 +259,8 @@ class RcloneManager:
             time.sleep(1) # Pequeña pausa para dejar que arranque
             if self.mount_process.poll() is None:
                 # Check if the drive actually appeared
-                for _ in range(5):  # 5 intentos de 1s = 5s total (mucho más rápido)
+                # Esperar hasta 20 segundos (necesario para modo Stability / Cache Full)
+                for _ in range(20):
                     if os.path.exists(drive_path):
                          return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
                     time.sleep(1)
