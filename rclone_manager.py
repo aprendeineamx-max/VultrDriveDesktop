@@ -176,32 +176,30 @@ class RcloneManager:
                 f"Searched paths: {base_path}"
             ), None
 
-        # Mount command optimized for Windows and large file support
+        # MODO ALTO RENDIMIENTO ESTABLE (Fórmula F1)
+        # Optimizado para velocidad máxima sin bloquear el inicio
         cmd = [
             rclone_path,
             "mount",
             remote_path,
             mount_point,
-            "--vfs-cache-mode", "full",  # Cambiado de "writes" a "full" para mejor rendimiento
-            "--vfs-cache-max-age", "24h",  # Aumentado para archivos grandes
-            "--vfs-cache-poll-interval", "30s",
-            "--vfs-cache-max-size", "10G",  # Tamaño máximo de caché
-            "--vfs-read-chunk-size", "256M",  # Aumentado para archivos grandes
-            "--vfs-read-chunk-size-limit", "off",  # Sin límite
-            "--vfs-write-back", "5s",  # Esperar antes de escribir
-            "--buffer-size", "64M",  # Aumentado de 32M a 64M
-            "--timeout", "10h",  # Aumentado para transferencias largas
-            "--contimeout", "10m",  # Timeout de conexión inicial
-            "--retries", "5",  # Más reintentos
-            "--low-level-retries", "20",  # Más reintentos de bajo nivel
+            "--vfs-cache-mode", "writes",  # El mejor balance velocidad/inicio
+            "--vfs-cache-max-age", "24h",
+            "--vfs-write-back", "5s",
+            "--transfers", "32",  # ¡CLAVE! Sube 32 archivos simultáneamente (antes 4)
+            "--checkers", "32",   # Verifica 32 archivos simultáneamente
+            "--tpslimit", "50",   # 50 trans/seg (5x más rápido que default)
+            "--tpslimit-burst", "20",  # Burst controlado para no colgar el inicio
+            "--buffer-size", "64M",
+            "--vfs-read-chunk-size", "128M",
+            "--timeout", "10h",
+            "--contimeout", "10m",
+            "--retries", "5",
             "--stats", "1m",
-            "--no-modtime",  # No sincronizar tiempos de modificación
-            "--no-checksum",  # No verificar checksums (más rápido)
-            "--dir-cache-time", "10m",  # Aumentado
+            "--no-modtime",
+            "--no-checksum",
             "--volname", f"Vultr-{profile_name}",
-            "--tpslimit", "100",  # Mantenemos velocidad alta
-            "--tpslimit-burst", "20",  # Reducimos ráfaga inicial para evitar bloqueo "start-up"
-            "--log-file", "rclone_mount_debug.txt",  # LOGGING ACTIVADO
+            "--log-file", os.path.join(os.path.expanduser("~"), "Desktop", "rclone_debug.txt"),
             "--log-level", "DEBUG"
         ]
 
@@ -217,27 +215,27 @@ class RcloneManager:
                 cwd=os.path.dirname(rclone_path)
             )
             
-            # Wait for the mount to initialize
+            # Modo Seguro: Tiempos de espera normales
             import time
-            time.sleep(5)  # Espera inicial breve
+            time.sleep(3)  # Espera inicial normal
             
             # Check if the process is still running
             if self.mount_process.poll() is None:
-                # Check if the drive actually appeared and wait loop
-                for _ in range(10): # 10 intentos de 2 segundos = 20s total
+                # Check if the drive actually appeared
+                for _ in range(5):  # 5 intentos de 1s = 5s total (mucho más rápido)
                     if os.path.exists(drive_path):
                          return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
-                    time.sleep(2)
+                    time.sleep(1)
                 
-                # Si llegamos aquí, no se montó tras el tiempo de espera
+                # Si llegamos aquí, no se montó
                 self.mount_process.terminate()
                 
-                # Leer el log de error para saber qué pasó
+                # Leer el log de error DESDE EL ESCRITORIO
+                log_path = os.path.join(os.path.expanduser("~"), "Desktop", "rclone_debug.txt")
                 error_details = "No se generó log."
-                if os.path.exists("rclone_mount_debug.txt"):
+                if os.path.exists(log_path):
                     try:
-                        with open("rclone_mount_debug.txt", "r", encoding="utf-8") as f:
-                            # Leer las últimas 10 líneas
+                        with open(log_path, "r", encoding="utf-8") as f:
                             lines = f.readlines()
                             error_details = "".join(lines[-15:])
                     except:

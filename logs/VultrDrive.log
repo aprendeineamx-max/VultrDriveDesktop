@@ -962,3 +962,29 @@ SOLUCIÓN:
 2026-01-02 11:50:12 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
 2026-01-02 11:50:14 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1280 | Buckets cargados exitosamente: 1
 2026-01-02 11:50:31 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 11:50:56 | INFO     | VultrDrive.ui.main_window | on_success:1517 | Montaje completado (mount_drive[V:bucket-nubepelis]): No se pudo montar la unidad V:\n\nEl proceso inició pero la unidad no apareció.\n\nDETALLES DEL ERROR (rclone log):\nNo se generó log.\n\nIntenta reducir los parámetros agresivos.
+2026-01-02 11:55:17 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 11:56:09 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6410847127 bytes (6113.86 MB)
+2026-01-02 12:01:17 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:01:42 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
+2026-01-02 12:06:47 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:07:47 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
+2026-01-02 12:12:47 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:13:28 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
+2026-01-02 12:14:39 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 12:14:40 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 12:14:42 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 12:14:42 | INFO     | VultrDrive.ui.main_window | load_profile:1341 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 12:14:42 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 12:14:42 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 12:14:43 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 12:14:43 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1217 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 12:14:43 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
+2026-01-02 12:14:43 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1280 | Buckets cargados exitosamente: 1
+2026-01-02 12:14:43 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:15:18 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
+2026-01-02 12:18:05 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 12:18:08 | INFO     | VultrDrive.ui.main_window | on_success:1517 | Montaje completado (mount_drive[V:bucket-nubepelis]): Montado exitosamente en V:
+2026-01-02 12:18:47 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 12:19:09 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6425386474 bytes (6127.73 MB)
+2026-01-02 12:20:41 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
