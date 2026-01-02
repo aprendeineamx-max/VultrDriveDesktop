@@ -1099,3 +1099,48 @@ SOLUCIÓN:
 2026-01-02 15:43:53 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
 2026-01-02 15:44:18 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
 2026-01-02 15:49:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 15:49:53 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 15:55:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 15:55:46 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7242420163 bytes (6906.91 MB)
+2026-01-02 16:00:50 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 16:01:29 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7242420163 bytes (6906.91 MB)
+2026-01-02 16:04:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 16:04:59 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7242985733 bytes (6907.45 MB)
+2026-01-02 16:06:14 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 16:06:14 | INFO     | VultrDrive.ui.main_window | on_success:1593 | Montaje completado (mount_drive[V:bucket-nubepelis]): Drive letter V: is already in use
+2026-01-02 16:06:36 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'unmount_all_drives'
+2026-01-02 16:06:48 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 16:06:54 | INFO     | VultrDrive.ui.main_window | on_success:1593 | Montaje completado (mount_drive[V:bucket-nubepelis]): No se pudo montar la unidad V:\n\nEl proceso inició pero la unidad no apareció.\n\nDETALLES DEL ERROR (rclone log):\n2026/01/02 16:06:32 DEBUG : /: >Releasedir: errc=0
+2026/01/02 16:06:49 INFO  : Starting transaction limiter: max 10 transactions/s with burst 20
+2026/01/02 16:06:49 DEBUG : rclone: Version "v1.71.2" starting with parameters ["C:\\Users\\Administrator\\Desktop\\vultr desktop\\VultrDriveDesktop\\rclone-v1.71.2-windows-amd64\\rclone.exe" "mount" "vultr_Dolphin-1000:bucket-nubepelis" "V:" "--vfs-cache-mode" "full" "--vfs-cache-max-age" "24h" "--vfs-write-back" "1m" "--transfers" "4" "--checkers" "8" "--buffer-size" "16M" "--vfs-read-chunk-size" "32M" "--timeout" "30m" "--contimeout" "10m" "--dir-cache-time" "30m" "--poll-interval" "1m" "--retries" "5" "--stats" "1m" "--no-modtime" "--no-checksum" "--volname" "Vultr-Dolphin-1000" "--log-file" "C:\\Users\\Administrator\\Desktop\\rclone_debug.txt" "--log-level" "DEBUG" "--tpslimit" "10" "--tpslimit-burst" "20"]
+2026/01/02 16:06:49 DEBUG : Creating backend with remote "vultr_Dolphin-1000:bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : Using config file from "C:\\Users\\Administrator\\.config\\rclone\\rclone.conf"
+2026/01/02 16:06:49 INFO  : S3 bucket bucket-nubepelis: poll-interval is not supported by this remote
+2026/01/02 16:06:49 DEBUG : S3 bucket bucket-nubepelis: vfs cache: root is "C:\\Users\\Administrator\\AppData\\Local\\rclone"
+2026/01/02 16:06:49 DEBUG : S3 bucket bucket-nubepelis: vfs cache: data root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfs\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : S3 bucket bucket-nubepelis: vfs cache: metadata root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfsMeta\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 16:06:49 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:06:49 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 16:06:49 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+\n\nIntenta reducir los parámetros agresivos.
+2026-01-02 16:07:14 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-02 16:07:21 | INFO     | VultrDrive.ui.main_window | on_success:1593 | Montaje completado (mount_drive[V:bucket-nubepelis]): No se pudo montar la unidad V:\n\nEl proceso inició pero la unidad no apareció.\n\nDETALLES DEL ERROR (rclone log):\n2026/01/02 16:06:49 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:07:15 INFO  : Starting transaction limiter: max 50 transactions/s with burst 20
+2026/01/02 16:07:15 DEBUG : rclone: Version "v1.71.2" starting with parameters ["C:\\Users\\Administrator\\Desktop\\vultr desktop\\VultrDriveDesktop\\rclone-v1.71.2-windows-amd64\\rclone.exe" "mount" "vultr_Dolphin-1000:bucket-nubepelis" "V:" "--vfs-cache-mode" "writes" "--vfs-cache-max-age" "24h" "--vfs-write-back" "10s" "--transfers" "32" "--checkers" "32" "--buffer-size" "32M" "--vfs-read-chunk-size" "64M" "--timeout" "1h" "--contimeout" "10m" "--dir-cache-time" "30m" "--poll-interval" "1m" "--retries" "5" "--stats" "1m" "--no-modtime" "--no-checksum" "--volname" "Vultr-Dolphin-1000" "--log-file" "C:\\Users\\Administrator\\Desktop\\rclone_debug.txt" "--log-level" "DEBUG" "--tpslimit" "50" "--tpslimit-burst" "20"]
+2026/01/02 16:07:15 DEBUG : Creating backend with remote "vultr_Dolphin-1000:bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : Using config file from "C:\\Users\\Administrator\\.config\\rclone\\rclone.conf"
+2026/01/02 16:07:15 INFO  : S3 bucket bucket-nubepelis: poll-interval is not supported by this remote
+2026/01/02 16:07:15 DEBUG : S3 bucket bucket-nubepelis: vfs cache: root is "C:\\Users\\Administrator\\AppData\\Local\\rclone"
+2026/01/02 16:07:15 DEBUG : S3 bucket bucket-nubepelis: vfs cache: data root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfs\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : S3 bucket bucket-nubepelis: vfs cache: metadata root is "\\\\?\\C:\\Users\\Administrator\\AppData\\Local\\rclone\\vfsMeta\\vultr_Dolphin-1000\\bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 16:07:15 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfs/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : Creating backend with remote ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+2026/01/02 16:07:15 DEBUG : :local: detected overridden config - adding "{R5KD5}" suffix to name
+2026/01/02 16:07:15 DEBUG : fs cache: renaming cache item ":local,encoding='Slash,LtGt,DoubleQuote,Colon,Question,Asterisk,Pipe,BackSlash,Ctl,RightSpace,RightPeriod,InvalidUtf8,Dot',links=false:C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis" to be canonical ":local{R5KD5}://?/C:/Users/Administrator/AppData/Local/rclone/vfsMeta/vultr_Dolphin-1000/bucket-nubepelis"
+\n\nIntenta reducir los parámetros agresivos.
+2026-01-02 16:08:03 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
