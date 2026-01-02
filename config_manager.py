@@ -461,3 +461,12 @@ class ConfigManager:
     def set_active_plan(self, name):
         self.configs['active_plan'] = name
         self.save_configs()
+
+    def get_active_profile(self):
+        """Retorna el nombre del perfil activo o None."""
+        return self.configs.get('active_profile')
+
+    def set_active_profile(self, name):
+        """Guarda el perfil activo."""
+        self.configs['active_profile'] = name
+        self.save_configs()

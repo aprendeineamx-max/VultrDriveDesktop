@@ -57,5 +57,6 @@
             "retries": "10"
         }
     },
-    "active_plan": "Stability 🛡️"
+    "active_plan": "Stability 🛡️",
+    "active_profile": "Dolphin-1000"
 }

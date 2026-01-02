@@ -305,8 +305,18 @@ class MainWindow(QMainWindow):
     def _auto_load_profile(self):
         """Cargar perfil automáticamente al iniciar"""
         if self.profile_selector.count() > 0:
-            profile_name = self.profile_selector.currentText()
-            self.load_profile(profile_name)
+            # Intentar cargar el último perfil activo
+            last_profile = self.config_manager.get_active_profile()
+            if last_profile:
+                index = self.profile_selector.findText(last_profile)
+                if index >= 0:
+                    self.profile_selector.setCurrentIndex(index)
+                    # load_profile se llama automáticamente por currentTextChanged
+                else:
+                    self.load_profile(self.profile_selector.currentText())
+            else:
+                self.load_profile(self.profile_selector.currentText())
+
             # Refrescar buckets automáticamente después de cargar perfil
             QTimer.singleShot(1000, self.refresh_buckets)
         
@@ -1324,6 +1334,9 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("no_profile_selected"))
             return
             
+        # Guardar como perfil activo
+        self.config_manager.set_active_profile(profile_name)
+
         config = self.config_manager.get_config(profile_name)
         if config:
             try:

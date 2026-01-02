@@ -1074,3 +1074,28 @@ SOLUCIÓN:
 2026-01-02 15:12:31 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
 2026-01-02 15:12:31 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1307 | Buckets cargados exitosamente: 1
 2026-01-02 15:12:31 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 15:12:56 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 15:15:25 | ERROR    | VultrDrive.ui.main_window | load_profile:1339 | Perfil 'rclone_plans' tiene credenciales vacías
+2026-01-02 15:15:32 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 15:15:32 | INFO     | VultrDrive.ui.main_window | load_profile:1368 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 15:15:32 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 15:15:32 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 15:15:32 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
+2026-01-02 15:15:32 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1307 | Buckets cargados exitosamente: 1
+2026-01-02 15:15:32 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 15:16:07 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 15:22:31 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 15:24:44 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 15:43:48 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 15:43:49 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 15:43:52 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 15:43:52 | INFO     | VultrDrive.ui.main_window | load_profile:1381 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 15:43:52 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 15:43:52 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 15:43:53 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1252 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 15:43:53 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 15:43:53 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
+2026-01-02 15:43:53 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1317 | Buckets cargados exitosamente: 1
+2026-01-02 15:43:53 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 15:44:18 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 6871644522 bytes (6553.31 MB)
+2026-01-02 15:49:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'

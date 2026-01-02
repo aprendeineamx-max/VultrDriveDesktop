@@ -122,6 +122,32 @@ class RcloneManager:
 
         return section_name
 
+    def _find_rclone_executable(self):
+        """Busca el ejecutable de rclone en varias ubicaciones."""
+        if getattr(sys, 'frozen', False):
+            base_path = os.path.dirname(sys.executable)
+        else:
+            base_path = os.path.dirname(os.path.abspath(__file__))
+        
+        search_paths = [
+            os.path.join(base_path, "rclone.exe"),
+            self.rclone_exe,
+            os.path.join(base_path, "rclone-v1.71.2-windows-amd64", "rclone.exe"),
+            os.path.join(os.path.dirname(base_path), "rclone.exe"),
+            "rclone"
+        ]
+        
+        for path in search_paths:
+            if path != "rclone" and os.path.exists(path):
+                return path
+            elif path == "rclone":
+                try:
+                    subprocess.run([path, "version"], capture_output=True, timeout=2, creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0)
+                    return path
+                except:
+                    pass
+        return None
+
     def mount_drive(self, profile_name, drive_letter, bucket_name=None, plan_config=None):
         """Mount the storage as a network drive.
         
@@ -148,40 +174,11 @@ class RcloneManager:
 
         mount_point = f"{drive_letter}:"
 
-        # Find rclone executable - Mejorado para versión portable
-        if getattr(sys, 'frozen', False):
-            # Ejecutando desde ejecutable empaquetado
-            base_path = os.path.dirname(sys.executable)
-        else:
-            # Ejecutando desde script Python
-            base_path = os.path.dirname(os.path.abspath(__file__))
-        
-        rclone_exe_paths = [
-            os.path.join(base_path, "rclone.exe"),  # Mismo directorio que el ejecutable
-            self.rclone_exe,  # Local rclone.exe
-            os.path.join(base_path, "rclone-v1.71.2-windows-amd64", "rclone.exe"),
-            os.path.join(os.path.dirname(base_path), "rclone.exe"),  # Directorio padre
-            "rclone"  # System PATH
-        ]
-        
-        rclone_path = None
-        for path in rclone_exe_paths:
-            if path != "rclone" and os.path.exists(path):
-                rclone_path = path
-                break
-            elif path == "rclone":
-                # Intentar ejecutar rclone del PATH
-                try:
-                    subprocess.run([path, "version"], capture_output=True, timeout=2)
-                    rclone_path = path
-                    break
-                except:
-                    pass
+        rclone_path = self._find_rclone_executable()
         
         if not rclone_path:
             return False, (
-                "Rclone executable not found. Please ensure rclone.exe is in the same folder as the application. "
-                f"Searched paths: {base_path}"
+                "Rclone executable not found. Please ensure rclone.exe is in the same folder as the application."
             ), None
 
         # Base Application Log Path
@@ -443,7 +440,9 @@ class RcloneManager:
         Ideal para subir el ZIP de backup.
         """
         try:
-            rclone_path = self.rclone_exe
+            rclone_path = self._find_rclone_executable()
+            if not rclone_path:
+                 return False, "Error: Ejecutable de rclone no encontrado"
             section_name = self.create_rclone_config(profile_name) # Asegura config
 
             if not remote_filename:
@@ -492,12 +491,14 @@ class RcloneManager:
 
     def sync_folder_parallel(self, profile_name, local_folder, bucket_name, remote_folder=None, progress_callback=None, **kwargs):
         """
-        Sube una carpeta completa usando rclone copy con ALTO PARALELISMO.
-        Simula la 'video sincronización'.
-        Kwargs soportados: transfers, checkers, tpslimit, tpslimit_burst
+        Sincroniza carpeta local con bucket usando rclone sync multipart.
+        Soporta kwargs para planes de rendimiento (transfers, checkers, etc)
         """
         try:
-            rclone_path = self.rclone_exe
+            rclone_path = self._find_rclone_executable()
+            if not rclone_path:
+                 return False, "Error: Ejecutable de rclone no encontrado"
+            
             section_name = self.create_rclone_config(profile_name)
 
             folder_name = os.path.basename(os.path.normpath(local_folder))
