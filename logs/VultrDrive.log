@@ -662,3 +662,62 @@ Error: None
 2026-01-02 05:59:00 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
 2026-01-02 05:59:00 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1238 | Buckets cargados exitosamente: 1
 2026-01-02 05:59:00 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'lab-backups'
+2026-01-02 06:00:24 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'lab-backups': 51614868769 bytes (49223.77 MB)
+2026-01-02 07:08:02 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 07:08:03 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 07:08:05 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 07:08:05 | INFO     | VultrDrive.ui.main_window | load_profile:1341 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 07:08:05 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:08:05 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:08:06 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 07:08:06 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1217 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 07:08:06 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['fdsfdsaa']
+2026-01-02 07:08:06 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1280 | Buckets cargados exitosamente: 1
+2026-01-02 07:08:06 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'fdsfdsaa'
+2026-01-02 07:08:07 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'fdsfdsaa': 0 bytes (0.00 MB)
+2026-01-02 07:08:41 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'delete_bucket[fdsfdsaa]'
+2026-01-02 07:08:41 | INFO     | VultrDrive.s3_handler | delete_bucket:444 | Eliminando bucket: fdsfdsaa (force=True)
+2026-01-02 07:08:43 | INFO     | VultrDrive.s3_handler | delete_bucket:489 | Bucket 'fdsfdsaa' eliminado exitosamente
+2026-01-02 07:08:45 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:08:45 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:08:45 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 0 buckets: []
+2026-01-02 07:08:45 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1284 | No se encontraron buckets (puede ser normal si no hay buckets creados)
+2026-01-02 07:20:04 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 07:20:06 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 07:20:07 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 07:20:07 | INFO     | VultrDrive.ui.main_window | load_profile:1341 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 07:20:07 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:20:08 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:20:08 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 07:20:08 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1217 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 07:20:08 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 0 buckets: []
+2026-01-02 07:20:08 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1284 | No se encontraron buckets (puede ser normal si no hay buckets creados)
+2026-01-02 07:21:06 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 07:21:08 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 07:21:09 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 07:21:09 | INFO     | VultrDrive.ui.main_window | load_profile:1341 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 07:21:09 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:21:09 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:21:10 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 07:21:10 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1217 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 07:21:10 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 0 buckets: []
+2026-01-02 07:21:10 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1284 | No se encontraron buckets (puede ser normal si no hay buckets creados)
+2026-01-02 07:23:29 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 07:23:30 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 07:23:32 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 07:23:32 | INFO     | VultrDrive.ui.main_window | load_profile:1341 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 07:23:32 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:23:32 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:23:33 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 07:23:33 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1217 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 07:23:33 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 0 buckets: []
+2026-01-02 07:23:33 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1284 | No se encontraron buckets (puede ser normal si no hay buckets creados)
+2026-01-02 07:24:00 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'create_bucket[bucket-nubepelis]'
+2026-01-02 07:24:00 | INFO     | VultrDrive.s3_handler | create_bucket:380 | Creando bucket: bucket-nubepelis
+2026-01-02 07:24:01 | INFO     | VultrDrive.s3_handler | create_bucket:391 | Bucket 'bucket-nubepelis' creado exitosamente
+2026-01-02 07:24:03 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 07:24:03 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 07:24:03 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
+2026-01-02 07:24:03 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1280 | Buckets cargados exitosamente: 1
+2026-01-02 07:24:03 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 07:24:03 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 0 bytes (0.00 MB)

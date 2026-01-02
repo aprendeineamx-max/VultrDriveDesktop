@@ -252,3 +252,140 @@ class ConfigManager:
         if not isinstance(self.configs, dict):
             return []
         return self.configs.get('_saved_mounts', [])
+    
+    # ===== NUEVO: Gestión de Perfiles (CRUD) =====
+    
+    def create_profile(self, name, access_key, secret_key, host_base):
+        """
+        Crear nuevo perfil de configuración.
+        
+        Args:
+            name: Nombre único del perfil
+            access_key: Vultr Access Key
+            secret_key: Vultr Secret Key
+            host_base: Endpoint de Object Storage (ej: sjc1.vultrobjects.com)
+        
+        Returns:
+            (bool, str): (éxito, mensaje)
+        
+        Raises:
+            ValueError: Si el perfil ya existe o faltan datos
+        """
+        # Validar datos de entrada
+        if not name or not isinstance(name, str):
+            raise ValueError("El nombre del perfil es obligatorio")
+        
+        if name in self.configs:
+            raise ValueError(f"El perfil '{name}' ya existe")
+        
+        if not access_key or not secret_key or not host_base:
+            raise ValueError("Todos los campos son obligatorios (access_key, secret_key, host_base)")
+        
+        # Crear perfil
+        self.configs[name] = {
+            'access_key': access_key.strip(),
+            'secret_key': secret_key.strip(),
+            'host_base': host_base.strip()
+        }
+        
+        # Guardar cambios
+        try:
+            self.save_configs()
+            return (True, f"Perfil '{name}' creado exitosamente")
+        except Exception as e:
+            # Revertir cambios si falla el guardado
+            del self.configs[name]
+            raise Exception(f"Error al guardar el perfil: {str(e)}")
+    
+    def update_profile(self, name, new_data):
+        """
+        Actualizar perfil existente.
+        
+        Args:
+            name: Nombre del perfil a actualizar
+            new_data: Diccionario con campos a actualizar
+                     Puede contener: access_key, secret_key, host_base
+        
+        Returns:
+            (bool, str): (éxito, mensaje)
+        
+        Raises:
+            ValueError: Si el perfil no existe
+        """
+        if name not in self.configs:
+            raise ValueError(f"El perfil '{name}' no existe")
+        
+        if not isinstance(new_data, dict):
+            raise ValueError("new_data debe ser un diccionario")
+        
+        # Validar que solo se actualicen campos permitidos
+        allowed_fields = {'access_key', 'secret_key', 'host_base'}
+        invalid_fields = set(new_data.keys()) - allowed_fields
+        if invalid_fields:
+            raise ValueError(f"Campos no permitidos: {invalid_fields}")
+        
+        # Actualizar campos
+        for key, value in new_data.items():
+            if value:  # Solo actualizar si no está vacío
+                self.configs[name][key] = value.strip() if isinstance(value, str) else value
+        
+        # Guardar cambios
+        try:
+            self.save_configs()
+            return (True, f"Perfil '{name}' actualizado exitosamente")
+        except Exception as e:
+            raise Exception(f"Error al guardar los cambios: {str(e)}")
+    
+    def delete_profile(self, name):
+        """
+        Eliminar perfil.
+        
+        Args:
+            name: Nombre del perfil a eliminar
+        
+        Returns:
+            (bool, str): (éxito, mensaje)
+        
+        Raises:
+            ValueError: Si el perfil no existe
+        """
+        if name not in self.configs:
+            raise ValueError(f"El perfil '{name}' no existe")
+        
+        # Eliminar perfil
+        del self.configs[name]
+        
+        # Guardar cambios
+        try:
+            self.save_configs()
+            return (True, f"Perfil '{name}' eliminado exitosamente")
+        except Exception as e:
+            raise Exception(f"Error al guardar los cambios: {str(e)}")
+    
+    def validate_profile_name(self, name):
+        """
+        Validar que el nombre de perfil sea único.
+        
+        Args:
+            name: Nombre del perfil a validar
+        
+        Returns:
+            bool: True si el nombre es válido (no existe), False si ya existe
+        """
+        if not name or not isinstance(name, str):
+            return False
+        
+        return name not in self.configs
+    
+    def get_profile_data(self, profile_name):
+        """
+        Obtener datos completos de un perfil.
+        
+        Args:
+            profile_name: Nombre del perfil
+        
+        Returns:
+            dict o None: Datos del perfil si existe, None si no existe
+        """
+        return self.configs.get(profile_name)
+

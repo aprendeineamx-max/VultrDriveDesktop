@@ -27,43 +27,104 @@ class SettingsWindow(QWidget):
 
         # Left side: List of profiles
         left_layout = QVBoxLayout()
-        left_layout.addWidget(QLabel(self.tr("settings_existing_profiles")))
+        left_label = QLabel(self.tr("settings_existing_profiles"))
+        left_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #2c3e50;")
+        left_layout.addWidget(left_label)
+        
         self.profile_list = QListWidget()
-        self.profile_list.itemClicked.connect(self.load_profile_details)
+        self.profile_list.itemClicked.connect(self.on_profile_selected)
+        self.profile_list.setStyleSheet("""
+            QListWidget {
+                border: 2px solid #bdc3c7;
+                border-radius: 5px;
+                padding: 5px;
+            }
+            QListWidget::item:selected {
+                background-color: #3498db;
+                color: white;
+            }
+        """)
         left_layout.addWidget(self.profile_list)
         
-        self.delete_button = QPushButton(self.tr("settings_delete_profile_button"))
+        # ===== NUEVO: Botones de gestión de perfiles =====
+        buttons_layout = QVBoxLayout()
+        buttons_layout.setSpacing(10)
+        
+        self.new_profile_btn = QPushButton("➕ Nuevo Perfil")
+        self.new_profile_btn.clicked.connect(self.create_new_profile)
+        self.new_profile_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #229954; }
+        """)
+        
+        self.edit_profile_btn = QPushButton("✏️ Editar Perfil")
+        self.edit_profile_btn.clicked.connect(self.edit_selected_profile)
+        self.edit_profile_btn.setEnabled(False)
+        self.edit_profile_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #3498db;
+                color: white;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #2980b9; }
+            QPushButton:disabled { background-color: #95a5a6; }
+        """)
+        
+        self.delete_button = QPushButton("🗑️ Eliminar Perfil")
         self.delete_button.clicked.connect(self.delete_profile)
-        left_layout.addWidget(self.delete_button)
+        self.delete_button.setEnabled(False)
+        self.delete_button.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                padding: 10px;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #c0392b; }
+            QPushButton:disabled { background-color: #95a5a6; }
+        """)
+        
+        buttons_layout.addWidget(self.new_profile_btn)
+        buttons_layout.addWidget(self.edit_profile_btn)
+        buttons_layout.addWidget(self.delete_button)
+        buttons_layout.addStretch()
+        
+        left_layout.addLayout(buttons_layout)
 
-        # Right side: Form to add/edit
+        # Right side: Info panel
         right_layout = QVBoxLayout()
-        right_layout.addWidget(QLabel(self.tr("settings_add_edit_profile")))
+        right_label = QLabel("📋 Información del Perfil")
+        right_label.setStyleSheet("font-weight: bold; font-size: 11pt; color: #2c3e50;")
+        right_layout.addWidget(right_label)
         
-        self.form_layout = QFormLayout()
-        self.profile_name_input = QLineEdit()
-        self.profile_name_input.setPlaceholderText(self.tr("settings_profile_placeholder"))
-        
-        self.access_key_input = QLineEdit()
-        self.access_key_input.setPlaceholderText(self.tr("settings_access_key_placeholder"))
-        
-        self.secret_key_input = QLineEdit()
-        self.secret_key_input.setPlaceholderText(self.tr("settings_secret_key_placeholder"))
-        self.secret_key_input.setEchoMode(QLineEdit.EchoMode.Password)  # Ocultar contraseña
-        
-        self.host_base_input = QLineEdit()
-        self.host_base_input.setPlaceholderText(self.tr("settings_host_placeholder"))
-
-        self.form_layout.addRow(self.tr("settings_profile_label"), self.profile_name_input)
-        self.form_layout.addRow(self.tr("settings_access_key_label"), self.access_key_input)
-        self.form_layout.addRow(self.tr("settings_secret_key_label"), self.secret_key_input)
-        self.form_layout.addRow(self.tr("settings_host_label"), self.host_base_input)
-        
-        right_layout.addLayout(self.form_layout)
-
-        self.save_button = QPushButton(self.tr("settings_save_button"))
-        self.save_button.clicked.connect(self.save_profile)
-        right_layout.addWidget(self.save_button)
+        self.profile_info_label = QLabel(
+            "Selecciona un perfil de la lista para ver sus detalles.\n\n"
+            "💡 Usa los botones de la izquierda para:\n"
+            "• Crear un nuevo perfil\n"
+            "• Editar el perfil seleccionado\n"
+            "• Eliminar el perfil seleccionado"
+        )
+        self.profile_info_label.setWordWrap(True)
+        self.profile_info_label.setStyleSheet("""
+            QLabel {
+                background-color: #ecf0f1;
+                border: 2px solid #bdc3c7;
+                border-radius: 5px;
+                padding: 20px;
+                color: #34495e;
+            }
+        """)
+        self.profile_info_label.setMinimumHeight(200)
+        right_layout.addWidget(self.profile_info_label)
         right_layout.addStretch()
 
         profiles_layout.addLayout(left_layout, 1)
@@ -128,55 +189,177 @@ class SettingsWindow(QWidget):
         self.refresh_profile_list()
 
     def refresh_profile_list(self):
+        """Actualizar lista de perfiles"""
         self.profile_list.clear()
         self.profile_list.addItems(self.config_manager.list_profiles())
-
-    def load_profile_details(self, item):
+    
+    def on_profile_selected(self, item):
+        """Mostrar información del perfil seleccionado"""
         profile_name = item.text()
-        config = self.config_manager.get_config(profile_name)
+        config = self.config_manager.get_profile_data(profile_name)
+        
         if config:
-            self.profile_name_input.setText(profile_name)
-            self.access_key_input.setText(config.get('access_key', ''))
-            self.secret_key_input.setText(config.get('secret_key', ''))
-            self.host_base_input.setText(config.get('host_base', ''))
-
-    def save_profile(self):
-        profile_name = self.profile_name_input.text()
-        access_key = self.access_key_input.text()
-        secret_key = self.secret_key_input.text()
-        host_base = self.host_base_input.text()
-
-        if profile_name and access_key and secret_key and host_base:
-            self.config_manager.add_config(profile_name, access_key, secret_key, host_base)
+            # Mostrar información del perfil (sin mostrar credenciales completas)
+            access_key_preview = config.get('access_key', '')[:10] + "..." if config.get('access_key') else "N/A"
+            host_base = config.get('host_base', 'N/A')
+            
+            info_text = (
+                f"📝 Perfil: {profile_name}\n\n"
+                f"🔑 Access Key: {access_key_preview}\n"
+                f"🌐 Endpoint: {host_base}\n\n"
+                f"💡 Usa 'Editar Perfil' para modificar las credenciales"
+            )
+            self.profile_info_label.setText(info_text)
+        
+        # Habilitar botones de editar/eliminar
+        self.edit_profile_btn.setEnabled(True)
+        self.delete_button.setEnabled(True)
+    
+    def create_new_profile(self):
+        """Crear nuevo perfil mediante diálogo"""
+        try:
+            from ui.profile_dialog import ProfileDialog
+        except ImportError as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar el diálogo: {e}")
+            return
+        
+        dialog = ProfileDialog(self, profile_data=None, translations=self.translations)
+        
+        if dialog.exec() != dialog.DialogCode.Accepted:
+            return
+        
+        profile_data = dialog.get_profile_data()
+        
+        try:
+            success, message = self.config_manager.create_profile(
+                profile_data['name'],
+                profile_data['access_key'],
+                profile_data['secret_key'],
+                profile_data['host_base']
+            )
+            
+            QMessageBox.information(self, "✅ Éxito", message)
             self.profiles_updated.emit()
             self.refresh_profile_list()
-            self.clear_form()
-        else:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_all_fields"))
-
-    def delete_profile(self):
+            
+        except ValueError as e:
+            QMessageBox.critical(self, "❌ Error", str(e))
+        except Exception as e:
+            QMessageBox.critical(self, "❌ Error", f"Error inesperado: {str(e)}")
+    
+    def edit_selected_profile(self):
+        """Editar perfil seleccionado"""
         selected_items = self.profile_list.selectedItems()
         if not selected_items:
-            QMessageBox.warning(self, self.tr("warning"), self.tr("settings_warning_select_profile"))
+            QMessageBox.warning(self, "Advertencia", "Selecciona un perfil primero")
+            return
+        
+        profile_name = selected_items[0].text()
+        config = self.config_manager.get_profile_data(profile_name)
+        
+        if not config:
+            QMessageBox.warning(self, "Error", "No se pudo cargar el perfil")
+            return
+        
+        try:
+            from ui.profile_dialog import ProfileDialog
+        except ImportError as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar el diálogo: {e}")
+            return
+        
+        # Preparar datos para el diálogo (incluir nombre)
+        profile_data_for_dialog = {
+            'name': profile_name,
+            'access_key': config.get('access_key', ''),
+            'secret_key': config.get('secret_key', ''),
+            'host_base': config.get('host_base', '')
+        }
+        
+        dialog = ProfileDialog(self, profile_data=profile_data_for_dialog, translations=self.translations)
+        
+        if dialog.exec() != dialog.DialogCode.Accepted:
+            return
+        
+        new_data = dialog.get_profile_data()
+        
+        # Solo actualizar campos que cambiaron
+        update_fields = {}
+        if new_data['access_key'] != config.get('access_key'):
+            update_fields['access_key'] = new_data['access_key']
+        if new_data['secret_key'] != config.get('secret_key'):
+            update_fields['secret_key'] = new_data['secret_key']
+        if new_data['host_base'] != config.get('host_base'):
+            update_fields['host_base'] = new_data['host_base']
+        
+        if not update_fields:
+            QMessageBox.information(self, "Info", "No se realizaron cambios")
+            return
+        
+        try:
+            success, message = self.config_manager.update_profile(profile_name, update_fields)
+            
+            QMessageBox.information(self, "✅ Éxito", message)
+            self.profiles_updated.emit()
+            self.refresh_profile_list()
+            
+            # Actualizar panel de información
+            self.on_profile_selected(self.profile_list.currentItem())
+            
+        except ValueError as e:
+            QMessageBox.critical(self, "❌ Error", str(e))
+        except Exception as e:
+            QMessageBox.critical(self, "❌ Error", f"Error inesperado: {str(e)}")
+
+    def delete_profile(self):
+        """Eliminar perfil seleccionado con confirmación"""
+        selected_items = self.profile_list.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, self.tr("warning"), "Selecciona un perfil primero")
             return
 
         profile_name = selected_items[0].text()
-        reply = QMessageBox.question(self, self.tr("settings_confirm_delete_title"), 
-                                     self.tr("settings_confirm_delete_text").format(profile_name),
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, 
-                                     QMessageBox.StandardButton.No)
+        
+        # Prevenir eliminación del perfil activo
+        if self.main_window and hasattr(self.main_window, 'profile_selector'):
+            active_profile = self.main_window.profile_selector.currentText()
+            if profile_name == active_profile:
+                QMessageBox.warning(
+                    self,
+                    "⚠️ Advertencia",
+                    f"No puedes eliminar el perfil activo '{profile_name}'.\n\n"
+                    f"Primero cambia a otro perfil en la ventana principal."
+                )
+                return
+        
+        reply = QMessageBox.question(
+            self,
+            "⚠️ Confirmar Eliminación",
+            f"¿Estás seguro de que deseas eliminar el perfil '{profile_name}'?\n\n"
+            f"Esta acción no se puede deshacer.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
 
         if reply == QMessageBox.StandardButton.Yes:
-            self.config_manager.delete_config(profile_name)
-            self.profiles_updated.emit()
-            self.refresh_profile_list()
-            self.clear_form()
+            try:
+                success, message = self.config_manager.delete_profile(profile_name)
+                
+                QMessageBox.information(self, "✅ Éxito", message)
+                self.profiles_updated.emit()
+                self.refresh_profile_list()
+                
+                # Limpiar panel de información
+                self.profile_info_label.setText(
+                    "Selecciona un perfil de la lista para ver sus detalles."
+                )
+                self.edit_profile_btn.setEnabled(False)
+                self.delete_button.setEnabled(False)
+                
+            except ValueError as e:
+                QMessageBox.critical(self, "❌ Error", str(e))
+            except Exception as e:
+                QMessageBox.critical(self, "❌ Error", f"Error inesperado: {str(e)}")
 
-    def clear_form(self):
-        self.profile_name_input.clear()
-        self.access_key_input.clear()
-        self.secret_key_input.clear()
-        self.host_base_input.clear()
     
     def on_startup_changed(self, state):
         """Callback cuando cambia el checkbox de inicio automático"""

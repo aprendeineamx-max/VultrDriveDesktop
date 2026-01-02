@@ -344,3 +344,220 @@ class S3Handler:
             namespace_cache.pop(key, None)
         if not namespace_cache:
             self._cache.pop(namespace, None)
+    
+    # ===== NUEVO: Gestión de Buckets =====
+    
+    def create_bucket(self, bucket_name, region=None):
+        """
+        Crear nuevo bucket en Object Storage.
+        
+        Args:
+            bucket_name: Nombre del bucket (debe ser S3-compliant)
+            region: Región (opcional, usa la del endpoint si no se especifica)
+        
+        Returns:
+            (bool, str): (éxito, mensaje de error/éxito)
+        """
+        self.last_error = None
+        
+        # Validar nombre de bucket
+        if not self._is_valid_bucket_name(bucket_name):
+            error_msg = (
+                f"Nombre de bucket inválido: '{bucket_name}'\n\n"
+                "Reglas:\n"
+                "• Solo minúsculas (a-z), números (0-9) y guiones (-)\n"
+                "• Entre 3 y 63 caracteres\n"
+                "• Debe empezar y terminar con letra o número\n"
+                "• No puede contener guiones consecutivos (--)"
+            )
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.warning(f"Intento de crear bucket con nombre inválido: {bucket_name}")
+            return (False, error_msg)
+        
+        try:
+            if LOGGING_AVAILABLE:
+                logger.info(f"Creando bucket: {bucket_name}")
+            
+            # Crear bucket (sin especificar LocationConstraint para Vultr)
+            # Vultr Object Storage usa la región del endpoint automáticamente
+            self.client.create_bucket(Bucket=bucket_name)
+            
+            # Invalidar caché de lista de buckets
+            self.clear_cache('list_buckets')
+            
+            success_msg = f"Bucket '{bucket_name}' creado exitosamente"
+            if LOGGING_AVAILABLE:
+                logger.info(success_msg)
+            
+            return (True, success_msg)
+        
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'BucketAlreadyExists':
+                error_msg = f"El bucket '{bucket_name}' ya existe (propiedad de otra cuenta)"
+            elif error_code == 'BucketAlreadyOwnedByYou':
+                error_msg = f"Ya tienes un bucket llamado '{bucket_name}'"
+            elif error_code == 'InvalidBucketName':
+                error_msg = f"Nombre de bucket inválido: {error_message}"
+            else:
+                error_msg = f"Error al crear bucket: {error_message}"
+            
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al crear bucket '{bucket_name}': {error_msg}")
+            
+            return (False, error_msg)
+        
+        except EndpointConnectionError as e:
+            error_msg = f"Error de conexión con {self.host_base}. Verifica tu conexión a internet."
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error de conexión al crear bucket: {e}")
+            return (False, error_msg)
+        
+        except Exception as e:
+            error_msg = f"Error inesperado al crear bucket: {str(e)}"
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error inesperado al crear bucket '{bucket_name}': {e}", exc_info=True)
+            return (False, error_msg)
+    
+    def delete_bucket(self, bucket_name, force=False):
+        """
+        Eliminar bucket de Object Storage.
+        
+        Args:
+            bucket_name: Nombre del bucket a eliminar
+            force: Si es True, elimina el bucket incluso si contiene objetos
+                  (PELIGROSO: elimina todos los objetos sin confirmación adicional)
+        
+        Returns:
+            (bool, str): (éxito, mensaje de error/éxito)
+        """
+        self.last_error = None
+        
+        try:
+            if LOGGING_AVAILABLE:
+                logger.info(f"Eliminando bucket: {bucket_name} (force={force})")
+            
+            # Verificar si el bucket está vacío
+            try:
+                response = self.client.list_objects_v2(Bucket=bucket_name, MaxKeys=1)
+                has_objects = 'Contents' in response
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'NoSuchBucket':
+                    error_msg = f"El bucket '{bucket_name}' no existe"
+                    self.last_error = error_msg
+                    return (False, error_msg)
+                raise
+            
+            # Si contiene objetos y no se especificó force
+            if has_objects and not force:
+                error_msg = (
+                    f"El bucket '{bucket_name}' contiene archivos.\n\n"
+                    f"Para eliminarlo junto con su contenido, usa la opción 'Forzar eliminación'.\n"
+                    f"⚠️ Esta acción es IRREVERSIBLE."
+                )
+                self.last_error = error_msg
+                if LOGGING_AVAILABLE:
+                    logger.warning(f"Intento de eliminar bucket no vacío sin force: {bucket_name}")
+                return (False, error_msg)
+            
+            # Si force=True y hay objetos, eliminarlos todos primero
+            if force and has_objects:
+                if LOGGING_AVAILABLE:
+                    logger.info(f"Eliminando todos los objetos del bucket {bucket_name}...")
+                
+                success = self.delete_all_objects(bucket_name)
+                if not success:
+                    error_msg = f"Error al eliminar los objetos del bucket '{bucket_name}'"
+                    self.last_error = error_msg
+                    return (False, error_msg)
+            
+            # Eliminar el bucket
+            self.client.delete_bucket(Bucket=bucket_name)
+            
+            # Invalidar cachés relevantes
+            self.clear_cache('list_buckets')
+            self.clear_cache('get_bucket_size')
+            
+            success_msg = f"Bucket '{bucket_name}' eliminado exitosamente"
+            if LOGGING_AVAILABLE:
+                logger.info(success_msg)
+            
+            return (True, success_msg)
+        
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            error_message = e.response['Error']['Message']
+            
+            if error_code == 'NoSuchBucket':
+                error_msg = f"El bucket '{bucket_name}' no existe"
+            elif error_code == 'BucketNotEmpty':
+                error_msg = (
+                    f"El bucket '{bucket_name}' aún contiene objetos. "
+                    "Usa 'Forzar eliminación' para eliminar el bucket y su contenido."
+                )
+            else:
+                error_msg = f"Error al eliminar bucket: {error_message}"
+            
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al eliminar bucket '{bucket_name}': {error_msg}")
+            
+            return (False, error_msg)
+        
+        except Exception as e:
+            error_msg = f"Error inesperado al eliminar bucket: {str(e)}"
+            self.last_error = error_msg
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error inesperado al eliminar bucket '{bucket_name}': {e}", exc_info=True)
+            return (False, error_msg)
+    
+    def _is_valid_bucket_name(self, name):
+        """
+        Validar nombre de bucket según reglas S3.
+        
+        Reglas:
+        - Longitud: 3-63 caracteres
+        - Solo minúsculas, números y guiones
+        - Debe empezar y terminar con letra o número
+        - No puede contener guiones consecutivos
+        - No puede ser una dirección IP
+        
+        Args:
+            name: Nombre del bucket a validar
+        
+        Returns:
+            bool: True si es válido, False en caso contrario
+        """
+        import re
+        
+        if not name or not isinstance(name, str):
+            return False
+        
+        # Longitud: 3-63 caracteres
+        if len(name) < 3 or len(name) > 63:
+            return False
+        
+        # Solo minúsculas, números y guiones
+        # Debe empezar y terminar con letra o número
+        if not re.match(r'^[a-z0-9][a-z0-9-]*[a-z0-9]$', name):
+            # Caso especial: nombre de 3 caracteres sin guiones (ej: "abc")
+            if len(name) == 3 and re.match(r'^[a-z0-9]+$', name):
+                return True
+            return False
+        
+        # No puede tener guiones consecutivos
+        if '--' in name:
+            return False
+        
+        # No puede ser una IP (formato xxx.xxx.xxx.xxx)
+        if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', name):
+            return False
+        
+        return True
+

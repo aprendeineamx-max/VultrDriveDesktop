@@ -2,7 +2,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QP
                              QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
                              QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
                              QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
-                             QStyle)
+                             QStyle, QDialog)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from config_manager import ConfigManager
@@ -743,6 +743,48 @@ class MainWindow(QMainWindow):
         bucket_layout.addWidget(self.refresh_buckets_btn)
         bucket_group.setLayout(bucket_layout)
         layout.addWidget(bucket_group)
+        
+        # ===== NUEVO: Bucket Management Buttons =====
+        bucket_mgmt_group = QGroupBox("🗂️ Gestión de Buckets")
+        bucket_mgmt_layout = QHBoxLayout()
+        
+        self.create_bucket_btn = QPushButton("➕ Crear Bucket")
+        self.create_bucket_btn.clicked.connect(self.create_bucket)
+        self.create_bucket_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #27ae60;
+                color: white;
+                font-weight: bold;
+                padding: 10px 20px;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #229954; }
+        """)
+        
+        self.delete_bucket_btn = QPushButton("🗑️ Eliminar Bucket")
+        self.delete_bucket_btn.clicked.connect(self.delete_bucket)
+        self.delete_bucket_btn.setEnabled(False)  # Solo si hay bucket seleccionado
+        self.delete_bucket_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                padding: 10px 20px;
+                border-radius: 5px;
+            }
+            QPushButton:hover { background-color: #c0392b; }
+            QPushButton:disabled { background-color: #95a5a6; }
+        """)
+        
+        bucket_mgmt_layout.addWidget(self.create_bucket_btn)
+        bucket_mgmt_layout.addWidget(self.delete_bucket_btn)
+        bucket_mgmt_group.setLayout(bucket_mgmt_layout)
+        layout.addWidget(bucket_mgmt_group)
+        
+        # Habilitar botón de eliminar solo si hay bucket seleccionado
+        self.bucket_selector.currentTextChanged.connect(
+            lambda text: self.delete_bucket_btn.setEnabled(bool(text))
+        )
 
         # Main action buttons
         actions_group = QGroupBox(self.tr("actions"))
@@ -2179,5 +2221,148 @@ class MainWindow(QMainWindow):
                     self.notification_manager.warning("Dashboard", f"Error al actualizar: {error.message}")
             if LOGGING_AVAILABLE:
                 logger.error(f"Error al actualizar dashboard: {e}", exc_info=True)
+    
+    # ===== NUEVO: Gestión de Buckets desde GUI =====
+    
+    def create_bucket(self):
+        """Crear nuevo bucket mediante diálogo"""
+        if not self.s3_handler:
+            QMessageBox.warning(self, "Advertencia", "Selecciona un perfil primero")
+            return
+        
+        # Importar diálogo
+        try:
+            from ui.bucket_dialog import BucketDialog
+        except ImportError as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar el diálogo: {e}")
+            return
+        
+        # Mostrar diálogo
+        dialog = BucketDialog(self, self.translations)
+        
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+        
+        bucket_name = dialog.get_bucket_name()
+        
+        if not bucket_name:
+            return
+        
+        # Ejecutar creación en background
+        self.statusBar().showMessage(f"Creando bucket '{bucket_name}'...")
+        self.create_bucket_btn.setEnabled(False)  # Deshabilitar botón
+        
+        description = f"create_bucket[{bucket_name}]"
+        
+        def execute_create():
+            return self.s3_handler.create_bucket(bucket_name)
+        
+        def on_success(result):
+            success, message = result
+            
+            if success:
+                QMessageBox.information(self, "✅ Éxito", message)
+                # Refrescar lista de buckets
+                self.refresh_buckets(force_remote=True)
+                self.statusBar().showMessage(message, 5000)
+            else:
+                QMessageBox.critical(self, "❌ Error", message)
+                self.statusBar().showMessage(f"Error: {message}", 5000)
+            
+            self.create_bucket_btn.setEnabled(True)
+        
+        def on_error(exc):
+            error_msg = f"Error inesperado: {str(exc)}"
+            QMessageBox.critical(self, "❌ Error", error_msg)
+            self.statusBar().showMessage(error_msg, 5000)
+            self.create_bucket_btn.setEnabled(True)
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al crear bucket: {exc}", exc_info=True)
+        
+        self.task_runner.run(
+            execute_create,
+            on_success=on_success,
+            on_error=on_error,
+            description=description
+        )
+    
+    def delete_bucket(self):
+        """Eliminar bucket seleccionado con confirmación doble"""
+        bucket_name = self.bucket_selector.currentText()
+        
+        if not bucket_name:
+            QMessageBox.warning(self, "Advertencia", "Selecciona un bucket primero")
+            return
+        
+        if not self.s3_handler:
+            QMessageBox.warning(self, "Advertencia", "No hay perfil activo")
+            return
+        
+        # Confirmación 1: Diálogo estándar
+        reply = QMessageBox.question(
+            self,
+            "⚠️ Confirmar Eliminación",
+            f"¿Estás seguro de que deseas eliminar el bucket '{bucket_name}'?\n\n"
+            f"⚠️ Esta acción es IRREVERSIBLE.\n"
+            f"⚠️ Todos los archivos del bucket serán eliminados.\n\n"
+            f"¿Deseas continuar?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        
+        if reply != QMessageBox.StandardButton.Yes:
+            self.statusBar().showMessage("Eliminación cancelada", 3000)
+            return
+        
+        # Confirmación 2: Escribir nombre del bucket
+        from PyQt6.QtWidgets import QInputDialog
+        text, ok = QInputDialog.getText(
+            self,
+            "🔒 Confirmación Final",
+            f"Escribe el nombre del bucket para confirmar:\n\n{bucket_name}"
+        )
+        
+        if not ok or text != bucket_name:
+            self.statusBar().showMessage("Eliminación cancelada (nombre no coincide)", 3000)
+            return
+        
+        # Ejecutar eliminación en background
+        self.statusBar().showMessage(f"Eliminando bucket '{bucket_name}'...")
+        self.delete_bucket_btn.setEnabled(False)
+        
+        description = f"delete_bucket[{bucket_name}]"
+        
+        def execute_delete():
+            # force=True para eliminar incluso con contenido
+            return self.s3_handler.delete_bucket(bucket_name, force=True)
+        
+        def on_success(result):
+            success, message = result
+            
+            if success:
+                QMessageBox.information(self, "✅ Éxito", message)
+                # Refrescar lista de buckets
+                self.refresh_buckets(force_remote=True)
+                self.statusBar().showMessage(message, 5000)
+            else:
+                QMessageBox.critical(self, "❌ Error", message)
+                self.statusBar().showMessage(f"Error: {message}", 5000)
+            
+            self.delete_bucket_btn.setEnabled(bool(self.bucket_selector.currentText()))
+        
+        def on_error(exc):
+            error_msg = f"Error inesperado: {str(exc)}"
+            QMessageBox.critical(self, "❌ Error", error_msg)
+            self.statusBar().showMessage(error_msg, 5000)
+            self.delete_bucket_btn.setEnabled(bool(self.bucket_selector.currentText()))
+            if LOGGING_AVAILABLE:
+                logger.error(f"Error al eliminar bucket: {exc}", exc_info=True)
+        
+        self.task_runner.run(
+            execute_delete,
+            on_success=on_success,
+            on_error=on_error,
+            description=description
+        )
 
 
