@@ -251,7 +251,15 @@ class RcloneManager:
             # Start the mount process in background for Windows
             # Use CREATE_NEW_PROCESS_GROUP to allow it to run independently
             self.mount_process = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+
             # Check if the process is still running
+            time.sleep(1) # Pequeña pausa para dejar que arranque
             if self.mount_process.poll() is None:
                 # Check if the drive actually appeared
                 for _ in range(5):  # 5 intentos de 1s = 5s total (mucho más rápido)
@@ -310,23 +318,12 @@ class RcloneManager:
                     f"Ejecutable de Rclone no encontrado en: {rclone_path}",
                     suggestion="Verifica que rclone.exe esté en la carpeta del programa",
                     original_error=e
-                    pass
-            
-            # Verificar nuevamente
-            vol_result2 = subprocess.run(
-                ['cmd', '/c', 'vol', drive_path],
-                capture_output=True,
-                text=True,
-                creationflags=subprocess.CREATE_NO_WINDOW
-            )
-            
-            if vol_result2.returncode != 0:
-                return True, f"Unidad {drive_letter}: desmontada exitosamente"
-            else:
-                return False, f"No se pudo desmontar la unidad {drive_letter}.\nIntenta cerrar todos los archivos abiertos desde esta unidad."
+                )
+                handle_error(error)
+            return False, f"Error: Ejecutable no encontrado: {e}", None
                 
         except Exception as e:
-            return False, f"Error al desmontar: {str(e)}"
+            return False, f"Error al montar: {str(e)}", None
 
     def unmount_drive(self, drive_letter):
         """Unmount the drive usando net use (específico para esa letra)"""

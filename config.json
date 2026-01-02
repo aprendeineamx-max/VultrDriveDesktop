@@ -15,8 +15,47 @@
             "profile": "Dolphin-1000",
             "bucket": "bucket-nubepelis",
             "status": "connected",
-            "mounted_at": "2026-01-02T12:58:40.047356",
+            "mounted_at": "2026-01-02T15:03:40.598091",
             "error_message": null
         }
-    ]
+    ],
+    "rclone_plans": {
+        "Ultra Performance 🚀": {
+            "transfers": "320",
+            "checkers": "320",
+            "tpslimit": "0",
+            "burst": "0",
+            "vfs_cache_mode": "writes",
+            "vfs_write_back": "5s",
+            "buffer_size": "64M",
+            "vfs_read_chunk_size": "128M",
+            "timeout": "10h",
+            "retries": "5"
+        },
+        "Balanced ⚖️": {
+            "transfers": "32",
+            "checkers": "32",
+            "tpslimit": "50",
+            "burst": "20",
+            "vfs_cache_mode": "writes",
+            "vfs_write_back": "10s",
+            "buffer_size": "32M",
+            "vfs_read_chunk_size": "64M",
+            "timeout": "1h",
+            "retries": "3"
+        },
+        "Stability 🛡️": {
+            "transfers": "4",
+            "checkers": "8",
+            "tpslimit": "10",
+            "burst": "5",
+            "vfs_cache_mode": "full",
+            "vfs_write_back": "1m",
+            "buffer_size": "16M",
+            "vfs_read_chunk_size": "32M",
+            "timeout": "30m",
+            "retries": "10"
+        }
+    },
+    "active_plan": "Stability 🛡️"
 }
