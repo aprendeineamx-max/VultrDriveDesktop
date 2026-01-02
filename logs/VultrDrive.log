@@ -599,3 +599,14 @@ Error: None
 2026-01-02 05:08:55 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['fdsfdsaa']
 2026-01-02 05:08:55 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1244 | Buckets cargados exitosamente: 1
 2026-01-02 05:08:55 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'fdsfdsaa'
+2026-01-02 05:08:56 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'fdsfdsaa': 0 bytes (0.00 MB)
+2026-01-02 05:11:22 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:fdsfdsaa]'
+2026-01-02 05:11:27 | INFO     | VultrDrive.ui.main_window | on_success:1481 | Montaje completado (mount_drive[V:fdsfdsaa]): Montado exitosamente en V:
+2026-01-02 05:12:24 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:fdsfdsaa]'
+2026-01-02 05:12:29 | INFO     | VultrDrive.ui.main_window | on_success:1481 | Montaje completado (mount_drive[V:fdsfdsaa]): Montado exitosamente en V:
+2026-01-02 05:13:47 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:fdsfdsaa]'
+2026-01-02 05:13:52 | INFO     | VultrDrive.ui.main_window | on_success:1481 | Montaje completado (mount_drive[V:fdsfdsaa]): Montado exitosamente en V:
+2026-01-02 05:14:23 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'fdsfdsaa'
+2026-01-02 05:14:24 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'fdsfdsaa': 0 bytes (0.00 MB)
+2026-01-02 05:14:31 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:fdsfdsaa]'
+2026-01-02 05:14:36 | INFO     | VultrDrive.ui.main_window | on_success:1481 | Montaje completado (mount_drive[V:fdsfdsaa]): Montado exitosamente en V:

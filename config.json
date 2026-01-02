@@ -8,5 +8,15 @@
         "access_key": "4BW2T0AX55SN0V0C14UN",
         "secret_key": "8Hjed5xmFILX0buJ5H7BB4NPaxrC1liKM9WIoRNB",
         "host_base": "ewr1.vultrobjects.com"
-    }
+    },
+    "_saved_mounts": [
+        {
+            "letter": "V",
+            "profile": "Dolphin-1000",
+            "bucket": "fdsfdsaa",
+            "status": "connected",
+            "mounted_at": "2026-01-02T05:14:36.225710",
+            "error_message": null
+        }
+    ]
 }
