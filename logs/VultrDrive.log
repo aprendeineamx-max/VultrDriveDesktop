@@ -588,3 +588,14 @@ Error: None
 2026-01-02 05:06:10 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1244 | Buckets cargados exitosamente: 1
 2026-01-02 05:06:10 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'test-antigravity'
 2026-01-02 05:06:11 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'test-antigravity': 0 bytes (0.00 MB)
+2026-01-02 05:08:51 | INFO     | VultrDrive | __init__:78 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 05:08:53 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 05:08:54 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-02 05:08:54 | INFO     | VultrDrive.ui.main_window | load_profile:1305 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-02 05:08:54 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-02 05:08:54 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-02 05:08:55 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 05:08:55 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1181 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 05:08:55 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['fdsfdsaa']
+2026-01-02 05:08:55 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1244 | Buckets cargados exitosamente: 1
+2026-01-02 05:08:55 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'fdsfdsaa'
