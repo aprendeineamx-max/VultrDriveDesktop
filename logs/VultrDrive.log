@@ -1174,3 +1174,5 @@ SOLUCIÓN:
 2026-01-02 16:35:50 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7893258884 bytes (7527.60 MB)
 2026-01-02 16:41:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
 2026-01-02 16:42:12 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7893258884 bytes (7527.60 MB)
+2026-01-02 16:47:50 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 16:48:21 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7893258884 bytes (7527.60 MB)

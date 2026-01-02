@@ -194,12 +194,37 @@ class MainWindow(QMainWindow):
 
         self._bind_multiple_mount_manager()
         
-        # ===== Task5: Marcar ventana principal como lista =====
-        if self.state_monitor:
-            QTimer.singleShot(1000, lambda: self.state_monitor.update_component_status(
-                'main_window',
                 ComponentStatus.READY
             ))
+
+        # ===== MEJORA: Multi-Ventana (Ctrl+Shift+N) =====
+        self.setup_multi_window_shortcut()
+
+    def setup_multi_window_shortcut(self):
+        """Configura el atajo Ctrl+Shift+N para abrir nueva ventana"""
+        from PyQt6.QtGui import QShortcut, QKeySequence
+        self.new_window_shortcut = QShortcut(QKeySequence("Ctrl+Shift+N"), self)
+        self.new_window_shortcut.activated.connect(self.open_new_window)
+
+    def open_new_window(self):
+        """Lanza una nueva instancia de la aplicación"""
+        import subprocess
+        import sys
+        
+        try:
+            # Lanzar el mismo ejecutable/script como un proceso separado
+            # DETACHED_PROCESS ensures it survives if parent dies (optional, but requested for resilience)
+            # CREATE_NEW_PROCESS_GROUP is good practice
+            flags = 0
+            if sys.platform == 'win32':
+                flags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
+
+            subprocess.Popen([sys.executable] + sys.argv, creationflags=flags)
+            
+            if LOGGING_AVAILABLE:
+                logger.info("Nueva ventana lanzada por usuario (Ctrl+Shift+N)")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo abrir nueva ventana:\n{str(e)}")
 
     def _bind_multiple_mount_manager(self):
         """Preparar conexiones con MultipleMountManager"""
