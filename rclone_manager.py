@@ -176,26 +176,31 @@ class RcloneManager:
                 f"Searched paths: {base_path}"
             ), None
 
-        # Mount command optimized for Windows and multi-machine support
+        # Mount command optimized for Windows and large file support
         cmd = [
             rclone_path,
             "mount",
             remote_path,
             mount_point,
-            "--vfs-cache-mode", "writes",
-            "--vfs-cache-max-age", "1h",
-            "--vfs-cache-poll-interval", "15s",  # Actualizar más frecuentemente
-            "--vfs-read-chunk-size", "128M",
-            "--vfs-read-chunk-size-limit", "2G",
-            "--buffer-size", "32M",
-            "--timeout", "1h",
-            "--retries", "3",
-            "--low-level-retries", "10",
+            "--vfs-cache-mode", "full",  # Cambiado de "writes" a "full" para mejor rendimiento
+            "--vfs-cache-max-age", "24h",  # Aumentado para archivos grandes
+            "--vfs-cache-poll-interval", "30s",
+            "--vfs-cache-max-size", "10G",  # Tamaño máximo de caché
+            "--vfs-read-chunk-size", "256M",  # Aumentado para archivos grandes
+            "--vfs-read-chunk-size-limit", "off",  # Sin límite
+            "--vfs-write-back", "5s",  # Esperar antes de escribir
+            "--buffer-size", "64M",  # Aumentado de 32M a 64M
+            "--timeout", "10h",  # Aumentado para transferencias largas
+            "--contimeout", "10m",  # Timeout de conexión inicial
+            "--retries", "5",  # Más reintentos
+            "--low-level-retries", "20",  # Más reintentos de bajo nivel
             "--stats", "1m",
-            "--no-modtime",  # No sincronizar tiempos de modificación (evita conflictos)
+            "--no-modtime",  # No sincronizar tiempos de modificación
             "--no-checksum",  # No verificar checksums (más rápido)
-            "--dir-cache-time", "5m",  # Cache de directorio más corto
-            "--volname", f"Vultr-{profile_name}"
+            "--dir-cache-time", "10m",  # Aumentado
+            "--volname", f"Vultr-{profile_name}",
+            "--tpslimit", "40",  # Límite balanceado: 40 transacciones/seg
+            "--tpslimit-burst", "10"  # Permite ráfagas de hasta 10 transacciones extra
         ]
 
         try:
