@@ -1164,3 +1164,5 @@ SOLUCIÓN:
 2026-01-02 16:09:37 | INFO     | VultrDrive.ui.main_window | on_success:1593 | Montaje completado (mount_drive[V:bucket-nubepelis]): Montado exitosamente en V:
 2026-01-02 16:10:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
 2026-01-02 16:11:06 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7893258884 bytes (7527.60 MB)
+2026-01-02 16:16:20 | DEBUG    | VultrDrive.s3_handler | get_bucket_size:208 | Calculando tamaño del bucket 'bucket-nubepelis'
+2026-01-02 16:17:03 | INFO     | VultrDrive.s3_handler | get_bucket_size:219 | Tamaño del bucket 'bucket-nubepelis': 7893258884 bytes (7527.60 MB)
