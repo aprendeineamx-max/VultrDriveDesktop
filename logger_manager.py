@@ -1,5 +1,16 @@
-# ... Imports previos se mantienen ...
+import logging
+import logging.handlers
+import sys
+import os
+from enum import IntEnum
 from PyQt6.QtCore import QObject, pyqtSignal
+
+class LogLevel(IntEnum):
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
 
 class QtLogHandler(logging.Handler, QObject):
     """Handler que emite señales Qt para la UI"""

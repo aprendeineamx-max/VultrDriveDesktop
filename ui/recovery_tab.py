@@ -59,8 +59,9 @@ class BackupWorker(QThread):
             self.finished.emit(False, f"Error en backup: {stderr}")
 
 class RecoveryTab(QWidget):
-    def __init__(self):
+    def __init__(self, rclone_manager=None):
         super().__init__()
+        self.rclone_manager = rclone_manager
         self.backup_manager = BackupManager()
         self.winpe_builder = WinPEBuilder()
         self.setup_ui()

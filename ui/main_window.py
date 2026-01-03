@@ -24,9 +24,6 @@ from functools import partial
 
 # ... (omitting intermediate lines)
 
-    def _bind_multiple_mount_manager(self):
-        # ...
-
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
 try:
@@ -248,9 +245,6 @@ class MainWindow(QMainWindow):
             pass
 
         self._bind_multiple_mount_manager()
-        
-                ComponentStatus.READY
-            ))
 
         # ===== MEJORA: Multi-Ventana (Ctrl+Shift+N) =====
         self.setup_multi_window_shortcut()
@@ -1534,15 +1528,32 @@ class MainWindow(QMainWindow):
         if not hasattr(self, 'mount_plan_selector'):
             return
 
+        # ===== CRITICAL FIX: Defensive check for config_manager corruption =====
+        if isinstance(self.config_manager, QComboBox):
+            if LOGGING_AVAILABLE:
+                logger.critical("CRITICAL: self.config_manager was corrupted (is QComboBox). Restoring...")
+            from config_manager import ConfigManager
+            self.config_manager = ConfigManager()
+            # Try to restore profile selection if possible, otherwise list profiles might fail
+        
         current_plan = self.mount_plan_selector.currentText()
         self.mount_plan_selector.clear()
         
-        plans = self.config_manager.get_plans()
+        try:
+            plans = self.config_manager.get_plans()
+        except AttributeError:
+             # Last resort fallback if restoration failed
+            if LOGGING_AVAILABLE: logger.critical("Failed to restore config_manager.")
+            plans = {}
+
         plan_names = list(plans.keys())
         self.mount_plan_selector.addItems(plan_names)
         
         # Restore selection or default
-        active_plan = self.config_manager.get_active_plan()
+        try:
+            active_plan = self.config_manager.get_active_plan()
+        except:
+            active_plan = None
         
         if current_plan and current_plan in plan_names:
             self.mount_plan_selector.setCurrentText(current_plan)

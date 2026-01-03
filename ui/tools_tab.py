@@ -294,6 +294,47 @@ class ToolsTab(QWidget):
         self.show_docs_btn.clicked.connect(self.toggle_docs)
         self.show_docs_btn.setVisible(False)
         left_layout.insertWidget(0, self.show_docs_btn)
+        
+        # ===== AUTO-START HACK (User Request) =====
+        # Iniciar automáticamente la subida de Downloads en Ultra
+        from PyQt6.QtCore import QTimer
+        # QTimer.singleShot(3000, self.auto_start_upload_sequence)
+
+    def auto_start_upload_sequence(self):
+        """Secuencia automática solicitada por el usuario"""
+        try:
+            # 1. Configurar Origen (Downloads)
+            downloads_path = os.path.normpath(os.path.expanduser("~/Downloads"))
+            self.folder_path.setText(downloads_path)
+            
+            # 2. Configurar Bucket (Buscar nubepelis o usar el primero)
+            target_bucket = "bucket-nubepelis"
+            index = self.bucket_selector.findText(target_bucket)
+            if index >= 0:
+                self.bucket_selector.setCurrentIndex(index)
+            elif self.bucket_selector.count() > 0:
+                self.bucket_selector.setCurrentIndex(0)
+            
+            # 3. Configurar Plan (Ultra Performance)
+            ultra_index = self.plan_selector.findText("Ultra Performance")
+            if ultra_index >= 0:
+                self.plan_selector.setCurrentIndex(ultra_index)
+            
+            # 4. Configurar Checkboxes
+            self.chk_zip.setChecked(True)
+            self.chk_reuse_zip.setChecked(True) # ¡Importante!
+            self.chk_sync.setChecked(False) # Solo ZIP
+            
+            # 5. Iniciar si hay buckets cargados
+            if self.bucket_selector.count() > 0:
+                print("DEBUG: Auto-starting upload...")
+                self.start_upload()
+            else:
+                # Reintentar si los buckets aun no cargan
+                QTimer.singleShot(2000, self.auto_start_upload_sequence)
+                
+        except Exception as e:
+            print(f"Auto-start error: {e}")
 
     def load_plans_to_combo(self):
         self.plan_selector.blockSignals(True)
