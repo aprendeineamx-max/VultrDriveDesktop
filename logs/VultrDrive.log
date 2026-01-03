@@ -1461,3 +1461,66 @@ AttributeError: 'MainWindow' object has no attribute 'state_monitor'
 2026-01-02 22:30:48 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:lab-backups]'
 2026-01-02 22:30:50 | INFO     | VultrDrive.ui.main_window | on_success:1606 | Montaje completado (mount_drive[V:lab-backups]): Montado exitosamente en V:
 2026-01-02 22:30:50 | ERROR    | VultrDrive.ui.main_window | _on_mount_success:1669 | Error al procesar éxito de montaje: 'MainWindow' object has no attribute 'state_monitor'
+2026-01-02 22:37:39 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 22:37:42 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 22:37:44 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 22:37:44 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-02 22:37:44 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:37:44 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-02 22:37:45 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 22:37:45 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1256 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 22:37:46 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-02 22:37:49 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-02 22:40:03 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 22:40:26 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 22:40:31 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 22:40:36 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 22:40:36 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-02 22:40:36 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:40:37 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-02 22:40:37 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 22:40:38 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-02 22:40:42 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1256 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 22:40:42 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-02 22:47:56 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 22:47:58 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 22:47:59 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 22:47:59 | INFO     | VultrDrive.ui.main_window | load_profile:1402 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-02 22:47:59 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:48:00 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-02 22:48:00 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 22:48:00 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-02 22:48:00 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1346 | Buckets cargados exitosamente: 1
+2026-01-02 22:48:03 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:48:03 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1346 | Buckets cargados exitosamente: 1
+2026-01-02 22:50:53 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 22:50:55 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 22:50:57 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 22:50:57 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-02 22:50:57 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:50:57 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-02 22:50:57 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 22:50:58 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-02 22:50:58 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-02 22:50:58 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 22:50:58 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-02 22:57:52 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'unmount_all_drives'
+2026-01-02 22:57:58 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:lab-backups]'
+2026-01-02 22:58:00 | INFO     | VultrDrive.ui.main_window | on_success:1606 | Montaje completado (mount_drive[V:lab-backups]): Montado exitosamente en V:
+2026-01-02 22:58:00 | ERROR    | VultrDrive.ui.main_window | _on_mount_success:1669 | Error al procesar éxito de montaje: 'MainWindow' object has no attribute 'state_monitor'
+2026-01-02 23:02:49 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 23:02:50 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 23:03:02 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: 'ToolsTab' object has no attribute 'cancel_upload'
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 199, in __init__
+    self.tools_tab = ToolsTab(self.rclone_manager, self.config_manager)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\tools_tab.py", line 138, in __init__
+    self.init_ui()
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\tools_tab.py", line 274, in init_ui
+    self.cancel_btn.clicked.connect(self.cancel_upload)
+                                    ^^^^^^^^^^^^^^^^^^
+AttributeError: 'ToolsTab' object has no attribute 'cancel_upload'

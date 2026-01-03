@@ -34,20 +34,30 @@ class SmartUploadWorker(QThread):
                 if self.reuse_zip:
                     self.status_update.emit("🔍 Buscando ZIP existente para reutilizar...")
                     try:
-                        temp_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'VultrDrive_Backups')
+                        # Buscar en múltiples ubicaciones posibles
+                        temp_base = os.environ.get('TEMP', os.path.expanduser('~'))
+                        search_dirs = [
+                            os.path.join(temp_base, 'VultrDrive_Backups'),
+                            os.path.join(temp_base, '2', 'VultrDrive_Backups'),  # Windows a veces usa \2\
+                        ]
+                        
                         folder_name = os.path.basename(self.source_folder)
                         # Patrón: FolderName_YYYYMMDD_HHMMSS.zip
                         candidates = []
-                        if os.path.exists(temp_dir):
-                            for f in os.listdir(temp_dir):
-                                if f.startswith(f"{folder_name}_") and f.endswith(".zip"):
-                                    candidates.append(os.path.join(temp_dir, f))
+                        
+                        for temp_dir in search_dirs:
+                            if os.path.exists(temp_dir):
+                                for f in os.listdir(temp_dir):
+                                    if f.startswith(f"{folder_name}_") and f.endswith(".zip"):
+                                        full_path = os.path.join(temp_dir, f)
+                                        candidates.append(full_path)
                         
                         if candidates:
                             # Ordenar por fecha de modificación (el más reciente)
                             candidates.sort(key=os.path.getmtime, reverse=True)
                             zip_path = candidates[0]
-                            self.status_update.emit(f"♻️ ZIP Existente encontrado: {os.path.basename(zip_path)}")
+                            size_mb = os.path.getsize(zip_path) / (1024*1024)
+                            self.status_update.emit(f"♻️ ZIP Existente encontrado: {os.path.basename(zip_path)} ({size_mb:.1f} MB)")
                         else:
                             self.status_update.emit("⚠️ No se encontró ZIP previo, se creará uno nuevo.")
                     except Exception as e:
@@ -241,6 +251,9 @@ class ToolsTab(QWidget):
         self.progress_log.setStyleSheet("background-color: #1e1e1e; color: #00ff00; font-family: Consolas; font-size: 9pt;")
         left_layout.addWidget(self.progress_log)
 
+        # Botones de control (Iniciar y Cancelar)
+        buttons_layout = QHBoxLayout()
+        
         self.start_btn = QPushButton("🚀 INICIAR OPERACIÓN")
         self.start_btn.setMinimumHeight(45)
         self.start_btn.setStyleSheet("""
@@ -249,7 +262,21 @@ class ToolsTab(QWidget):
             QPushButton:disabled { background-color: #555; }
         """)
         self.start_btn.clicked.connect(self.start_upload)
-        left_layout.addWidget(self.start_btn)
+        
+        self.cancel_btn = QPushButton("🛑 CANCELAR")
+        self.cancel_btn.setMinimumHeight(45)
+        self.cancel_btn.setMaximumWidth(150)
+        self.cancel_btn.setStyleSheet("""
+            QPushButton { background-color: #e74c3c; color: white; font-weight: bold; font-size: 11pt; border-radius: 4px; }
+            QPushButton:hover { background-color: #c0392b; }
+            QPushButton:disabled { background-color: #555; }
+        """)
+        self.cancel_btn.clicked.connect(self.cancel_upload)
+        self.cancel_btn.setEnabled(False)  # Deshabilitado al inicio
+        
+        buttons_layout.addWidget(self.start_btn, 3)
+        buttons_layout.addWidget(self.cancel_btn, 1)
+        left_layout.addLayout(buttons_layout)
 
         self.splitter.addWidget(left_widget)
 
