@@ -256,19 +256,24 @@ class RcloneManager:
             )
 
             # Check if the process is still running
-            time.sleep(1) # Pequeña pausa para dejar que arranque
+            time.sleep(2)
             if self.mount_process.poll() is None:
-                # Check if the drive actually appeared
-                # Esperar hasta 20 segundos (necesario para modo Stability / Cache Full)
-                for _ in range(20):
-                    if os.path.exists(drive_path):
-                         return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                # Wait up to 40 seconds for drive to appear
+                for i in range(40):
+                    try:
+                        if os.path.exists(f"{drive_letter}:\\"):
+                            return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                        try:
+                            os.listdir(f"{drive_letter}:\\")
+                            return True, f"Montado exitosamente en {drive_letter}:", self.mount_process
+                        except:
+                            pass
+                    except:
+                        pass
                     time.sleep(1)
                 
-                # Si llegamos aquí, no se montó
                 self.mount_process.terminate()
                 
-                # Leer el log de error DESDE EL ESCRITORIO
                 log_path = os.path.join(os.path.expanduser("~"), "Desktop", "rclone_debug.txt")
                 error_details = "No se generó log."
                 if os.path.exists(log_path):
@@ -281,7 +286,7 @@ class RcloneManager:
 
                 return False, (
                     f"No se pudo montar la unidad {drive_letter}:\\n\\n"
-                    f"El proceso inició pero la unidad no apareció.\\n\\n"
+                    f"El proceso inició pero la unidad no apareció después de 40 segundos.\\n\\n"
                     f"DETALLES DEL ERROR (rclone log):\\n{error_details}\\n\\n"
                     f"Intenta reducir los parámetros agresivos."
                 ), None

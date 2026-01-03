@@ -12,10 +12,10 @@
     "_saved_mounts": [
         {
             "letter": "V",
-            "profile": "Dolphin-1000",
-            "bucket": "bucket-nubepelis",
+            "profile": "Dolphin-1000-Premium",
+            "bucket": "lab-backups",
             "status": "connected",
-            "mounted_at": "2026-01-02T16:09:37.449489",
+            "mounted_at": "2026-01-02T22:30:50.435989",
             "error_message": null
         }
     ],
