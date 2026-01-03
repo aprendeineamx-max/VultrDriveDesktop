@@ -18,7 +18,15 @@ from multiple_mount_manager import MultipleMountManager
 from ui.multi_mounts_widget import MultiMountsWidget
 from ui.tools_tab import ToolsTab
 from ui.plan_editor import PlanEditorDialog
+from ui.recovery_tab import RecoveryTab
+from ui.monitoring_tab import MonitoringTab
 from functools import partial
+
+# ... (omitting intermediate lines)
+
+    def _bind_multiple_mount_manager(self):
+        # ...
+
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
 try:
@@ -165,6 +173,53 @@ class MainWindow(QMainWindow):
         if AUDIT_AVAILABLE:
             self.audit_logger = get_audit_logger()
         else:
+            self.audit_logger = None
+
+        # ===== SETUP UI CORE =====
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+        self.main_layout = QVBoxLayout(self.central_widget)
+
+        self.setup_top_controls()
+
+        # Tabs Container
+        self.tabs = QTabWidget()
+        self.main_layout.addWidget(self.tabs)
+
+        # 1. Initialize Base Tab Widgets
+        self.main_tab = QWidget()
+        self.mount_tab = QWidget()
+        self.sync_tab = QWidget()
+        self.advanced_tab = QWidget()
+        self.monitoring_tab = MonitoringTab() # NUEVO: Monitor
+
+        # 2. Setup Main Tab FIRST (creates profile_selector and bucket_selector)
+        self.setup_main_tab()
+
+        # 3. Initialize Dependent Tabs
+        self.recovery_tab = RecoveryTab(self.rclone_manager)
+        # Ahora bucket_selector existe gracias a setup_main_tab
+        self.tools_tab = ToolsTab(self.s3_handler, self.bucket_selector) 
+
+        # 4. Add Tabs to Widget
+        self.tabs.addTab(self.main_tab, "🏠 " + self.tr("tab_main"))
+        self.tabs.addTab(self.mount_tab, "💿 " + self.tr("tab_mount"))
+        self.tabs.addTab(self.sync_tab, "🔄 " + self.tr("tab_sync"))
+        self.tabs.addTab(self.recovery_tab, "🚑 " + self.tr("tab_recovery"))
+        self.tabs.addTab(self.tools_tab, "🛠️ " + self.tr("tab_tools"))
+        self.tabs.addTab(self.monitoring_tab, "📊 " + self.tr("tab_monitor"))
+        self.tabs.addTab(self.advanced_tab, "⚙️ " + self.tr("tab_advanced"))
+
+        # 5. Setup Remaining Tabs Content
+        self.setup_mount_tab()
+        self.setup_sync_tab()
+        self.setup_advanced_tab()
+        
+        # Connect Global Logging Signal
+        if LOGGING_AVAILABLE:
+            from logger_manager import logger_manager
+            logger_manager.log_received.connect(self.monitoring_tab.add_log)
+
         # Progress Bar
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)

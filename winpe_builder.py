@@ -238,18 +238,112 @@ class WinPEBuilder:
         return None
 
     def _install_recovery_agent(self, mount_dir):
-        """Copia los archivos del agente al System32 del WinPE"""
-        # Por ahora creamos un script dummy
-        target_dir = mount_dir / "windows" / "system32"
-        # En el futuro copiaremos el ejecutable compilado
-        return
+        """
+        Instala Python compatible, Rclone y el Agente en la imagen WinPE.
+        """
+        import urllib.request
+        import zipfile
+        
+        target_root = mount_dir / "Program Files" / "Phoenix"
+        if not target_root.exists():
+            target_root.mkdir(parents=True)
+            
+        print(f"Instalando Phoenix Recovery Stack en {target_root}...")
+
+        # 1. Instalar Python Portable (Embeddable)
+        python_zip_url = "https://www.python.org/ftp/python/3.11.5/python-3.11.5-embed-amd64.zip"
+        python_zip_path = self.workspace_path / "python_embed.zip"
+        
+        if not python_zip_path.exists():
+            print(f"Descargando Python Runtime ({python_zip_url})...")
+            try:
+                urllib.request.urlretrieve(python_zip_url, python_zip_path)
+            except Exception as e:
+                print(f"Error descargando Python: {e}")
+                # Fallback: intentar copiar el del sistema si es portable (poco probable)
+                pass
+
+        if python_zip_path.exists():
+            print("Extrayendo Python Runtime...")
+            python_dir = target_root / "Python"
+            with zipfile.ZipFile(python_zip_path, 'r') as zip_ref:
+                zip_ref.extractall(python_dir)
+                
+            # Activar importación de módulos (descomentar pth)
+            # En la versión embed, hay un archivo ._pth que limita sys.path.
+            # A veces es necesario editarlo para permitir importar scripts locales.
+            pth_files = list(python_dir.glob("*._pth"))
+            if pth_files:
+                pth_file = pth_files[0]
+                content = pth_file.read_text()
+                # Uncomment 'import site' to enable full power if needed
+                content = content.replace("#import site", "import site")
+                pth_file.write_text(content)
+
+        # 2. Copiar rclone.exe (del host)
+        # Asumimos que rclone está en el PATH o en la carpeta actual
+        rclone_src = shutil.which("rclone")
+        if not rclone_src:
+            # Intentar buscar en directorios comunes
+            search_paths = [Path("."), Path("bin"), Path("C:\\rclone"), target_root.parent]
+            for p in search_paths:
+                candidate = p / "rclone.exe"
+                if candidate.exists():
+                    rclone_src = candidate
+                    break
+        
+        if rclone_src:
+            print(f"Copiando Rclone ({rclone_src})...")
+            shutil.copy2(rclone_src, target_root / "rclone.exe")
+        else:
+            print("⚠️ ADVERTENCIA: rclone.exe no encontrado. El agente podría fallar.")
+
+        # 3. Copiar rclone.conf (del usuario actual)
+        # C:\Users\Administrator\.config\rclone\rclone.conf
+        rclone_conf_src = Path(os.path.expanduser("~")) / ".config" / "rclone" / "rclone.conf"
+        if rclone_conf_src.exists():
+            print("Inyectando configuración de nube (rclone.conf)...")
+            shutil.copy2(rclone_conf_src, target_root / "rclone.conf")
+        else:
+             print("⚠️ No se encontró rclone.conf. El agente requerirá configuración manual.")
+
+        # 4. Copiar Agente (recovery_agent.py)
+        # Asumimos que está en el CWD
+        agent_src = Path("recovery_agent.py").absolute()
+        if agent_src.exists():
+             shutil.copy2(agent_src, target_root / "recovery_agent.py")
+        else:
+             # Try absolute path based on __file__ if running from module
+             agent_src = Path(__file__).parent / "recovery_agent.py"
+             if agent_src.exists():
+                 shutil.copy2(agent_src, target_root / "recovery_agent.py")
+             else:
+                 print("ERROR CRÍTICO: No se encuentra recovery_agent.py")
 
     def _configure_startup(self, mount_dir):
         """Modifica startnet.cmd para iniciar el agente"""
         startnet = mount_dir / "windows" / "system32" / "startnet.cmd"
+        
+        cmd_content = [
+            "wpeinit",
+            "@echo off",
+            "cls",
+            "echo ==================================================",
+            "echo      Iniciando Entorno de Recuperación Phoenix     ",
+            "echo ==================================================",
+            "echo Cargando drivers...",
+            "drvload X:\\Windows\\System32\\DriverStore\\FileRepository\\*.inf >nul 2>&1",
+            "echo Iniciando Agente Python...",
+            r'set PATH=%PATH%;X:\Program Files\Phoenix\Python;X:\Program Files\Phoenix',
+            r'cd /d "X:\Program Files\Phoenix"',
+            r'python.exe recovery_agent.py',
+            "if %ERRORLEVEL% NEQ 0 (",
+            "  echo El agente se cerro o fallo. Abriendo consola de emergencia...",
+            "  cmd /k",
+            ")",
+            "cmd /k"
+        ]
+        
         with open(startnet, "w") as f:
-            f.write("wpeinit\n")
-            f.write("echo Iniciando Phoenix Recovery Agent...\n")
-            f.write("powershell -Command \"Write-Host 'Bienvenido al Sistema de Recuperacion Vultr' -ForegroundColor Green\"\n")
-            f.write("cmd /k\n") # Shell interactiva por ahora
+            f.write("\n".join(cmd_content))
  
