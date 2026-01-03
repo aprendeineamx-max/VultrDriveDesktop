@@ -1373,14 +1373,6 @@ class MainWindow(QMainWindow):
                 self.s3_handler = S3Handler(access_key, secret_key, host_base)
                 self.statusBar().showMessage(self.tr("profile_loaded").format(profile_name))
                 
-                # ===== ACTUALIZAR MONITOR =====
-                if self.state_monitor:
-                    self.state_monitor.update_component_status(
-                        's3_handler',
-                        ComponentStatus.READY,
-                        {'profile_name': profile_name}
-                    )
-                
                 if LOGGING_AVAILABLE:
                     logger.info(f"Perfil '{profile_name}' cargado exitosamente")
                 
