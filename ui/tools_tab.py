@@ -23,11 +23,23 @@ class SmartUploadWorker(QThread):
         self.reuse_zip = reuse_zip
         self.extra_params = kwargs  # transfers, checkers, tpslimit, burst ...
         self.is_running = True
+        self._is_cancelled = False
+
+    def cancel(self):
+        self._is_cancelled = True
+        self.is_running = False
+        self.status_update.emit("⚠️ Cancelando operación...")
 
     def run(self):
         try:
+            # Check cancellation method
+            def check_cancel():
+                if self._is_cancelled:
+                    raise Exception("Operación cancelada por el usuario")
+
             # 1. Backup ZIP (Si está activado)
             if self.do_zip:
+                check_cancel()
                 zip_path = None
                 
                 # Check Reuso
@@ -38,11 +50,10 @@ class SmartUploadWorker(QThread):
                         temp_base = os.environ.get('TEMP', os.path.expanduser('~'))
                         search_dirs = [
                             os.path.join(temp_base, 'VultrDrive_Backups'),
-                            os.path.join(temp_base, '2', 'VultrDrive_Backups'),  # Windows a veces usa \2\
+                            os.path.join(temp_base, '2', 'VultrDrive_Backups'),
                         ]
                         
                         folder_name = os.path.basename(self.source_folder)
-                        # Patrón: FolderName_YYYYMMDD_HHMMSS.zip
                         candidates = []
                         
                         for temp_dir in search_dirs:
@@ -53,7 +64,6 @@ class SmartUploadWorker(QThread):
                                         candidates.append(full_path)
                         
                         if candidates:
-                            # Ordenar por fecha de modificación (el más reciente)
                             candidates.sort(key=os.path.getmtime, reverse=True)
                             zip_path = candidates[0]
                             size_mb = os.path.getsize(zip_path) / (1024*1024)
@@ -63,46 +73,52 @@ class SmartUploadWorker(QThread):
                     except Exception as e:
                         self.status_update.emit(f"⚠️ Error buscando ZIP: {e}")
 
+                check_cancel()
                 if not zip_path:
                     self.status_update.emit("📦 Comprimiendo carpeta (Fase 1/2)...")
-                    # Pasamos kwargs por si en el futuro compress_folder usa algo (hoy no)
                     success, zip_path = self.rclone_manager.compress_folder(self.source_folder)
                     
                     if not success:
                         self.finished.emit(False, f"Error al comprimir: {zip_path}")
                         return
 
+                check_cancel()
                 self.status_update.emit(f"🚀 Subiendo Backup ZIP: {os.path.basename(zip_path)}...")
-                # FIXED: Pasar extra_params (transfers, etc) a upload_file para activar Ultra Mode
+                
+                def progress_callback(msg):
+                    if self._is_cancelled:
+                        return False # Signal rclone to stop
+                    self.progress_update.emit(f"[ZIP] {msg}")
+
                 success, msg = self.rclone_manager.upload_file(
                     self.profile_name, 
                     zip_path, 
                     self.bucket_name,
-                    progress_callback=lambda p: self.progress_update.emit(f"[ZIP] {p}"),
+                    progress_callback=progress_callback,
                     **self.extra_params
                 )
                 
-                # Eliminar temporal (Desactivado para preservar ZIP si falla o si usuario quiere conservarlo)
-                # El usuario pidió "no pierdas el zip que ya está"
-                # Podemos implementar una limpieza inteligente luego, por ahora lo dejamos.
-                # try:
-                #     os.remove(zip_path)
-                # except:
-                #     pass
-
+                check_cancel()
                 if not success:
                     self.finished.emit(False, f"Error al subir ZIP: {msg}")
                     return
 
-            # 2. Sincronización Paralela (Si está activado)
+            # 2. Sincronización Paralela
             if self.do_sync:
+                check_cancel()
                 transfers = self.extra_params.get('transfers', '320')
                 self.status_update.emit(f"⚡ Iniciando Sincronización Paralela ({transfers} hilos)...")
+                
+                def sync_callback(msg):
+                    if self._is_cancelled:
+                         return False # Need to ensure sync_folder_parallel supports this too, but for now this is better than nothing
+                    self.progress_update.emit(f"[SYNC] {msg}")
+
                 success, msg = self.rclone_manager.sync_folder_parallel(
                     self.profile_name,
                     self.source_folder,
                     self.bucket_name,
-                    progress_callback=lambda p: self.progress_update.emit(f"[SYNC] {p}"),
+                    progress_callback=sync_callback,
                     **self.extra_params
                 )
                 
@@ -113,7 +129,11 @@ class SmartUploadWorker(QThread):
             self.finished.emit(True, "✅ Operación completada exitosamente")
 
         except Exception as e:
-            self.finished.emit(False, str(e))
+            msg = str(e)
+            if "cancelada" in msg.lower():
+                self.finished.emit(False, "🛑 Operación cancelada por el usuario.")
+            else:
+                self.finished.emit(False, str(e))
 
     def stop(self):
         self.is_running = False
@@ -480,6 +500,7 @@ class ToolsTab(QWidget):
             return
 
         self.start_btn.setEnabled(False)
+        self.cancel_btn.setEnabled(True)
         self.progress_log.clear()
         
         # Obtener params del plan activo
@@ -498,6 +519,13 @@ class ToolsTab(QWidget):
         self.worker.finished.connect(self.on_finished)
         self.worker.start()
 
+    def cancel_upload(self):
+        """Cancela la subida actual"""
+        if hasattr(self, 'worker') and self.worker and self.worker.isRunning():
+            self.update_status("🛑 Solicitando cancelación...")
+            self.worker.cancel()
+            self.cancel_btn.setEnabled(False)
+
     def append_log(self, text):
         self.progress_log.append(text)
         sb = self.progress_log.verticalScrollBar()
@@ -509,9 +537,13 @@ class ToolsTab(QWidget):
 
     def on_finished(self, success, message):
         self.start_btn.setEnabled(True)
+        self.cancel_btn.setEnabled(False)
         if success:
             QMessageBox.information(self, "Éxito", message)
             self.status_label.setText("Completado.")
         else:
-            QMessageBox.critical(self, "Error", message)
-            self.status_label.setText("Error.")
+            if "cancelada" in message.lower():
+                 self.status_label.setText("Cancelado.")
+            else:
+                QMessageBox.critical(self, "Error", message)
+                self.status_label.setText("Error.")

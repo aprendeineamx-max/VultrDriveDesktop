@@ -1524,3 +1524,13 @@ Traceback (most recent call last):
     self.cancel_btn.clicked.connect(self.cancel_upload)
                                     ^^^^^^^^^^^^^^^^^^
 AttributeError: 'ToolsTab' object has no attribute 'cancel_upload'
+2026-01-02 23:21:06 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 23:21:13 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 23:21:30 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 23:21:30 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-02 23:21:30 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-02 23:21:31 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-02 23:21:31 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 23:21:31 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1256 | Se ignoró refresh_buckets porque ya hay una operación en curso.
+2026-01-02 23:21:31 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-02 23:21:31 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1

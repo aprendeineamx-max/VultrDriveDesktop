@@ -513,7 +513,11 @@ class RcloneManager:
                     break
                 
                 if line and progress_callback:
-                    progress_callback(line.strip())
+                    # Si callback devuelve False, ABORTAR
+                    continue_upload = progress_callback(line.strip())
+                    if continue_upload is False:
+                        process.kill()
+                        return False, "Cancelado por el usuario"
 
             if process.returncode == 0:
                 return True, "Subida completada"
