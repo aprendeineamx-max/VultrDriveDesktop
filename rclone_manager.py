@@ -5,6 +5,7 @@ import shutil  # Para compresión de carpetas
 import configparser
 import time
 from pathlib import Path
+import zipfile
 
 # ===== MEJORA #48: Manejo de Errores Mejorado =====
 try:
@@ -414,9 +415,7 @@ class RcloneManager:
 
     def compress_folder(self, source_folder, output_path=None):
         """
-        Comprime una carpeta local en un archivo ZIP.
-        Si output_path no se especifica, se crea en %TEMP%
-        Retorna: (True, path_archivo_zip) o (False, error)
+        Comprime una carpeta local en un archivo ZIP. (Version robusta con streaming y timestamp safe)
         """
         try:
             source_path = Path(source_folder)
@@ -424,18 +423,45 @@ class RcloneManager:
                 return False, f"La carpeta origen no existe: {source_folder}"
 
             if output_path is None:
-                # Usar carpeta temporal del sistema
                 temp_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'VultrDrive_Backups')
                 os.makedirs(temp_dir, exist_ok=True)
                 folder_name = source_path.name
                 timestamp = time.strftime("%Y%m%d_%H%M%S")
-                # Nombre seguro: Carpeta_TIMESTAMP
-                output_base = os.path.join(temp_dir, f"{folder_name}_{timestamp}")
+                # ZIP extension must be explicit in this custom implementation
+                zip_path = os.path.join(temp_dir, f"{folder_name}_{timestamp}.zip")
             else:
-                output_base = os.path.splitext(output_path)[0]
+                zip_path = output_path if output_path.lower().endswith('.zip') else output_path + '.zip'
 
-            # shutil.make_archive agrega automáticamente la extensión .zip
-            zip_path = shutil.make_archive(output_base, 'zip', source_folder)
+            # Implementación custom con zipfile
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+                for root, dirs, files in os.walk(str(source_path)):
+                    # Guardar root folder structure también? 
+                    # shutil.make_archive guarda root_dir como base.
+                    # Haremos equivalente: items dentro de source_folder quedan en root del zip.
+                    
+                    for file in files:
+                        full_path = os.path.join(root, file)
+                        # Path relativo al source_folder
+                        rel_path = os.path.relpath(full_path, str(source_path))
+                        # Si queremos preservar la carpeta contenedora, usar source_path.parent
+                        # Pero standard es contenido.
+                        
+                        try:
+                            # Crear ZipInfo desde archivo para preservar permisos y fechas
+                            zinfo = zipfile.ZipInfo.from_file(full_path, rel_path)
+                            
+                            # FIX CRITICO: Timestamps pre-1980 causan crash
+                            if zinfo.date_time < (1980, 1, 1, 0, 0, 0):
+                                zinfo.date_time = (1980, 1, 1, 0, 0, 0)
+                            
+                            # Streaming copy: file -> zip (sin leer todo a RAM)
+                            with open(full_path, 'rb') as src, zf.open(zinfo, 'w') as dst:
+                                shutil.copyfileobj(src, dst)
+                                
+                        except Exception as e:
+                            print(f"[Compress] Omitiendo {file}: {e}")
+                            # Omitir archivo problemático y seguir con el resto
+            
             return True, zip_path
         except Exception as e:
             return False, str(e)
