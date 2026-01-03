@@ -12,7 +12,7 @@ class SmartUploadWorker(QThread):
     status_update = pyqtSignal(str)
     finished = pyqtSignal(bool, str)
 
-    def __init__(self, rclone_manager, profile_name, source_folder, bucket_name, do_zip, do_sync, **kwargs):
+    def __init__(self, rclone_manager, profile_name, source_folder, bucket_name, do_zip, do_sync, reuse_zip, **kwargs):
         super().__init__()
         self.rclone_manager = rclone_manager
         self.profile_name = profile_name
@@ -20,6 +20,7 @@ class SmartUploadWorker(QThread):
         self.bucket_name = bucket_name
         self.do_zip = do_zip
         self.do_sync = do_sync
+        self.reuse_zip = reuse_zip
         self.extra_params = kwargs  # transfers, checkers, tpslimit, burst ...
         self.is_running = True
 
@@ -27,27 +28,57 @@ class SmartUploadWorker(QThread):
         try:
             # 1. Backup ZIP (Si está activado)
             if self.do_zip:
-                self.status_update.emit("📦 Comprimiendo carpeta (Fase 1/2)...")
-                # Pasamos kwargs por si en el futuro compress_folder usa algo (hoy no)
-                success, zip_path = self.rclone_manager.compress_folder(self.source_folder)
+                zip_path = None
                 
-                if not success:
-                    self.finished.emit(False, f"Error al comprimir: {zip_path}")
-                    return
+                # Check Reuso
+                if self.reuse_zip:
+                    self.status_update.emit("🔍 Buscando ZIP existente para reutilizar...")
+                    try:
+                        temp_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'VultrDrive_Backups')
+                        folder_name = os.path.basename(self.source_folder)
+                        # Patrón: FolderName_YYYYMMDD_HHMMSS.zip
+                        candidates = []
+                        if os.path.exists(temp_dir):
+                            for f in os.listdir(temp_dir):
+                                if f.startswith(f"{folder_name}_") and f.endswith(".zip"):
+                                    candidates.append(os.path.join(temp_dir, f))
+                        
+                        if candidates:
+                            # Ordenar por fecha de modificación (el más reciente)
+                            candidates.sort(key=os.path.getmtime, reverse=True)
+                            zip_path = candidates[0]
+                            self.status_update.emit(f"♻️ ZIP Existente encontrado: {os.path.basename(zip_path)}")
+                        else:
+                            self.status_update.emit("⚠️ No se encontró ZIP previo, se creará uno nuevo.")
+                    except Exception as e:
+                        self.status_update.emit(f"⚠️ Error buscando ZIP: {e}")
+
+                if not zip_path:
+                    self.status_update.emit("📦 Comprimiendo carpeta (Fase 1/2)...")
+                    # Pasamos kwargs por si en el futuro compress_folder usa algo (hoy no)
+                    success, zip_path = self.rclone_manager.compress_folder(self.source_folder)
+                    
+                    if not success:
+                        self.finished.emit(False, f"Error al comprimir: {zip_path}")
+                        return
 
                 self.status_update.emit(f"🚀 Subiendo Backup ZIP: {os.path.basename(zip_path)}...")
+                # FIXED: Pasar extra_params (transfers, etc) a upload_file para activar Ultra Mode
                 success, msg = self.rclone_manager.upload_file(
                     self.profile_name, 
                     zip_path, 
                     self.bucket_name,
-                    progress_callback=lambda p: self.progress_update.emit(f"[ZIP] {p}")
+                    progress_callback=lambda p: self.progress_update.emit(f"[ZIP] {p}"),
+                    **self.extra_params
                 )
                 
-                # Eliminar temporal
-                try:
-                    os.remove(zip_path)
-                except:
-                    pass
+                # Eliminar temporal (Desactivado para preservar ZIP si falla o si usuario quiere conservarlo)
+                # El usuario pidió "no pierdas el zip que ya está"
+                # Podemos implementar una limpieza inteligente luego, por ahora lo dejamos.
+                # try:
+                #     os.remove(zip_path)
+                # except:
+                #     pass
 
                 if not success:
                     self.finished.emit(False, f"Error al subir ZIP: {msg}")
@@ -111,9 +142,23 @@ class ToolsTab(QWidget):
         left_layout.setContentsMargins(10, 10, 10, 10)
 
         # Header
+        header_layout = QHBoxLayout()
         header_label = QLabel("🚀 Herramientas Avanzadas v2")
         header_label.setStyleSheet("font-size: 14pt; font-weight: bold; color: #3498db;")
-        left_layout.addWidget(header_label)
+        header_layout.addWidget(header_label)
+        
+        # Botón para abrir backups (NUEVO)
+        btn_open_backups = QPushButton("📂 Abrir Backups")
+        btn_open_backups.setToolTip("Abrir carpeta donde se guardan los ZIP temporales")
+        btn_open_backups.clicked.connect(self.open_backups_folder)
+        btn_open_backups.setStyleSheet("""
+            QPushButton { background-color: #f39c12; color: white; border-radius: 4px; padding: 5px; }
+            QPushButton:hover { background-color: #d35400; }
+        """)
+        header_layout.addStretch()
+        header_layout.addWidget(btn_open_backups)
+        
+        left_layout.addLayout(header_layout)
 
         # 1. Selección de Origen y Destino
         config_group = QGroupBox("1. Origen y Destino")
@@ -143,9 +188,19 @@ class ToolsTab(QWidget):
         modes_layout = QVBoxLayout()
         self.chk_zip = QCheckBox("📦 Backup Comprimido (.zip)")
         self.chk_zip.setChecked(True)
+        
+        self.chk_reuse_zip = QCheckBox("♻️ Usar ZIP existente si se encuentra")
+        self.chk_reuse_zip.setToolTip("Si existe un archivo FolderName_*.zip reciente en la carpeta de backups, se usará en lugar de recomprimir.")
+        self.chk_reuse_zip.setChecked(True)
+        self.chk_reuse_zip.setStyleSheet("margin-left: 20px; color: #f39c12;")
+        # Deshabilitar si chk_zip no está marcado
+        self.chk_zip.toggled.connect(self.chk_reuse_zip.setEnabled)
+        
         self.chk_sync = QCheckBox("⚡ Video Sincronización (Carpetas)")
         self.chk_sync.setChecked(True)
+        
         modes_layout.addWidget(self.chk_zip)
+        modes_layout.addWidget(self.chk_reuse_zip)
         modes_layout.addWidget(self.chk_sync)
         modes_group.setLayout(modes_layout)
         left_layout.addWidget(modes_group)
@@ -298,6 +353,17 @@ class ToolsTab(QWidget):
         for widget, text in helps.items():
             filter_obj = HelpEventFilter(self.set_help_text, text)
             widget.installEventFilter(filter_obj)
+
+    def open_backups_folder(self):
+        """Abre la carpeta de backups temporales en el explorador"""
+        temp_dir = os.path.join(os.environ.get('TEMP', os.path.expanduser('~')), 'VultrDrive_Backups')
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir, exist_ok=True)
+            
+        try:
+            os.startfile(temp_dir)
+        except Exception as e:
+            QMessageBox.warning(self, "Error", f"No se pudo abrir la carpeta: {e}")
             setattr(widget, "_help_filter", filter_obj)
 
     def set_help_text(self, text):
@@ -339,6 +405,7 @@ class ToolsTab(QWidget):
         
         do_zip = self.chk_zip.isChecked()
         do_sync = self.chk_sync.isChecked()
+        reuse_zip = self.chk_reuse_zip.isChecked()
 
         if not do_zip and not do_sync:
             QMessageBox.warning(self, "Error", "Elige ZIP, Sync o ambos.")
@@ -356,7 +423,7 @@ class ToolsTab(QWidget):
             plan_config = {'transfers': '32', 'checkers': '32'}
 
         self.worker = SmartUploadWorker(
-            self.rclone_manager, profile, folder, bucket, do_zip, do_sync, **plan_config
+            self.rclone_manager, profile, folder, bucket, do_zip, do_sync, reuse_zip, **plan_config
         )
         self.worker.progress_update.connect(self.append_log)
         self.worker.status_update.connect(self.update_status)

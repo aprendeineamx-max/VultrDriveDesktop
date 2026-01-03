@@ -435,38 +435,68 @@ class RcloneManager:
         except Exception as e:
             return False, str(e)
 
-    def upload_file(self, profile_name, local_file, bucket_name, remote_filename=None, progress_callback=None):
+    def upload_file(self, profile_name, local_file, bucket_name, remote_filename=None, progress_callback=None, **kwargs):
         """
-        Sube un archivo único usando rclone copyto.
-        Ideal para subir el ZIP de backup.
+        Sube un archivo único usando rclone copyto con optimizaciones S3 (multipart).
+        Soporta **kwargs para ajustar el rendimiento al vuelo (Ultra/Stability).
         """
         try:
             rclone_path = self._find_rclone_executable()
             if not rclone_path:
                  return False, "Error: Ejecutable de rclone no encontrado"
-            section_name = self.create_rclone_config(profile_name) # Asegura config
+            section_name = self.create_rclone_config(profile_name)
 
             if not remote_filename:
                 remote_filename = os.path.basename(local_file)
             
-            # Destino: nombre_seccion:bucket/nombre_archivo
             remote_path = f"{section_name}:{bucket_name}/{remote_filename}"
             
+            # Construir comando base
             cmd = [
                 rclone_path,
                 "copyto",
                 local_file,
                 remote_path,
                 "--config", self.rclone_config_file,
-                "--stats", "1s", # Reportar progreso cada segundo
+                "--stats", "1s",
                 "--stats-one-line",
-                "--log-level", "INFO"
+                "--log-level", "INFO",
+                "--rc", # Habilitar control remoto para Live Tuning
+                "--rc-no-auth" # Simplificar acceso local
             ]
+
+            # ===== OPTIMIZACIONES DE VELOCIDAD S3 =====
+            # Para archivos únicos, 'transfers' no ayuda mucho, pero s3-upload-concurrency SI.
+            # Convertimos el plan 'transfers' (ej 320) en concurrency para el multipart.
+            
+            transfers_val = int(kwargs.get('transfers', 4))
+            
+            # S3 Upload Concurrency: Define cuántas partes del MISMO archivo se suben a la vez.
+            # Rclone default es 4. Para Ultra, queremos saturar.
+            s3_concurrency = transfers_val if transfers_val < 64 else 64 # Cap seguro de 64 hilos por archivo
+            
+            cmd.extend(["--s3-upload-concurrency", str(s3_concurrency)])
+            
+            # Chunk Size: Más grande = menos overhead requests, mejor para archivos grandes.
+            # Default 5M. Subimos a 64M o 128M en modo Ultra.
+            if transfers_val > 100: # Modo Ultra
+                cmd.extend(["--s3-chunk-size", "128M"])
+            elif transfers_val > 10: # Modo Balanced
+                cmd.extend(["--s3-chunk-size", "32M"])
+            
+            # Otros flags pass-through
+            if 'checkers' in kwargs:
+                cmd.extend(["--checkers", str(kwargs['checkers'])])
+            if 'tpslimit' in kwargs and int(kwargs['tpslimit']) > 0:
+                cmd.extend(["--tpslimit", str(kwargs['tpslimit'])])
+            
+            # Debug log
+            print(f"DEBUG: upload_file flags: concurrency={s3_concurrency}")
 
             process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE, # Rclone escribe stats en stderr por defecto
+                stderr=subprocess.PIPE,
                 text=True,
                 creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
             )
@@ -478,8 +508,6 @@ class RcloneManager:
                     break
                 
                 if line and progress_callback:
-                    # Parsear línea de stats de rclone si es necesario
-                    # Ejemplo: " 46% / 10.000 G, 2.000 M/s, 2s"
                     progress_callback(line.strip())
 
             if process.returncode == 0:
