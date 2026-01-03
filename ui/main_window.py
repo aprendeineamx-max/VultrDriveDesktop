@@ -195,8 +195,8 @@ class MainWindow(QMainWindow):
 
         # 3. Initialize Dependent Tabs
         self.recovery_tab = RecoveryTab(self.rclone_manager)
-        # Ahora bucket_selector existe gracias a setup_main_tab
-        self.tools_tab = ToolsTab(self.s3_handler, self.bucket_selector) 
+        # Fix: ToolsTab expects (rclone_manager, config_manager)
+        self.tools_tab = ToolsTab(self.rclone_manager, self.config_manager)
 
         # 4. Add Tabs to Widget
         self.tabs.addTab(self.main_tab, "🏠 " + self.tr("tab_main"))
@@ -214,8 +214,9 @@ class MainWindow(QMainWindow):
         
         # Connect Global Logging Signal
         if LOGGING_AVAILABLE:
-            from logger_manager import logger_manager
-            logger_manager.log_received.connect(self.monitoring_tab.add_log)
+            from logger_manager import get_logger_manager
+            # Use singleton accessor
+            get_logger_manager().log_received.connect(self.monitoring_tab.add_log_entry)
 
         # Progress Bar
         self.progress_bar = QProgressBar()

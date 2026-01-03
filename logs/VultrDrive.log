@@ -1311,3 +1311,69 @@ Traceback (most recent call last):
     plans = self.config_manager.get_plans()
             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 AttributeError: 'QComboBox' object has no attribute 'get_plans'
+2026-01-02 20:08:26 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 20:09:25 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 20:10:18 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: 'QComboBox' object has no attribute 'get_plans'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 199, in __init__
+    self.tools_tab = ToolsTab(self.s3_handler, self.bucket_selector)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\tools_tab.py", line 128, in __init__
+    self.init_ui()
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\tools_tab.py", line 289, in init_ui
+    self.load_plans_to_combo()
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\tools_tab.py", line 344, in load_plans_to_combo
+    plans = self.config_manager.get_plans()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'QComboBox' object has no attribute 'get_plans'
+2026-01-02 20:11:42 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 20:11:57 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 20:12:05 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: cannot import name 'logger_manager' from 'logger_manager' (C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logger_manager.py)
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 217, in __init__
+    from logger_manager import logger_manager
+ImportError: cannot import name 'logger_manager' from 'logger_manager' (C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logger_manager.py)
+2026-01-02 20:15:27 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 20:15:41 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 20:15:46 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: cannot import name 'logger_manager' from 'logger_manager' (c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logger_manager.py)
+Traceback (most recent call last):
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 217, in __init__
+    from logger_manager import logger_manager
+ImportError: cannot import name 'logger_manager' from 'logger_manager' (c:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logger_manager.py)
+2026-01-02 20:18:14 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 20:18:17 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 20:18:24 | ERROR    | VultrDrive | main:369 | Error crítico al inicializar MainWindow: 'MonitoringTab' object has no attribute 'add_log'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\app.py", line 338, in main
+    window = MainWindow(theme_manager, translations, save_user_preferences)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 219, in __init__
+    get_logger_manager().log_received.connect(self.monitoring_tab.add_log)
+                                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: 'MonitoringTab' object has no attribute 'add_log'
+2026-01-02 20:20:18 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\logs
+2026-01-02 20:20:22 | DEBUG    | VultrDrive | main:308 | WinFsp ya está instalado
+2026-01-02 20:21:03 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-02 20:40:57 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-02 20:40:57 | ERROR    | VultrDrive.ui.main_window | load_profile:1406 | Error inesperado al cargar perfil 'Dolphin-1000-Premium': 'MainWindow' object has no attribute 'state_monitor'
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 1377, in load_profile
+    if self.state_monitor:
+       ^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'state_monitor'
+2026-01-02 20:40:58 | ERROR    | VultrDrive.ErrorHandler | _log_error:327 | [Desconocido] Error: 'MainWindow' object has no attribute 'state_monitor' | Contexto: load_profile
+Traceback (most recent call last):
+  File "C:\Users\Administrator\Desktop\vultr desktop\VultrDriveDesktop\ui\main_window.py", line 1377, in load_profile
+    if self.state_monitor:
+       ^^^^^^^^^^^^^^^^^^
+AttributeError: 'MainWindow' object has no attribute 'state_monitor'
+2026-01-02 20:40:58 | INFO     | VultrDrive.ErrorHandler | _log_error:332 | Sugerencia: Por favor, reporta este error al soporte técnico.
