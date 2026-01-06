@@ -1554,3 +1554,31 @@ AttributeError: 'ToolsTab' object has no attribute 'cancel_upload'
 2026-01-02 23:33:52 | DEBUG    | VultrDrive.ui.main_window | refresh_buckets:1256 | Se ignoró refresh_buckets porque ya hay una operación en curso.
 2026-01-02 23:33:52 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
 2026-01-02 23:33:53 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-06 00:23:04 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\WinAdmin\.gemini\antigravity\scratch\VultrDriveDesktop\logs
+2026-01-06 00:23:06 | INFO     | VultrDrive | main:284 | WinFsp no está instalado. Intentando instalación automática...
+2026-01-06 00:23:16 | INFO     | VultrDrive | main:295 | WinFsp instalado exitosamente
+2026-01-06 00:23:24 | INFO     | VultrDrive | main:385 | Aplicación iniciada correctamente
+2026-01-06 00:23:45 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-06 00:23:45 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-06 00:23:45 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-06 00:23:45 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-06 00:23:46 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-06 00:23:46 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-06 00:23:49 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para sjc1.vultrobjects.com
+2026-01-06 00:23:49 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000' cargado exitosamente
+2026-01-06 00:23:49 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[sjc1.vultrobjects.com]'
+2026-01-06 00:23:49 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde sjc1.vultrobjects.com
+2026-01-06 00:23:50 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['bucket-nubepelis']
+2026-01-06 00:23:50 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-06 00:23:59 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[V:bucket-nubepelis]'
+2026-01-06 00:24:01 | INFO     | VultrDrive.ui.main_window | on_success:1606 | Montaje completado (mount_drive[V:bucket-nubepelis]): Montado exitosamente en V:
+2026-01-06 00:24:01 | ERROR    | VultrDrive.ui.main_window | _on_mount_success:1669 | Error al procesar éxito de montaje: 'MainWindow' object has no attribute 'state_monitor'
+2026-01-06 00:26:17 | DEBUG    | VultrDrive.s3_handler | __init__:65 | S3Handler inicializado para ewr1.vultrobjects.com
+2026-01-06 00:26:17 | INFO     | VultrDrive.ui.main_window | load_profile:1377 | Perfil 'Dolphin-1000-Premium' cargado exitosamente
+2026-01-06 00:26:17 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'list_buckets[ewr1.vultrobjects.com]'
+2026-01-06 00:26:17 | DEBUG    | VultrDrive.s3_handler | list_buckets:90 | Intentando listar buckets desde ewr1.vultrobjects.com
+2026-01-06 00:26:18 | INFO     | VultrDrive.s3_handler | list_buckets:96 | Encontrados 1 buckets: ['lab-backups']
+2026-01-06 00:26:18 | INFO     | VultrDrive.ui.main_window | _handle_bucket_response:1321 | Buckets cargados exitosamente: 1
+2026-01-06 00:26:27 | DEBUG    | VultrDrive.core.task_runner | run:144 | Ejecutando tarea 'mount_drive[W:lab-backups]'
+2026-01-06 00:26:29 | INFO     | VultrDrive.ui.main_window | on_success:1606 | Montaje completado (mount_drive[W:lab-backups]): Montado exitosamente en W:
+2026-01-06 00:26:29 | ERROR    | VultrDrive.ui.main_window | _on_mount_success:1669 | Error al procesar éxito de montaje: 'MainWindow' object has no attribute 'state_monitor'
