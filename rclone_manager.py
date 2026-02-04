@@ -149,16 +149,186 @@ class RcloneManager:
                     pass
         return None
 
+    def create_mega_config(self, name, user, password):
+        """
+        Crea una configuración de MEGA usando rclone config create para asegurar
+        que la contraseña se guarde encriptada/oscurecida correctamente.
+        """
+        rclone_path = self._find_rclone_executable()
+        if not rclone_path:
+            return False, "Rclone no encontrado"
+            
+        # rclone config create NAME mega user=USER pass=PASS
+        cmd = [
+            rclone_path,
+            "config",
+            "create",
+            name,
+            "mega",
+            f"user={user}",
+            f"pass={password}",
+            "--config", self.rclone_config_file,
+            "--non-interactive"
+        ]
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            if result.returncode == 0:
+                return True, f"Cuenta MEGA '{name}' agregada correctamente"
+            else:
+                return False, f"Error al crear config: {result.stderr}"
+        except Exception as e:
+            return False, f"Excepción al crear config: {str(e)}"
+
+    def list_mega_profiles(self):
+        """Lista todos los perfiles que sean de tipo mega en rclone.conf"""
+        profiles = []
+        if not os.path.exists(self.rclone_config_file):
+            return profiles
+            
+        config = configparser.ConfigParser()
+        config.read(self.rclone_config_file)
+        
+        for section in config.sections():
+            if config.has_option(section, 'type') and config.get(section, 'type') == 'mega':
+                profiles.append({
+                    'name': section,
+                    'user': config.get(section, 'user', fallback='Unknown')
+                })
+        return profiles
+
+    def delete_rclone_profile(self, name):
+        """Elimina un perfil del archivo de configuración"""
+        rclone_path = self._find_rclone_executable()
+        if not rclone_path:
+            return False, "Rclone no encontrado"
+            
+        cmd = [
+            rclone_path,
+            "config",
+            "delete",
+            name,
+            "--config", self.rclone_config_file
+        ]
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            if result.returncode == 0:
+                return True, "Perfil eliminado"
+            else:
+                return False, f"Error al eliminar: {result.stderr}"
+        except Exception as e:
+            return False, str(e)
+
+    def copy_file_to_remote(self, remote_name, local_path, remote_path="/"):
+        """
+        Copia un archivo local a un remoto usando rclone copy.
+        
+        Args:
+            remote_name: Nombre del remoto en rclone.conf
+            local_path: Ruta completa del archivo local
+            remote_path: Carpeta destino en el remoto (default: raíz)
+        """
+        rclone_path = self._find_rclone_executable()
+        if not rclone_path:
+            return False, "Rclone no encontrado"
+        
+        # rclone copy /path/to/file remote:path
+        cmd = [
+            rclone_path,
+            "copy",
+            local_path,
+            f"{remote_name}:{remote_path}",
+            "--config", self.rclone_config_file,
+            "-v"
+        ]
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            if result.returncode == 0:
+                return True, "Archivo subido correctamente"
+            else:
+                return False, f"Error: {result.stderr}"
+        except Exception as e:
+            return False, f"Excepción: {str(e)}"
+
+    def copy_folder_to_remote(self, remote_name, local_folder, remote_path="/"):
+        """
+        Copia una carpeta local completa a un remoto usando rclone copy.
+        
+        Args:
+            remote_name: Nombre del remoto en rclone.conf
+            local_folder: Ruta de la carpeta local
+            remote_path: Carpeta destino en el remoto (default: raíz)
+        """
+        rclone_path = self._find_rclone_executable()
+        if not rclone_path:
+            return False, "Rclone no encontrado"
+        
+        folder_name = os.path.basename(local_folder)
+        dest_path = f"{remote_path}/{folder_name}" if remote_path != "/" else folder_name
+        
+        cmd = [
+            rclone_path,
+            "copy",
+            local_folder,
+            f"{remote_name}:{dest_path}",
+            "--config", self.rclone_config_file,
+            "-v"
+        ]
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == 'win32' else 0
+            )
+            
+            if result.returncode == 0:
+                return True, "Carpeta respaldada correctamente"
+            else:
+                return False, f"Error: {result.stderr}"
+        except Exception as e:
+            return False, f"Excepción: {str(e)}"
+
     def mount_drive(self, profile_name, drive_letter, bucket_name=None, plan_config=None):
         """Mount the storage as a network drive.
         
         Args:
-            profile_name (str): Vultr profile name
+            profile_name (str): Vultr profile name or MEGA profile name
             drive_letter (str): Drive letter (e.g., "Z")
             bucket_name (str, optional): Specific bucket to mount
             plan_config (dict, optional): Dictionary with Rclone performance flags
         """
+        # Try to create config from Vultr config.json
         section_name = self.create_rclone_config(profile_name)
+        
+        # If not found in config.json, check if it exists directly in rclone.conf (e.g. MEGA)
+        if not section_name:
+            if os.path.exists(self.rclone_config_file):
+                config = configparser.ConfigParser()
+                config.read(self.rclone_config_file)
+                if config.has_section(profile_name):
+                    section_name = profile_name  # Use the profile name directly as section
+        
         if not section_name:
             return False, "Profile not found", None
 
@@ -392,6 +562,13 @@ class RcloneManager:
     def list_buckets_rclone(self, profile_name):
         """List all buckets using rclone"""
         section_name = self.create_rclone_config(profile_name)
+        if not section_name:
+             if os.path.exists(self.rclone_config_file):
+                config = configparser.ConfigParser()
+                config.read(self.rclone_config_file)
+                if config.has_section(profile_name):
+                    section_name = profile_name
+        
         if not section_name:
             return []
 

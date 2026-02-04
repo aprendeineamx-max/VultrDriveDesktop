@@ -15,7 +15,8 @@ foreach ($cmd in @("py", "python", "python3")) {
             Write-Host "   OK - Python encontrado: $version" -ForegroundColor Green
             break
         }
-    } catch {}
+    }
+    catch {}
 }
 
 if (-not $pythonCmd) {
@@ -29,7 +30,8 @@ Write-Host "2. Instalando PyInstaller..." -ForegroundColor Yellow
 & $pythonCmd -m pip install pyinstaller --quiet --disable-pip-version-check
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   OK - PyInstaller instalado" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ERROR - No se pudo instalar PyInstaller" -ForegroundColor Red
     exit 1
 }
@@ -66,9 +68,17 @@ $pyinstallerArgs = @(
     "--hidden-import=boto3",
     "--hidden-import=botocore",
     "--hidden-import=watchdog",
+    "--hidden-import=google.cloud.storage",
+    "--hidden-import=google.auth",
+    "--hidden-import=google.api_core",
+    "--hidden-import=azure.identity",
+    "--hidden-import=azure.storage.blob",
+    "--hidden-import=azure.mgmt.compute",
+    "--hidden-import=azure.mgmt.resource",
     "--collect-all=PyQt6",
     "--collect-all=boto3",
     "--collect-all=botocore",
+    "--collect-all=google.cloud.storage",
     "--noconsole",
     "app.py"
 )
@@ -77,7 +87,8 @@ $pyinstallerArgs = @(
 
 if ($LASTEXITCODE -eq 0 -and (Test-Path ".\dist\VultrDriveDesktop.exe")) {
     Write-Host "   OK - Aplicacion compilada exitosamente" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ERROR - La compilacion fallo" -ForegroundColor Red
     Write-Host "   Revisa los logs en build/ para mas detalles" -ForegroundColor Yellow
     exit 1
@@ -93,7 +104,8 @@ Write-Host "   OK - Ejecutable copiado" -ForegroundColor Green
 if (Test-Path ".\rclone-v1.71.2-windows-amd64\rclone.exe") {
     Copy-Item ".\rclone-v1.71.2-windows-amd64\rclone.exe" "$distFolder\" -Force
     Write-Host "   OK - Rclone copiado" -ForegroundColor Green
-} elseif (Test-Path ".\rclone.exe") {
+}
+elseif (Test-Path ".\rclone.exe") {
     Copy-Item ".\rclone.exe" "$distFolder\" -Force
     Write-Host "   OK - Rclone copiado" -ForegroundColor Green
 }
@@ -103,7 +115,8 @@ Write-Host "   Copiando configuracion predeterminada..." -ForegroundColor Gray
 if (Test-Path ".\config.default.json") {
     Copy-Item ".\config.default.json" "$distFolder\config.json" -Force
     Write-Host "   OK - Configuracion predeterminada incluida" -ForegroundColor Green
-} elseif (Test-Path ".\config.json") {
+}
+elseif (Test-Path ".\config.json") {
     Copy-Item ".\config.json" "$distFolder\config.json" -Force
     Write-Host "   OK - Configuracion actual incluida" -ForegroundColor Green
 }
@@ -112,6 +125,48 @@ if (Test-Path ".\config.default.json") {
 if (Test-Path ".\user_preferences.json") {
     Copy-Item ".\user_preferences.json" "$distFolder\" -Force
     Write-Host "   OK - Preferencias de usuario incluidas" -ForegroundColor Green
+}
+
+# 6.7. Copiar credenciales de GCP (Claves GCP/)
+Write-Host "   Copiando credenciales de GCP..." -ForegroundColor Gray
+if (Test-Path ".\Claves GCP") {
+    Copy-Item ".\Claves GCP" "$distFolder\Claves GCP" -Recurse -Force
+    Write-Host "   OK - Credenciales de GCP incluidas" -ForegroundColor Green
+}
+else {
+    Write-Host "   NOTA - No se encontraron credenciales GCP" -ForegroundColor Yellow
+}
+
+# 6.8. Copiar credenciales de Azure
+Write-Host "   Copiando credenciales de Azure..." -ForegroundColor Gray
+if (Test-Path ".\azure_creds.json") {
+    Copy-Item ".\azure_creds.json" "$distFolder\" -Force
+    Write-Host "   OK - azure_creds.json incluido" -ForegroundColor Green
+}
+if (Test-Path ".\azure_profiles.json") {
+    Copy-Item ".\azure_profiles.json" "$distFolder\" -Force
+    Write-Host "   OK - azure_profiles.json incluido" -ForegroundColor Green
+}
+
+# 6.9. Copiar credenciales de Vultr S3
+Write-Host "   Copiando credenciales de Vultr..." -ForegroundColor Gray
+if (Test-Path ".\vultr_creds.json") {
+    Copy-Item ".\vultr_creds.json" "$distFolder\" -Force
+    Write-Host "   OK - vultr_creds.json incluido" -ForegroundColor Green
+}
+
+# 6.10. Copiar configuración de Rclone
+Write-Host "   Copiando configuración de Rclone..." -ForegroundColor Gray
+if (Test-Path ".\rclone.conf") {
+    Copy-Item ".\rclone.conf" "$distFolder\" -Force
+    Write-Host "   OK - rclone.conf incluido" -ForegroundColor Green
+}
+
+# 6.11. Copiar Transfer Manager state (para resume de descargas)
+Write-Host "   Copiando estado de transferencias..." -ForegroundColor Gray
+if (Test-Path ".\active_transfers.json") {
+    Copy-Item ".\active_transfers.json" "$distFolder\" -Force
+    Write-Host "   OK - active_transfers.json incluido (para reanudar descargas)" -ForegroundColor Green
 }
 
 # 7. Copiar documentación

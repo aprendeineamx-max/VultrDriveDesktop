@@ -228,7 +228,32 @@ def start_component_check(window, manual=False, force_install=False):
 
     window._winfsp_installer = installer
     window._winfsp_thread = thread
+    window._winfsp_installer = installer
+    window._winfsp_thread = thread
     thread.start()
+
+def exception_hook(exctype, value, traceback_obj):
+    """Global exception hook to catch unhandled errors"""
+    import traceback
+    traceback_str = ''.join(traceback.format_exception(exctype, value, traceback_obj))
+    error_msg = f"Unhandled Exception: {value}\n{traceback_str}"
+    print(error_msg)
+    if 'logger' in globals() and logger:
+        logger.critical(error_msg)
+    else:
+        # Fallback to file if logger not ready
+        try:
+            with open("crash_log.txt", "a") as f:
+                f.write(f"\n[{import_datetime_now()}] {error_msg}\n")
+        except:
+            pass
+    sys.__excepthook__(exctype, value, traceback_obj)
+
+def import_datetime_now():
+    from datetime import datetime
+    return datetime.now()
+
+sys.excepthook = exception_hook
 
 def main():
     app = QApplication(sys.argv)

@@ -1,8 +1,10 @@
-from PyQt6.QtWidgets import (QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
-                             QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
-                             QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
-                             QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
-                             QStyle, QDialog)
+from PyQt6.QtWidgets import (
+    QApplication, QMainWindow, QVBoxLayout, QWidget, QPushButton, QComboBox, 
+    QLabel, QFileDialog, QStatusBar, QHBoxLayout, QGroupBox, 
+    QMessageBox, QLineEdit, QTabWidget, QTextEdit, QProgressBar,
+    QMenu, QScrollArea, QSizePolicy, QToolButton, QSystemTrayIcon,
+    QStyle, QDialog, QStackedWidget
+)
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt6.QtGui import QAction
 from config_manager import ConfigManager
@@ -20,9 +22,12 @@ from ui.tools_tab import ToolsTab
 from ui.plan_editor import PlanEditorDialog
 from ui.recovery_tab import RecoveryTab
 from ui.monitoring_tab import MonitoringTab
-from functools import partial
 
 # ... (omitting intermediate lines)
+from ui.mega_tab import MegaTab
+from ui.azure_tab import AzureTab
+from ui.gcp_tab import GCPTab
+from ui.sidebar import Sidebar
 
 
 # ===== MEJORA Task5: Auditoría y Monitor =====
@@ -175,37 +180,73 @@ class MainWindow(QMainWindow):
         # ===== SETUP UI CORE =====
         self.central_widget = QWidget()
         self.setCentralWidget(self.central_widget)
-        self.main_layout = QVBoxLayout(self.central_widget)
+        
+        # ===== NEW: Layout con barra lateral =====
+        self.root_layout = QHBoxLayout(self.central_widget)
+        self.root_layout.setContentsMargins(0, 0, 0, 0)
+        self.root_layout.setSpacing(0)
+        
+        # Sidebar izquierda
+        self._setup_sidebar()
+        
+        # Contenedor derecho para el contenido original
+        self.content_container = QWidget()
+        self.main_layout = QVBoxLayout(self.content_container)
+        self.main_layout.setContentsMargins(10, 10, 10, 10)
+        self.root_layout.addWidget(self.content_container, 1)
 
         self.setup_top_controls()
 
-        # Tabs Container
-        self.tabs = QTabWidget()
-        self.main_layout.addWidget(self.tabs)
 
-        # 1. Initialize Base Tab Widgets
+
+        # ===== STACK PRINCIPAL (Para cambiar entre Vultr, MEGA, Azure) =====
+        self.main_stack = QStackedWidget()
+        self.main_layout.addWidget(self.main_stack)
+
+        # 1. Contenedor Vultr (QTabWidget original)
+        self.vultr_container = QWidget()
+        vultr_layout = QVBoxLayout(self.vultr_container)
+        vultr_layout.setContentsMargins(0, 0, 0, 0)
+        
+        self.vultr_tabs = QTabWidget()
+        vultr_layout.addWidget(self.vultr_tabs)
+        
+        self.main_stack.addWidget(self.vultr_container) # Index 0
+
+        # 2. Inicializar Widgets de Vultr
         self.main_tab = QWidget()
         self.mount_tab = QWidget()
         self.sync_tab = QWidget()
         self.advanced_tab = QWidget()
-        self.monitoring_tab = MonitoringTab() # NUEVO: Monitor
+        self.monitoring_tab = MonitoringTab()
 
-        # 2. Setup Main Tab FIRST (creates profile_selector and bucket_selector)
+        # 3. Setup Main Tab (creates profile_selector and bucket_selector)
         self.setup_main_tab()
 
-        # 3. Initialize Dependent Tabs
+        # 4. Initialize Dependent Tabs
         self.recovery_tab = RecoveryTab(self.rclone_manager)
-        # Fix: ToolsTab expects (rclone_manager, config_manager)
         self.tools_tab = ToolsTab(self.rclone_manager, self.config_manager)
 
-        # 4. Add Tabs to Widget
-        self.tabs.addTab(self.main_tab, "🏠 " + self.tr("tab_main"))
-        self.tabs.addTab(self.mount_tab, "💿 " + self.tr("tab_mount"))
-        self.tabs.addTab(self.sync_tab, "🔄 " + self.tr("tab_sync"))
-        self.tabs.addTab(self.recovery_tab, "🚑 " + self.tr("tab_recovery"))
-        self.tabs.addTab(self.tools_tab, "🛠️ " + self.tr("tab_tools"))
-        self.tabs.addTab(self.monitoring_tab, "📊 " + self.tr("tab_monitor"))
-        self.tabs.addTab(self.advanced_tab, "⚙️ " + self.tr("tab_advanced"))
+        # 5. Add Tabs to Vultr Widget
+        self.vultr_tabs.addTab(self.main_tab, "🏠 " + self.tr("tab_main"))
+        self.vultr_tabs.addTab(self.mount_tab, "💿 " + self.tr("tab_mount"))
+        self.vultr_tabs.addTab(self.sync_tab, "🔄 " + self.tr("tab_sync"))
+        self.vultr_tabs.addTab(self.recovery_tab, "🚑 " + self.tr("tab_recovery"))
+        self.vultr_tabs.addTab(self.tools_tab, "🛠️ " + self.tr("tab_tools"))
+        self.vultr_tabs.addTab(self.monitoring_tab, "📊 " + self.tr("tab_monitor"))
+        self.vultr_tabs.addTab(self.advanced_tab, "⚙️ " + self.tr("tab_advanced"))
+        
+        # 6. MEGA Tab (Container propio)
+        self.mega_tab = MegaTab(self.rclone_manager, self)
+        self.main_stack.addWidget(self.mega_tab) # Index 1
+        
+        # 7. Azure Tab (Container propio)
+        self.azure_tab = AzureTab(self)
+        self.main_stack.addWidget(self.azure_tab) # Index 2
+        
+        # 8. GCP Tab (Container propio)
+        self.gcp_tab = GCPTab(self)
+        self.main_stack.addWidget(self.gcp_tab) # Index 3
 
         # 5. Setup Remaining Tabs Content
         self.setup_mount_tab()
@@ -249,6 +290,85 @@ class MainWindow(QMainWindow):
 
         # ===== MEJORA: Multi-Ventana (Ctrl+Shift+N) =====
         self.setup_multi_window_shortcut()
+
+    def _setup_sidebar(self):
+        """Configura la barra lateral izquierda con tipos de almacenamiento"""
+        self.sidebar = Sidebar(self)
+        self.sidebar.setFixedWidth(200)
+        
+        # Agregar tipos de almacenamiento
+        self.sidebar.add_storage_type('vultr_s3', '🔷', 'Vultr S3', '#3498db')
+        self.sidebar.add_storage_type('mega', '☁️', 'MEGA.nz', '#e74c3c')
+        self.sidebar.add_storage_type('azure', '🔷', 'Azure Disks', '#0078D4')
+        self.sidebar.add_storage_type('gcp', '☁️', 'Google Cloud', '#4285F4')
+        
+        # Conectar señal de selección
+        self.sidebar.storage_selected.connect(self._on_sidebar_storage_selected)
+        self.sidebar.add_storage_clicked.connect(self._on_add_storage_clicked)
+        
+        # Agregar al layout principal
+        self.root_layout.insertWidget(0, self.sidebar)
+    
+    def _on_sidebar_storage_selected(self, storage_id: str):
+        """Maneja la selección de tipo de almacenamiento desde la barra lateral"""
+        if storage_id == 'vultr_s3':
+            # Mostrar Stack 0 (Vultr)
+            self.main_stack.setCurrentIndex(0)
+            self._filter_profiles_by_type('vultr')
+            self.statusBar().showMessage("🔷 Modo Vultr S3 activado")
+            
+        elif storage_id == 'mega':
+            # Mostrar Stack 1 (MEGA)
+            self.main_stack.setCurrentIndex(1)
+            # MEGA Tab maneja sus propios perfiles internamente, o usamos filtro global si es compartido
+            # La implementación actual de MegaTab parece autocontenida
+            self.statusBar().showMessage("☁️ Modo MEGA.nz activado")
+            
+        elif storage_id == 'azure':
+            # Mostrar Stack 2 (Azure)
+            self.main_stack.setCurrentIndex(2)
+            self.statusBar().showMessage("🔷 Modo Azure Disks activado")
+            
+        elif storage_id == 'gcp':
+            # Mostrar Stack 3 (GCP)
+            self.main_stack.setCurrentIndex(3)
+            self.statusBar().showMessage("☁️ Modo Google Cloud Platform activado")
+    
+    def _filter_profiles_by_type(self, storage_type: str):
+        """Filtra los perfiles en el selector según el tipo de almacenamiento"""
+        self.profile_selector.blockSignals(True)
+        self.profile_selector.clear()
+        
+        if storage_type == 'vultr':
+            # Perfiles de Vultr S3 desde config_manager
+            profiles = self.config_manager.list_profiles()
+            for p in profiles:
+                self.profile_selector.addItem(f"🔷 {p}")
+        elif storage_type == 'mega':
+            # Perfiles MEGA desde rclone_manager
+            mega_profiles = self.rclone_manager.list_mega_profiles()
+            for p in mega_profiles:
+                self.profile_selector.addItem(f"☁️ {p['name']}")
+        
+        self.profile_selector.blockSignals(False)
+        
+        # Cargar el primer perfil si hay alguno
+        if self.profile_selector.count() > 0:
+            self.profile_selector.setCurrentIndex(0)
+            display_name = self.profile_selector.currentText()
+            self.load_profile(display_name)
+    
+    def _on_add_storage_clicked(self):
+        """Muestra diálogo para agregar nuevo tipo de almacenamiento"""
+        QMessageBox.information(
+            self,
+            "Próximamente",
+            "La posibilidad de agregar nuevos tipos de almacenamiento "
+            "(Google Drive, OneDrive, Dropbox, etc.) estará disponible pronto.\n\n"
+            "Por ahora puedes:\n"
+            "• Usar Vultr S3 (pestaña Principal)\n"
+            "• Usar MEGA.nz (pestaña MEGA.nz)"
+        )
 
     def setup_multi_window_shortcut(self):
         """Configura el atajo Ctrl+Shift+N para abrir nueva ventana"""
@@ -451,7 +571,9 @@ class MainWindow(QMainWindow):
         self.restore_from_tray()
         if hasattr(self, 'tabs'):
             # Cambiar a pestaña "Montar Disco" (índice 1)
-            self.tabs.setCurrentIndex(1)
+            # Cambiar a pestaña "Montar Disco" (índice 1 en Vultr Tabs)
+            self.main_stack.setCurrentIndex(0) # Asegurar que vemos Vultr
+            self.vultr_tabs.setCurrentIndex(1)
 
     def update_language_button_text(self):
         """Update the language button text"""
@@ -744,7 +866,9 @@ class MainWindow(QMainWindow):
         profile_layout = QHBoxLayout()
         self.profile_label = QLabel(self.tr("active_profile"))
         self.profile_selector = QComboBox()
-        self.profile_selector.addItems(self.config_manager.list_profiles())
+        self.profile_selector = QComboBox()
+        # self.profile_selector.addItems(self.config_manager.list_profiles()) # Replaced by refresh_profiles_list
+        self.refresh_profiles_list()
         self.profile_selector.currentTextChanged.connect(self.load_profile)
         profile_layout.addWidget(self.profile_label)
         profile_layout.addWidget(self.profile_selector, 1)
@@ -1332,7 +1456,43 @@ class MainWindow(QMainWindow):
         # Actualizar dashboard con métricas posiblemente nuevas
         self.update_dashboard_stats(force_remote=force_remote)
 
-    def load_profile(self, profile_name):
+    def refresh_profiles_list(self):
+        """Refresh the list of available profiles (Vultr + MEGA)"""
+        current = self.profile_selector.currentText()
+        self.profile_selector.blockSignals(True)
+        self.profile_selector.clear()
+        
+        # 1. Vultr Profiles
+        vultr_profiles = self.config_manager.list_profiles()
+        for p in vultr_profiles:
+             self.profile_selector.addItem(f"🔷 {p}", p) # Store real name in data
+
+        # 2. MEGA Profiles
+        mega_profiles = self.rclone_manager.list_mega_profiles()
+        for p in mega_profiles:
+            self.profile_selector.addItem(f"☁️ {p['name']}", p['name'])
+
+        self.profile_selector.blockSignals(False)
+        
+        # Restore selection if possible
+        if current:
+            # Try to find exact match or match in data
+            index = self.profile_selector.findData(current)
+            if index < 0:
+                 # Try to find by text (maybe user had "🔷 Profile")
+                 index = self.profile_selector.findText(current)
+            
+            if index >= 0:
+                self.profile_selector.setCurrentIndex(index)
+
+    def load_profile(self, display_name):
+        # Get real profile name from data if available
+        index = self.profile_selector.currentIndex()
+        if index >= 0:
+            profile_name = self.profile_selector.itemData(index)
+        else:
+            profile_name = display_name
+            
         if not profile_name:
             self.s3_handler = None
             self.statusBar().showMessage(self.tr("no_profile_selected"))
@@ -1340,6 +1500,40 @@ class MainWindow(QMainWindow):
             
         # Guardar como perfil activo
         self.config_manager.set_active_profile(profile_name)
+
+        # 1. Check if it is a MEGA profile
+        mega_profiles = [p['name'] for p in self.rclone_manager.list_mega_profiles()]
+        if profile_name in mega_profiles:
+            self.s3_handler = None
+            self._current_profile_type = 'mega'  # Track profile type
+            self._current_mega_profile = profile_name
+            self.statusBar().showMessage(f"☁️ Perfil MEGA '{profile_name}' cargado.")
+            
+            # Setup UI for MEGA (No buckets needed, just Root)
+            self.bucket_selector.blockSignals(True)
+            self.bucket_selector.clear()
+            self.bucket_selector.addItem("/ (Raíz)")
+            self.bucket_selector.setEnabled(False)
+            self.refresh_buckets_btn.setEnabled(False)
+            self.create_bucket_btn.setEnabled(False)
+            self.delete_bucket_btn.setEnabled(False)
+            self.bucket_selector.blockSignals(False)
+            
+            # Enable file operations (will use rclone instead of S3)
+            self.upload_button.setEnabled(True) 
+            self.backup_button.setEnabled(True)
+            return
+
+        # 2. It is a Vultr S3 Profile
+        self._current_profile_type = 'vultr'
+        self._current_mega_profile = None
+        # Re-enable UI elements
+        self.bucket_selector.setEnabled(True)
+        self.refresh_buckets_btn.setEnabled(True)
+        self.create_bucket_btn.setEnabled(True)
+        # delete button depends on selection
+        self.upload_button.setEnabled(True)
+        self.backup_button.setEnabled(True)
 
         config = self.config_manager.get_config(profile_name)
         if config:
@@ -1413,6 +1607,37 @@ class MainWindow(QMainWindow):
             self.s3_handler = None
 
     def upload_file(self):
+        # Check if using MEGA profile
+        if getattr(self, '_current_profile_type', None) == 'mega':
+            file_path, _ = QFileDialog.getOpenFileName(self, self.tr("dialog_select_upload_file"))
+            if file_path:
+                profile_name = self._current_mega_profile
+                self.statusBar().showMessage(self.tr("status_uploading_file").format(os.path.basename(file_path)))
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setValue(0)
+                
+                # Use rclone to copy file to MEGA
+                def do_upload():
+                    return self.rclone_manager.copy_file_to_remote(profile_name, file_path, "/")
+                
+                def on_success(result):
+                    self.progress_bar.setVisible(False)
+                    success, msg = result
+                    if success:
+                        QMessageBox.information(self, self.tr("success"), f"Archivo '{os.path.basename(file_path)}' subido a MEGA.")
+                        self.statusBar().showMessage(self.tr("status_upload_completed"), 5000)
+                    else:
+                        QMessageBox.warning(self, self.tr("error"), f"Error: {msg}")
+                        self.statusBar().showMessage(self.tr("status_upload_failed"), 5000)
+                
+                def on_error(exc):
+                    self.progress_bar.setVisible(False)
+                    QMessageBox.warning(self, self.tr("error"), str(exc))
+                
+                self.task_runner.run(do_upload, on_success=on_success, on_error=on_error, description="mega_upload")
+            return
+        
+        # Original S3 upload logic
         if not self.s3_handler:
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return
@@ -1460,6 +1685,37 @@ class MainWindow(QMainWindow):
             self.statusBar().showMessage(self.tr("status_upload_failed"), 5000)
 
     def full_backup(self):
+        # Check if using MEGA profile
+        if getattr(self, '_current_profile_type', None) == 'mega':
+            dir_path = QFileDialog.getExistingDirectory(self, self.tr("dialog_select_backup_directory"))
+            if dir_path:
+                profile_name = self._current_mega_profile
+                self.statusBar().showMessage(self.tr("status_backup_starting").format(dir_path))
+                self.progress_bar.setVisible(True)
+                self.progress_bar.setValue(0)
+                
+                # Use rclone to copy folder to MEGA
+                def do_backup():
+                    return self.rclone_manager.copy_folder_to_remote(profile_name, dir_path, "/")
+                
+                def on_success(result):
+                    self.progress_bar.setVisible(False)
+                    success, msg = result
+                    if success:
+                        QMessageBox.information(self, self.tr("success"), f"Carpeta '{os.path.basename(dir_path)}' respaldada a MEGA.")
+                        self.statusBar().showMessage(self.tr("status_backup_completed"), 5000)
+                    else:
+                        QMessageBox.warning(self, self.tr("error"), f"Error: {msg}")
+                        self.statusBar().showMessage(self.tr("status_backup_failed"), 5000)
+                
+                def on_error(exc):
+                    self.progress_bar.setVisible(False)
+                    QMessageBox.warning(self, self.tr("error"), str(exc))
+                
+                self.task_runner.run(do_backup, on_success=on_success, on_error=on_error, description="mega_backup")
+            return
+        
+        # Original S3 backup logic
         if not self.s3_handler:
             QMessageBox.warning(self, self.tr("warning"), self.tr("select_profile_first"))
             return

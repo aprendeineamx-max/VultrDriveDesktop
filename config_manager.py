@@ -232,7 +232,15 @@ class ConfigManager:
         return self.configs.get(profile_name)
 
     def list_profiles(self):
-        return list(self.configs.keys())
+        """List available profiles excluding internal config keys"""
+        internal_keys = {
+            '_saved_mounts', 
+            'active_plan', 
+            'active_profile', 
+            'rclone_plans', 
+            'encryption_enabled'
+        }
+        return [k for k in self.configs.keys() if k not in internal_keys and not k.startswith('_')]
 
     # ===== Persistencia de montajes múltiples =====
 
