@@ -425,6 +425,10 @@ class GCPTab(QWidget):
                 item = QListWidgetItem(f"📦 {bucket.name}")
                 item.setData(Qt.ItemDataRole.UserRole, bucket)
                 self.buckets_list.addItem(item)
+            
+            # Sincronizar con la pestaña de Sync
+            if hasattr(self, 'sync_tab'):
+                self.sync_tab.update_buckets_from_list(buckets)
         else:
             QMessageBox.warning(self, "Error", f"No se pudieron cargar buckets: {message}")
 

@@ -107,16 +107,31 @@ class GCPSyncTab(QWidget):
     def refresh_buckets(self):
         if not self.client: return
         
-        self.bucket_combo.clear()
+        # Si ya estamos recibiendo actualizaciones desde el Tab principal, 
+        # quizás no necesitemos llamar a list_buckets aquí, pero lo mantenemos por si acaso
+        # se llama manualmente.
         try:
             buckets = list(self.client.list_buckets())
-            for bucket in buckets:
-                self.bucket_combo.addItem(f"📦 {bucket.name}", bucket.name)
-            
-            if self.bucket_combo.count() > 0:
-                self.check_ready_state()
+            self.update_buckets_from_list(buckets)
         except Exception as e:
             self.log(f"Error listando buckets: {e}")
+
+    def update_buckets_from_list(self, buckets):
+        """Actualiza el combobox con una lista de buckets ya obtenida"""
+        current_selection = self.bucket_combo.currentData()
+        self.bucket_combo.clear()
+        
+        for bucket in buckets:
+            self.bucket_combo.addItem(f"📦 {bucket.name}", bucket.name)
+            
+        # Restaurar selección si es posible
+        if current_selection:
+            index = self.bucket_combo.findData(current_selection)
+            if index >= 0:
+                self.bucket_combo.setCurrentIndex(index)
+        
+        if self.bucket_combo.count() > 0:
+            self.check_ready_state()
 
     def browse_folder(self):
         path = QFileDialog.getExistingDirectory(self, "Seleccionar Carpeta para Sincronizar")
