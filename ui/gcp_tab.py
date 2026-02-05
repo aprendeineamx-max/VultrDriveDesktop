@@ -5,6 +5,7 @@ Permite autenticarse con Service Account y gestionar Buckets/Objetos.
 
 import os
 import glob
+import shutil
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QListWidget, QListWidgetItem, QFileDialog, 
@@ -209,6 +210,12 @@ class GCPTab(QWidget):
         self.connect_btn.clicked.connect(self.try_auto_auth)
         self.connect_btn.setStyleSheet("background-color: #2c3e50; color: white; padding: 5px;")
         layout.addWidget(self.connect_btn)
+
+        # Botón para subir credenciales (New)
+        self.upload_creds_btn = QPushButton("🔑 Subir Credenciales JSON")
+        self.upload_creds_btn.clicked.connect(self.upload_credentials)
+        self.upload_creds_btn.setStyleSheet("background-color: #e67e22; color: white; padding: 5px;")
+        layout.addWidget(self.upload_creds_btn)
         
         # Splitter principal
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -294,6 +301,7 @@ class GCPTab(QWidget):
         """Intenta autenticarse automáticamente buscando JSON en 'Claves GCP'"""
         self.connection_status.setText("⏳ Conectando automáticamente en 2s...")
         self.connect_btn.setEnabled(False)
+        self.upload_creds_btn.setEnabled(False)
         # Delay increased to 2000ms to ensure MainWindow is fully rendered and avoid startup race conditions
         QTimer.singleShot(2000, self._perform_auth_main_thread)
 
@@ -304,12 +312,14 @@ class GCPTab(QWidget):
             if not os.path.exists(keys_dir):
                 self.connection_status.setText("❌ Carpeta 'Claves GCP' no encontrada")
                 self.connect_btn.setEnabled(True)
+                self.upload_creds_btn.setEnabled(True)
                 return
 
             json_files = glob.glob(os.path.join(keys_dir, "*.json"))
             if not json_files:
                 self.connection_status.setText("❌ No se encontró archivo .json en 'Claves GCP'")
                 self.connect_btn.setEnabled(True)
+                self.upload_creds_btn.setEnabled(True)
                 return
 
             # Usar el primer archivo encontrado
@@ -321,13 +331,45 @@ class GCPTab(QWidget):
             
             self.connection_status.setText(f"✅ Conectado | Proyecto: {self.project_id}")
             self.connect_btn.hide() # Ocultar botón si conecta bien
+            self.upload_creds_btn.hide() # Ocultar botón de subida si conecta bien
             self.refresh_buckets()
             
         except Exception as e:
             self.connection_status.setText(f"❌ Error de conexión: {str(e)}")
             self.connect_btn.setEnabled(True)
             self.connect_btn.setText("Reintentar Conexión")
+            self.upload_creds_btn.setEnabled(True)
             QMessageBox.critical(self, "Error GCP", f"No se pudo conectar a Google Cloud:\n{str(e)}")
+
+    def upload_credentials(self):
+        """Permite al usuario subir un archivo JSON de credenciales"""
+        path, _ = QFileDialog.getOpenFileName(self, "Seleccionar Credenciales GCP", "", "JSON Files (*.json)")
+        if path:
+            try:
+                # Crear carpeta si no existe
+                keys_dir = os.path.join(os.getcwd(), "Claves GCP")
+                if not os.path.exists(keys_dir):
+                    os.makedirs(keys_dir)
+                
+                # Copiar archivo
+                start_path = path
+                filename = os.path.basename(path)
+                dest_path = os.path.join(keys_dir, filename)
+                
+                # Limpiar otros json previos para evitar conflictos (opcional, pero recomendado)
+                for old_file in glob.glob(os.path.join(keys_dir, "*.json")):
+                    try:
+                        os.remove(old_file)
+                    except:
+                        pass # Si no se puede borrar, seguimos
+
+                shutil.copy2(start_path, dest_path)
+                
+                QMessageBox.information(self, "Credenciales", "Credenciales subidas correctamente. Conectando...")
+                self.try_auto_auth()
+                
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Error al subir credenciales: {str(e)}")
 
     def _handle_auth_error(self, message):
         self.connection_status.setText(f"❌ Error: {message}")

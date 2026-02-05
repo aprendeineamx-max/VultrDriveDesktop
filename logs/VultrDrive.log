@@ -1923,3 +1923,14 @@ AttributeError: 'TransferManager' object has no attribute 'add_transfer'
 2026-02-05 04:22:19 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
 2026-02-05 04:22:21 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
 2026-02-05 04:22:22 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 04:22:33 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 04:27:31 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 04:27:32 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 04:27:35 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 04:37:07 | CRITICAL | VultrDrive | exception_hook:242 | Unhandled Exception: 
+Traceback (most recent call last):
+  File "C:\Users\AzureAdmin\AppData\Local\Programs\Python\Python311\Lib\enum.py", line 688, in __call__
+    def __call__(cls, value, names=None, *, module=None, qualname=None, type=None, start=1, boundary=None):
+    
+KeyboardInterrupt
+
