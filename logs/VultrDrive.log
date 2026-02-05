@@ -1917,3 +1917,9 @@ AttributeError: 'TransferManager' object has no attribute 'add_transfer'
 2026-02-04 13:36:30 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\AzulCieloMar\.gemini\antigravity\scratch\VultrDriveDesktop\logs
 2026-02-04 13:36:33 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
 2026-02-04 13:36:38 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 04:21:40 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 04:21:47 | INFO     | VultrDrive | main:309 | WinFsp no está instalado. Intentando instalación automática...
+2026-02-05 04:22:06 | INFO     | VultrDrive | main:320 | WinFsp instalado exitosamente
+2026-02-05 04:22:19 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: c:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 04:22:21 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 04:22:22 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
