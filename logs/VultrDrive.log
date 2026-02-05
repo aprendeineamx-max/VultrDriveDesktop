@@ -1983,3 +1983,27 @@ Traceback (most recent call last):
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
 IndentationError: unexpected indent
 
+2026-02-05 05:20:14 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 05:20:15 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 05:20:16 | CRITICAL | VultrDrive | exception_hook:242 | Unhandled Exception: unexpected indent (gcp_sync_tab.py, line 1)
+Traceback (most recent call last):
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\app.py", line 439, in <module>
+    main()
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\app.py", line 340, in main
+    from ui.main_window import MainWindow
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\main_window.py", line 29, in <module>
+    from ui.gcp_tab import GCPTab
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\gcp_tab.py", line 22, in <module>
+    from ui.gcp_sync_tab import GCPSyncTab
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\gcp_sync_tab.py", line 1
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+IndentationError: unexpected indent
+
+2026-02-05 05:24:46 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 05:24:47 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 05:24:50 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 05:25:18 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 05:25:19 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 05:25:23 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 05:25:24 | INFO     | VultrDrive.ui.gcp_sync_tab | try_auto_resume:434 | Auto-resuming GCP Sync...
+2026-02-05 05:25:24 | INFO     | VultrDrive.ui.gcp_sync_tab | start_sync:335 | GCP Sync STARTED. Path: C:\Users\AzureAdmin\Desktop, Bucket: discos-azure-allison-everest

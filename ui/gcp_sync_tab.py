@@ -1,3 +1,6 @@
+import os
+import glob
+from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QComboBox, QFileDialog, QListWidget, QListWidgetItem, QGroupBox, QProgressBar, QMessageBox,
     QAbstractItemView
@@ -10,6 +13,14 @@ from file_watcher import RealTimeSync
 from config_manager import ConfigManager
 from rclone_manager import RcloneManager
 import string
+import logging
+
+try:
+    from logger_manager import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
 class GCPAdapter:
     """Adaptador para que RealTimeSync pueda usar el cliente GCP Storage"""
@@ -321,9 +332,11 @@ class GCPSyncTab(QWidget):
             self.browse_btn.setEnabled(False)
             self.bucket_combo.setEnabled(False)
             self.log("✅ Sistema de sincronización activo. Esperando cambios...")
+            logger.info(f"GCP Sync STARTED. Path: {folder}, Bucket: {bucket_name}")
             self.save_config()
         else:
             self.log(f"❌ Error al iniciar: {msg}")
+            logger.error(f"GCP Sync START FAILED: {msg}")
 
     def stop_sync(self):
         if self.sync_engine:
@@ -418,4 +431,5 @@ class GCPSyncTab(QWidget):
         
         if has_path and has_bucket and not self.is_running:
             self.log("🔄 Reanudando sincronización automática...")
+            logger.info("Auto-resuming GCP Sync...")
             self.start_sync()
