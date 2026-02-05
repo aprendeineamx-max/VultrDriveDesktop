@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QGroupBox, QListWidget, QListWidgetItem, QFileDialog, 
     QMessageBox, QProgressBar, QSplitter, QFrame, QScrollArea,
-    QMenu, QInputDialog, QTreeWidget, QTreeWidgetItem
+    QMenu, QInputDialog, QTreeWidget, QTreeWidgetItem, QTabWidget
 )
 from PyQt6.QtCore import Qt, QThread, pyqtSignal, QSize, QTimer
 from PyQt6.QtGui import QIcon, QAction
@@ -18,6 +18,7 @@ from google.cloud import storage
 from datetime import datetime
 from transfer_manager import get_transfer_manager, TransferType, TransferStatus
 from ui.transfer_queue_widget import TransferQueueWidget
+from ui.gcp_sync_tab import GCPSyncTab
 
 class GCPWorker(QThread):
     """Worker genérico para operaciones de GCP que pueden bloquear la UI"""
@@ -172,7 +173,7 @@ class GCPTab(QWidget):
         self.try_auto_auth()
 
     def init_ui(self):
-        # Layout principal con ScrollArea para responsividad
+        # Layout principal
         if self.layout() is None:
             main_layout = QVBoxLayout(self)
             main_layout.setContentsMargins(0, 0, 0, 0)
@@ -180,42 +181,44 @@ class GCPTab(QWidget):
         else:
             main_layout = self.layout()
         
-        scroll = QScrollArea()
-        scroll.setWidgetResizable(True)
-        scroll.setFrameShape(QFrame.Shape.NoFrame)
-        scroll.setStyleSheet("background-color: transparent;")
+        # --- TAB WIDGET PRINCIPAL ---
+        self.tabs = QTabWidget()
+        main_layout.addWidget(self.tabs)
         
-        content_widget = QWidget()
-        layout = QVBoxLayout(content_widget)
-        layout.setSpacing(10)
-        layout.setContentsMargins(15, 15, 15, 15)
+        # ==========================================
+        # TAB 1: EXPLORADOR (Código original movido)
+        # ==========================================
+        self.explorer_tab = QWidget()
+        explorer_layout = QVBoxLayout(self.explorer_tab)
+        explorer_layout.setSpacing(10)
+        explorer_layout.setContentsMargins(15, 15, 15, 15)
         
         # Header
-        header = QLabel("☁️ Google Cloud Storage")
+        header = QLabel("☁️ Google Cloud Storage - Explorador")
         header.setStyleSheet("font-size: 18px; font-weight: bold; color: #4285F4;")
-        layout.addWidget(header)
+        explorer_layout.addWidget(header)
         
         # Estado de conexión
         self.connection_status = QLabel("⚪ Buscando credenciales...")
         self.connection_status.setStyleSheet("font-size: 12px; color: #7f8c8d; padding: 5px;")
-        layout.addWidget(self.connection_status)
+        explorer_layout.addWidget(self.connection_status)
 
         # Cola de transferencias (reemplaza barra de progreso simple)
         self.transfer_queue = TransferQueueWidget()
         self.transfer_queue.setMaximumHeight(200) # Limitar altura
-        layout.addWidget(self.transfer_queue)
+        explorer_layout.addWidget(self.transfer_queue)
 
         # Botón de conectar manual
         self.connect_btn = QPushButton("🔌 Conectar con GCP")
         self.connect_btn.clicked.connect(self.try_auto_auth)
         self.connect_btn.setStyleSheet("background-color: #2c3e50; color: white; padding: 5px;")
-        layout.addWidget(self.connect_btn)
+        explorer_layout.addWidget(self.connect_btn)
 
         # Botón para subir credenciales (New)
         self.upload_creds_btn = QPushButton("🔑 Subir Credenciales JSON")
         self.upload_creds_btn.clicked.connect(self.upload_credentials)
         self.upload_creds_btn.setStyleSheet("background-color: #e67e22; color: white; padding: 5px;")
-        layout.addWidget(self.upload_creds_btn)
+        explorer_layout.addWidget(self.upload_creds_btn)
         
         # Splitter principal
         splitter = QSplitter(Qt.Orientation.Horizontal)
@@ -291,11 +294,18 @@ class GCPTab(QWidget):
         splitter.addWidget(right_widget)
         splitter.setSizes([250, 550])
         
-        layout.addWidget(splitter, 1)
+        explorer_layout.addWidget(splitter, 1)
         
-        # Finalizar setup scroll
-        scroll.setWidget(content_widget)
-        main_layout.addWidget(scroll)
+        # Scroll area para el tab explorador (opcional, si se quiere scroll)
+        # En este diseño removemos el scroll global para usar el del tree/list
+        
+        self.tabs.addTab(self.explorer_tab, "🔍 Explorador")
+
+        # ==========================================
+        # TAB 2: SINCRONIZACIÓN (Nuevo)
+        # ==========================================
+        self.sync_tab = GCPSyncTab(self.main_window)
+        self.tabs.addTab(self.sync_tab, "🔄 Sincronización Automática")
 
     def try_auto_auth(self):
         """Intenta autenticarse automáticamente buscando JSON en 'Claves GCP'"""
@@ -333,6 +343,10 @@ class GCPTab(QWidget):
             self.connect_btn.hide() # Ocultar botón si conecta bien
             self.upload_creds_btn.hide() # Ocultar botón de subida si conecta bien
             self.refresh_buckets()
+            
+            # Pasar cliente a la pestaña de sincronización
+            if hasattr(self, 'sync_tab'):
+                self.sync_tab.set_client(self.client)
             
         except Exception as e:
             self.connection_status.setText(f"❌ Error de conexión: {str(e)}")

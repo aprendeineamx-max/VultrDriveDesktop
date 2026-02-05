@@ -1934,3 +1934,13 @@ Traceback (most recent call last):
     
 KeyboardInterrupt
 
+2026-02-05 04:48:55 | CRITICAL | VultrDrive | exception_hook:242 | Unhandled Exception: 
+Traceback (most recent call last):
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\gcp_tab.py", line 494, in on_objects_loaded
+    parent_item = folder_items[current_path]
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+
+2026-02-05 04:49:07 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 04:49:09 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 04:49:12 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
