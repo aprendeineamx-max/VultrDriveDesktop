@@ -17,6 +17,7 @@ from PyQt6.QtGui import QIcon, QAction
 from google.cloud import storage
 from datetime import datetime
 from transfer_manager import get_transfer_manager, TransferType, TransferStatus
+import re
 from ui.transfer_queue_widget import TransferQueueWidget
 from ui.gcp_sync_tab import GCPSyncTab
 
@@ -429,14 +430,30 @@ class GCPTab(QWidget):
 
     def create_new_bucket(self):
         if not self.client: return
-        name, ok = QInputDialog.getText(self, "Nuevo Bucket", "Nombre del bucket (único globalmente):")
+        name, ok = QInputDialog.getText(self, "Nuevo Bucket", "Nombre del bucket (único globalmente):\n(Se formateará automáticamente)")
         if ok and name:
+            # Auto-formato de nombre
+            original_name = name
+            # 1. Minúsculas
+            name = name.lower()
+            # 2. Reemplazar caracteres inválidos (espacios, símbolos) por guiones
+            name = re.sub(r'[^a-z0-9-]', '-', name)
+            # 3. Eliminar guiones múltiples
+            name = re.sub(r'-+', '-', name)
+            # 4. Eliminar guiones al inicio y final
+            name = name.strip('-')
+            
+            if not name:
+                QMessageBox.warning(self, "Nombre Inválido", "El nombre resultante quedó vacío.")
+                return
+
             try:
                 bucket = self.client.create_bucket(name, location="us")
-                QMessageBox.information(self, "Éxito", f"Bucket '{name}' creado.")
+                msg = f"Bucket creado exitosamente:\nOriginal: '{original_name}'\nFormateado: '{name}'"
+                QMessageBox.information(self, "Éxito", msg)
                 self.refresh_buckets()
             except Exception as e:
-                QMessageBox.critical(self, "Error", f"Error al crear bucket: {str(e)}")
+                QMessageBox.critical(self, "Error", f"Error al crear bucket '{name}':\n{str(e)}")
 
     def on_bucket_selected(self, item):
         bucket = item.data(Qt.ItemDataRole.UserRole)
