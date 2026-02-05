@@ -186,6 +186,27 @@ class RcloneManager:
         except Exception as e:
             return False, f"Excepción al crear config: {str(e)}"
 
+    def create_gcp_config(self, name, service_account_file):
+        """
+        Crea o actualiza una configuración de Google Cloud Storage en rclone.conf
+        """
+        config = configparser.ConfigParser()
+        if os.path.exists(self.rclone_config_file):
+            config.read(self.rclone_config_file)
+            
+        if not config.has_section(name):
+            config.add_section(name)
+            
+        config.set(name, 'type', 'google cloud storage')
+        config.set(name, 'service_account_file', service_account_file)
+        config.set(name, 'object_acl', 'private')
+        config.set(name, 'bucket_acl', 'private')
+        
+        with open(self.rclone_config_file, 'w') as f:
+            config.write(f)
+            
+        return name
+
     def list_mega_profiles(self):
         """Lista todos los perfiles que sean de tipo mega en rclone.conf"""
         profiles = []

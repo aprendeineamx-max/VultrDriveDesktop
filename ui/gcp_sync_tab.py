@@ -1,10 +1,14 @@
 import os
+import glob
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QFileDialog, QTextEdit, QGroupBox, QProgressBar
+    QComboBox, QFileDialog, QTextEdit, QGroupBox, QProgressBar, QMessageBox
 )
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from file_watcher import RealTimeSync
+from config_manager import ConfigManager
+from rclone_manager import RcloneManager
+import string
 
 class GCPAdapter:
     """Adaptador para que RealTimeSync pueda usar el cliente GCP Storage"""
@@ -35,6 +39,10 @@ class GCPSyncTab(QWidget):
         self.client = None
         self.sync_engine = None
         self.is_running = False
+        
+        # Managers
+        self.config_manager = ConfigManager()
+        self.rclone_manager = RcloneManager(self.config_manager)
         
         self.init_ui()
 
@@ -68,9 +76,43 @@ class GCPSyncTab(QWidget):
         dest_group.setLayout(dest_layout)
         layout.addWidget(dest_group)
 
-        # 3. Control
+        # 3. Montaje de Unidad (Nueva Sección)
+        mount_group = QGroupBox("3. Montar como Unidad Local (Opcional)")
+        mount_layout = QHBoxLayout()
+        
+        mount_layout.addWidget(QLabel("Letra:"))
+        self.drive_letter_combo = QComboBox()
+        self.available_drives = [f"{d}" for d in string.ascii_uppercase if d not in ['C', 'D']] # Simple exclusion
+        self.drive_letter_combo.addItems(self.available_drives)
+        # Select Z by default if available
+        if 'Z' in self.available_drives:
+            self.drive_letter_combo.setCurrentText('Z')
+            
+        mount_layout.addWidget(self.drive_letter_combo)
+        
+        self.mount_btn = QPushButton("🔌 Montar Unidad")
+        self.mount_btn.clicked.connect(self.mount_bucket)
+        self.mount_btn.setStyleSheet("background-color: #8e44ad; color: white;")
+        
+        self.unmount_btn = QPushButton("⏏️ Desmontar")
+        self.unmount_btn.clicked.connect(self.unmount_bucket)
+        self.unmount_btn.setStyleSheet("background-color: #c0392b; color: white;")
+        self.unmount_btn.setEnabled(False)
+        
+        self.explore_drive_btn = QPushButton("📂 Abrir")
+        self.explore_drive_btn.clicked.connect(self.open_mounted_drive)
+        self.explore_drive_btn.setEnabled(False)
+        
+        mount_layout.addWidget(self.mount_btn)
+        mount_layout.addWidget(self.unmount_btn)
+        mount_layout.addWidget(self.explore_drive_btn)
+        
+        mount_group.setLayout(mount_layout)
+        layout.addWidget(mount_group)
+
+        # 4. Control
         control_layout = QHBoxLayout()
-        self.start_btn = QPushButton("▶ Iniciar Sincronización")
+        self.start_btn = QPushButton("▶ Iniciar Sincronización Automática")
         self.start_btn.clicked.connect(self.toggle_sync)
         self.start_btn.setMinimumHeight(40)
         self.start_btn.setStyleSheet("""
@@ -143,6 +185,88 @@ class GCPSyncTab(QWidget):
         has_path = os.path.isdir(self.path_input.text())
         has_bucket = self.bucket_combo.count() > 0
         self.start_btn.setEnabled(has_path and has_bucket)
+
+    def mount_bucket(self):
+        bucket_name = self.bucket_combo.currentData()
+        drive_letter = self.drive_letter_combo.currentText()
+        
+        if not bucket_name:
+            QMessageBox.warning(self, "Error", "Selecciona un bucket primero")
+            return
+
+        # Nombre del perfil en rclone
+        rclone_remote_name = "gcp_current"
+        
+        # 1. Asegurar credenciales
+        keys_dir = os.path.join(os.getcwd(), "Claves GCP")
+        json_files = glob.glob(os.path.join(keys_dir, "*.json"))
+        
+        if not json_files:
+             # Intentar buscarlas si no están en la ruta estándar (aunque GCP tab ya lo hace)
+             QMessageBox.critical(self, "Error", "No se encontró ningún archivo JSON en 'Claves GCP'.")
+             return
+        
+        creds_path = json_files[0]
+
+        # 2. Configurar Rclone
+        self.log(f"Configurando perfil Rclone '{rclone_remote_name}'...")
+        self.rclone_manager.create_gcp_config(rclone_remote_name, creds_path)
+        
+        # 3. Montar
+        self.log(f"Intentando montar bucket '{bucket_name}' en {drive_letter}: ...")
+        self.mount_btn.setEnabled(False)
+        self.mount_btn.setText("Montando...")
+        
+        # Ejecutar montaje (puede tardar un poco)
+        QTimer.singleShot(100, lambda: self._perform_mount(rclone_remote_name, bucket_name, drive_letter))
+
+    def _perform_mount(self, remote_name, bucket_name, drive_letter):
+        # NOTA: mount_drive espera profile_name (section config), drive_letter sin ':', bucket_name opcional
+        success, msg, process = self.rclone_manager.mount_drive(
+            remote_name, 
+            drive_letter, 
+            bucket_name=bucket_name
+        )
+        
+        if success:
+            self.log(f"✅ Éxito: {msg}")
+            self.mount_btn.setText("Montado")
+            self.mount_btn.setEnabled(False)
+            self.unmount_btn.setEnabled(True)
+            self.explore_drive_btn.setEnabled(True)
+            self.drive_letter_combo.setEnabled(False)
+            self.bucket_combo.setEnabled(False)
+        else:
+            self.log(f"❌ Error al montar: {msg}")
+            self.mount_btn.setText("🔌 Montar Unidad")
+            self.mount_btn.setEnabled(True)
+            QMessageBox.critical(self, "Error de Montaje", msg)
+
+    def unmount_bucket(self):
+        drive_letter = self.drive_letter_combo.currentText()
+        self.log(f"Desmontando unidad {drive_letter}: ...")
+        
+        success, msg = self.rclone_manager.unmount_drive(drive_letter)
+        
+        if success:
+            self.log(f"Unidad desmontada.")
+            self.mount_btn.setText("🔌 Montar Unidad")
+            self.mount_btn.setEnabled(True)
+            self.unmount_btn.setEnabled(False)
+            self.explore_drive_btn.setEnabled(False)
+            self.drive_letter_combo.setEnabled(True)
+            self.bucket_combo.setEnabled(True)
+        else:
+            self.log(f"Error al desmontar: {msg}")
+            QMessageBox.warning(self, "Error", msg)
+
+    def open_mounted_drive(self):
+        drive_letter = self.drive_letter_combo.currentText()
+        drive_path = f"{drive_letter}:\\"
+        if os.path.exists(drive_path):
+            os.startfile(drive_path)
+        else:
+             QMessageBox.warning(self, "Error", "La unidad no parece estar disponible")
 
     def toggle_sync(self):
         if not self.is_running:

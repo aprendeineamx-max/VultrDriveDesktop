@@ -1964,3 +1964,6 @@ Traceback (most recent call last):
     
 KeyboardInterrupt
 
+2026-02-05 05:02:28 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 05:02:29 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 05:02:35 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
