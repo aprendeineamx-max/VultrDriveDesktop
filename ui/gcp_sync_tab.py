@@ -1,9 +1,10 @@
-import os
-import glob
-from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
-    QComboBox, QFileDialog, QTextEdit, QGroupBox, QProgressBar, QMessageBox
+    QComboBox, QFileDialog, QListWidget, QListWidgetItem, QGroupBox, QProgressBar, QMessageBox,
+    QAbstractItemView
 )
+from PyQt6.QtCore import Qt, pyqtSignal, QTimer, QSize
+from PyQt6.QtGui import QIcon, QColor, QBrush
+from datetime import datetime
 from PyQt6.QtCore import Qt, pyqtSignal, QTimer
 from file_watcher import RealTimeSync
 from config_manager import ConfigManager
@@ -132,14 +133,29 @@ class GCPSyncTab(QWidget):
         layout.addLayout(control_layout)
 
         # 4. Log de actividad
-        log_group = QGroupBox("Actividad en Tiempo Real")
-        log_layout = QVBoxLayout()
-        self.log_area = QTextEdit()
-        self.log_area.setReadOnly(True)
-        self.log_area.setStyleSheet("background-color: #1e1e1e; color: #00ff00; font-family: Consolas, monospace;")
-        log_layout.addWidget(self.log_area)
-        log_group.setLayout(log_layout)
-        layout.addWidget(log_group, 1)
+        # 4. Log de Actividad (Rediseñado)
+        layout.addWidget(QLabel("Actividad Reciente:"))
+        self.log_list = QListWidget()
+        self.log_list.setAlternatingRowColors(True)
+        self.log_list.setStyleSheet("""
+            QListWidget {
+                background-color: #ffffff;
+                border: 1px solid #dcdcdc;
+                border-radius: 4px;
+            }
+            QListWidget::item {
+                padding: 5px;
+                border-bottom: 1px solid #f0f0f0;
+            }
+            QListWidget::item:selected {
+                background-color: #e6f7ff;
+                color: black;
+            }
+        """)
+        layout.addWidget(self.log_list, 1)
+
+        # Cargar configuración guardada al iniciar (con un pequeño delay)
+        QTimer.singleShot(500, self.load_config)
 
     def set_client(self, client):
         """Recibe el cliente autenticado desde GCPTab"""
@@ -305,6 +321,7 @@ class GCPSyncTab(QWidget):
             self.browse_btn.setEnabled(False)
             self.bucket_combo.setEnabled(False)
             self.log("✅ Sistema de sincronización activo. Esperando cambios...")
+            self.save_config()
         else:
             self.log(f"❌ Error al iniciar: {msg}")
 
@@ -317,11 +334,88 @@ class GCPSyncTab(QWidget):
             self.browse_btn.setEnabled(True)
             self.bucket_combo.setEnabled(True)
             self.log("⏹ Sincronización detenida.")
+            self.save_config()
 
     def log(self, message):
-        from datetime import datetime
         timestamp = datetime.now().strftime("%H:%M:%S")
-        self.log_area.append(f"[{timestamp}] {message}")
-        # Auto-scroll
-        scrollbar = self.log_area.verticalScrollBar()
-        scrollbar.setValue(scrollbar.maximum())
+        
+        # Determinar icono/color basado en mensaje
+        icon = "📝 "
+        color = "#333333"
+        
+        if "✅" in message or "Uploaded" in message or "Success" in message or "activ" in message:
+            icon = "✅ "
+            color = "#27ae60"
+        elif "❌" in message or "Error" in message or "Failed" in message:
+            icon = "❌ "
+            color = "#c0392b"
+        elif "⏳" in message or "Waiting" in message or "Connecting" in message:
+            icon = "⏳ "
+            color = "#f39c12"
+        elif "Detected" in message:
+            icon = "👀 "
+            color = "#2980b9"
+        elif "⏹" in message:
+            icon = "⏹ "
+            color = "#7f8c8d"
+            
+        clean_msg = message.replace("✅ ", "").replace("❌ ", "").replace("⏹ ", "")
+        
+        item = QListWidgetItem(f"[{timestamp}] {icon} {clean_msg}")
+        item.setForeground(QBrush(QColor(color)))
+        
+        self.log_list.insertItem(0, item) # Insertar al principio
+        
+        # Limitar historial
+        if self.log_list.count() > 100:
+            self.log_list.takeItem(100)
+
+    def save_config(self):
+        """Guardar configuración actual"""
+        config = {
+            'local_path': self.path_input.text(), # Usar text(), es un QLabel? NO, era text() en el snippet anterior, pero init_ui dice QLabel... WAIT
+            # Ah, en init_ui use QLabel para path_input? 
+            # Line 60: self.path_input = QLabel("No se ha seleccionado carpeta")
+            # Line 182: self.path_input.setText(path)
+            # So text() is correct (QLabel has text())
+            'bucket_name': self.bucket_combo.currentData(),
+            'auto_start': self.is_running # Persistir estado de ejecución
+        }
+        self.config_manager.set_gcp_sync_config(config)
+
+    def load_config(self):
+        """Cargar configuración guardada"""
+        config = self.config_manager.get_gcp_sync_config()
+        if not config:
+            return
+            
+        path = config.get('local_path')
+        if path and path != "No se ha seleccionado carpeta":
+            self.path_input.setText(path)
+            self.check_ready_state()
+            
+        bucket = config.get('bucket_name')
+        if bucket:
+            # Intentar seleccionar el bucket (puede no estar cargado aún)
+            index = self.bucket_combo.findData(bucket)
+            if index >= 0:
+                self.bucket_combo.setCurrentIndex(index)
+            else:
+                # Si no está en la lista (ej. carga asíncrona), guardarlo para después
+                # O simplemente esperar que refresh_buckets lo maneje si se llama después?
+                # refresh_buckets ya maneja 'currentData', pero si cambiamos la selección aquí podría perderse
+                pass
+
+        # Auto-start si estaba corriendo
+        if config.get('auto_start', False):
+            # Usar timer para dar tiempo a que se carguen cosas (y MainWindow)
+            QTimer.singleShot(2000, self.try_auto_resume)
+            
+    def try_auto_resume(self):
+        """Intenta reanudar la sincronización automáticamente"""
+        has_path = os.path.isdir(self.path_input.text())
+        has_bucket = self.bucket_combo.currentData() is not None
+        
+        if has_path and has_bucket and not self.is_running:
+            self.log("🔄 Reanudando sincronización automática...")
+            self.start_sync()

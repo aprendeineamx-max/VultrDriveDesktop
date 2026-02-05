@@ -1967,3 +1967,19 @@ KeyboardInterrupt
 2026-02-05 05:02:28 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
 2026-02-05 05:02:29 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
 2026-02-05 05:02:35 | INFO     | VultrDrive | main:410 | Aplicación iniciada correctamente
+2026-02-05 05:13:16 | INFO     | VultrDrive | __init__:71 | Logger inicializado. Logs en: C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\logs
+2026-02-05 05:13:17 | DEBUG    | VultrDrive | main:333 | WinFsp ya está instalado
+2026-02-05 05:13:18 | CRITICAL | VultrDrive | exception_hook:242 | Unhandled Exception: unexpected indent (gcp_sync_tab.py, line 1)
+Traceback (most recent call last):
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\app.py", line 439, in <module>
+    main()
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\app.py", line 340, in main
+    from ui.main_window import MainWindow
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\main_window.py", line 29, in <module>
+    from ui.gcp_tab import GCPTab
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\gcp_tab.py", line 22, in <module>
+    from ui.gcp_sync_tab import GCPSyncTab
+  File "C:\Users\AzureAdmin\Desktop\Nueva carpeta\VultrDriveDesktop\ui\gcp_sync_tab.py", line 1
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
+IndentationError: unexpected indent
+

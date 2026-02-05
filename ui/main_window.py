@@ -724,11 +724,18 @@ class MainWindow(QMainWindow):
     def _should_keep_in_background(self):
         """Determinar si la app debe quedarse en segundo plano"""
         sync_running = self.real_time_sync and self.real_time_sync.is_running()
+        
+        # Check GCP Sync
+        if hasattr(self, 'gcp_tab') and hasattr(self.gcp_tab, 'sync_tab'):
+             if getattr(self.gcp_tab.sync_tab, 'is_running', False):
+                 sync_running = True
+
         drive_mounted = False
         try:
             drive_mounted = self.rclone_manager.is_mounted()
         except Exception:
             drive_mounted = False
+            
         return sync_running or drive_mounted
 
     def _execute_shutdown_tasks(self):

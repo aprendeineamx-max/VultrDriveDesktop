@@ -478,3 +478,14 @@ class ConfigManager:
         """Guarda el perfil activo."""
         self.configs['active_profile'] = name
         self.save_configs()
+
+    # ===== Configuración de GCP Sync =====
+    
+    def get_gcp_sync_config(self):
+        """Obtener configuración guardada de sincronización GCP"""
+        return self.configs.get('_gcp_sync', {})
+
+    def set_gcp_sync_config(self, config):
+        """Guardar configuración de sincronización GCP"""
+        self.configs['_gcp_sync'] = config
+        self.save_configs()
